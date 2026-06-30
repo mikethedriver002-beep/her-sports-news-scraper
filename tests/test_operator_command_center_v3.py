@@ -306,6 +306,16 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         assert path in artifact_paths
         assert path in mirrored_paths
         assert command_center.RUN_COMMANDS[path] == import_review_command
+    external_review_command = ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py"
+    external_review_paths = {
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json",
+    }
+    for path in external_review_paths:
+        assert path in artifact_paths
+        assert path in mirrored_paths
+        assert command_center.RUN_COMMANDS[path] == external_review_command
     manual_bridge_command = ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     manual_bridge_paths = {
         "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md",
@@ -3846,6 +3856,55 @@ def seed_asset_availability_audit_files() -> None:
             "publish_ready": False,
         },
     )
+    (action_photo_dir / "review_only_action_photo_external_research_return_review_v1.md").write_text("# Action Photo External Research Return Review\n", encoding="utf-8")
+    write_csv(
+        (action_photo_dir / "review_only_action_photo_external_research_return_review_v1.csv").as_posix(),
+        [
+            {
+                "review_id": "APER001",
+                "candidate_queue_id": "APQ001",
+                "external_return_present": "yes",
+                "candidate_photo_url_direct_image_hold": "yes",
+                "identity_vocabulary_mismatch": "yes",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "review_only": "true",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            }
+        ],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_external_research_return_review_v1.json").as_posix(),
+        {
+            "status": "action_photo_external_research_return_review_ready",
+            "generated_at_utc": "2026-06-30T00:00:00+00:00",
+            "review_rows": 10,
+            "external_return_rows": 8,
+            "missing_external_return_rows": 2,
+            "missing_candidate_queue_ids": ["APQ007", "APQ008"],
+            "direct_image_url_hold_rows": 8,
+            "identity_vocabulary_mismatch_rows": 8,
+            "ready_for_later_human_download_decision_review_rows": 0,
+            "generated_download_approval_rows": 0,
+            "review_only": True,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     (action_photo_dir / "review_only_action_photo_manual_research_bridge_v1.md").write_text("# Action Photo Manual Research Bridge\n", encoding="utf-8")
     write_csv(
         (action_photo_dir / "review_only_action_photo_manual_research_bridge_v1.csv").as_posix(),
@@ -5926,6 +5985,18 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_research_return_import_review_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_research_return_import_review_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_research_return_import_review_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_rows"] == 10
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_returned_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_missing_rows"] == 2
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_direct_image_hold_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_identity_vocab_mismatch_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_ready_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_generated_download_approval_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_source_fetching"] is False
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_auto_source_enablement"] is False
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_external_research_return_review_approved_marker_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_rows"] == 2
     assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_source_rows"] == 103
     assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_womens_soccer_source_rows"] == 95
@@ -6061,6 +6132,17 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Action-photo research return paste worksheet blank source_url rows: 10" in markdown
     assert "Action-photo research return paste worksheet download-approved yes rows: 0" in markdown
     assert "Action-photo research return paste worksheet asset/headshot/marker writes: False/False/False" in markdown
+    assert "External return rows" in html
+    assert "External missing APQ" in html
+    assert "External direct holds" in html
+    assert "External identity holds" in html
+    assert "External ready/dl" in html
+    assert "Action-photo external research return review rows: 10" in markdown
+    assert "Action-photo external research return returned/missing rows: 8/2" in markdown
+    assert "Action-photo external research return direct-image/identity holds: 8/8" in markdown
+    assert "Action-photo external research return ready/download approvals: 0/0" in markdown
+    assert "Action-photo external research return fetch/auto-enable: False/False" in markdown
+    assert "Action-photo external research return asset/headshot/marker writes: False/False/False" in markdown
     assert "Action-photo manual source-hunt rows: 10" in markdown
     assert "Action-photo manual source-hunt blank source_url rows: 10" in markdown
     assert "Action-photo manual source-hunt download-approved yes rows: 0" in markdown
@@ -6659,6 +6741,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
@@ -7748,6 +7833,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json" in runner
