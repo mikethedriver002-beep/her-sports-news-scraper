@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.60.0-soft-review-wash"
+VERSION = "hsd-manual-review-renderer-v1.61.0-open-score-rails"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -46,7 +46,7 @@ ATHLETE_PHOTO_ONBOARDING_METADATA = "athlete_photo_onboarding/athlete_photo_onbo
 ATHLETE_IDENTITY_AUDIT = "data/asset_registry/wnba/athlete_identity_audit.json"
 ATHLETE_IDENTITY_RESOLUTION_INBOX = "operator/inbox/wnba_athlete_identity_resolution.csv"
 FINAL_SCORE_STAT_PROOF_CSV = "final_score_stat_proof_v1.csv"
-RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v27_borderless_score_wash"
+RENDER_BACKGROUND_STYLE = "hsd_premium_sports_editorial_v28_open_score_rails"
 RENDER_BACKGROUND_FAMILY = "hsd_premium_sports_editorial"
 RENDER_BACKGROUND_CUES = (
     "dimensional_hsd_ink_field,quiet_score_zones,subtle_stadium_light_sweep,"
@@ -72,7 +72,7 @@ RENDER_BACKGROUND_CUES = (
     "photo_first_editorial_team_identifiers,photo_first_lower_third_caption_strip,"
     "photo_first_quiet_review_marker,photo_first_score_stage_wash,"
     "photo_first_action_photo_stage_bridge,photo_first_editorial_depth_bridge,"
-    "photo_first_lower_third_score_shelf,photo_first_quiet_badge_pin,"
+    "photo_first_open_lower_caption_rail,photo_first_quiet_badge_pin,"
     "logo_first_editorial_score_spine,logo_first_no_dashboard_card_panels,score_rows_typography_over_wash,"
     "lower_third_editorial_rail,lower_third_no_heavy_stat_cards,reduced_lower_rail_panel_weight,"
     "soft_review_wash,open_manual_context_rail,"
@@ -132,6 +132,7 @@ PHOTO_FIRST_FINAL_SCORE_TYPE_SCALE = {
         "level": "headline",
         "font": "display",
         "size": 50,
+        "story_size": 46,
         "square_size": 35,
         "min": 24,
         "stroke": 1,
@@ -1578,7 +1579,7 @@ def public_stat_line(callouts: List[Dict[str, str]]) -> str:
         for item in callouts[:3]
         if clean(item.get("value")) and clean(item.get("label"))
     ]
-    return " | ".join(parts)
+    return " / ".join(parts)
 
 
 def photo_first_public_canvas_copy(score: Dict[str, str], stat_module: Dict[str, Any]) -> Dict[str, str]:
@@ -2455,7 +2456,7 @@ def draw_photo_first_public_header(image: Any, template_spec: Dict[str, Any], fo
     width = max(360, title_x + title_w - left)
     is_square = format_id == "square_feed_1x1"
     kicker_type = photo_first_type_spec("kicker", square=is_square)
-    headline_type = photo_first_type_spec("headline", square=is_square)
+    headline_type = photo_first_type_spec("headline", square=is_square, story=format_id == "ig_story_9x16")
     result_y = title_y + (54 if not is_square else 48)
     draw = ImageDraw.Draw(image, "RGBA")
     draw_reference_text(
@@ -2773,7 +2774,7 @@ def athlete_photo_render_source_path(module: Dict[str, Any], variant_id: str) ->
     return athlete_photo_review_variant_path(module, variant_id) or approved_athlete_photo_path(module)
 
 
-def photo_first_type_spec(key: str, *, compact: bool = False, square: bool = False, winner: bool = False) -> Dict[str, Any]:
+def photo_first_type_spec(key: str, *, compact: bool = False, square: bool = False, story: bool = False, winner: bool = False) -> Dict[str, Any]:
     spec = dict(PHOTO_FIRST_FINAL_SCORE_TYPE_SCALE.get(key, {}))
     if not spec:
         return {"level": "support", "font": "context", "size": 18, "min": 12, "stroke": 0}
@@ -2782,6 +2783,8 @@ def photo_first_type_spec(key: str, *, compact: bool = False, square: bool = Fal
         size = spec.get("winner_compact_size")
     elif winner and spec.get("winner_size"):
         size = spec.get("winner_size")
+    elif story and spec.get("story_size"):
+        size = spec.get("story_size")
     elif compact and spec.get("compact_size"):
         size = spec.get("compact_size")
     elif square and spec.get("square_size"):
@@ -2918,25 +2921,25 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         score_top = 360
         score_h = 124
         score_gap = 20
-        stat_box = [60, 752, 960, 78]
-        hook_box = [60, 854, 960, 94]
-        context_extra_gap = 28
+        stat_box = [60, 740, 960, 64]
+        hook_box = [60, 838, 960, 94]
+        context_extra_gap = 34
     elif is_story:
         photo_box = [56, 520, 456, 684]
         score_top = 520
         score_h = 206
         score_gap = 24
-        stat_box = [72, 1232, 936, 130]
-        hook_box = [72, 1396, 936, 132]
-        context_extra_gap = 36
+        stat_box = [72, 1248, 936, 104]
+        hook_box = [72, 1392, 936, 132]
+        context_extra_gap = 48
     else:
         photo_box = [48, 370, 452, 580]
         score_top = 398
         score_h = 176
         score_gap = 24
-        stat_box = [60, 976, 960, 112]
+        stat_box = [60, 994, 960, 84]
         hook_box = [60, 1118, 960, 104]
-        context_extra_gap = 36
+        context_extra_gap = 48
     score_x = photo_box[0] + photo_box[2] + 24
     score_w = width - score_x - PHOTO_FIRST_SAFE_ZONES.get(format_id, PHOTO_FIRST_SAFE_ZONES["default"])["right"]
     winner_row = [score_x, score_top, score_w, score_h]
@@ -2995,7 +2998,7 @@ def draw_photo_first_focal_depth_stage(
     draw.rounded_rectangle(
         (stage_left, stage_top, stage_right, stage_bottom),
         radius=34,
-        fill=(0, 0, 0, 28),
+        fill=(0, 0, 0, 14),
     )
     draw.polygon(
         [
@@ -3004,7 +3007,7 @@ def draw_photo_first_focal_depth_stage(
             (stage_right - 34, stage_bottom - 54),
             (stage_left + 44, stage_bottom - 12),
         ],
-        fill=(*primary, 20),
+        fill=(*primary, 12),
     )
     draw.polygon(
         [
@@ -3013,7 +3016,7 @@ def draw_photo_first_focal_depth_stage(
             (stage_right - 42, ly + lh + 38),
             (px + pw + 20, ly + lh + 12),
         ],
-        fill=(*secondary, 16),
+        fill=(*secondary, 9),
     )
     draw.polygon(
         [
@@ -3022,7 +3025,7 @@ def draw_photo_first_focal_depth_stage(
             (wx + int(ww * 0.88), ly + lh + 20),
             (px + int(pw * 0.70), py + int(ph * 0.92)),
         ],
-        fill=(*primary, 24),
+        fill=(*primary, 16),
     )
     draw.polygon(
         [
@@ -3031,7 +3034,7 @@ def draw_photo_first_focal_depth_stage(
             (wx + int(ww * 0.82), ly + int(lh * 0.78)),
             (px + int(pw * 0.58), py + int(ph * 0.76)),
         ],
-        fill=(*PALETTE["gold"], 20),
+        fill=(*PALETTE["gold"], 13),
     )
     draw.polygon(
         [
@@ -3040,7 +3043,7 @@ def draw_photo_first_focal_depth_stage(
             (stage_right - 42, ly + lh + 40),
             (px + int(pw * 0.30), py + int(ph * 0.90)),
         ],
-        fill=(*primary, 14),
+        fill=(*primary, 8),
     )
     draw.polygon(
         [
@@ -3049,11 +3052,11 @@ def draw_photo_first_focal_depth_stage(
             (stage_right - 110, sy + 24),
             (px + int(pw * 0.54), sy + 8),
         ],
-        fill=(*secondary, 12),
+        fill=(*secondary, 7),
     )
     draw.ellipse(
         (px + int(pw * 0.46), wy - 42, stage_right + 54, ly + lh + 54),
-        fill=(248, 250, 255, 12),
+        fill=(248, 250, 255, 7),
     )
     for offset in range(-80, stage_right - stage_left + 160, 46):
         draw.line(
@@ -3117,13 +3120,8 @@ def draw_photo_first_editorial_depth_bridge(
 
     bridge = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(bridge, "RGBA")
-    draw.rounded_rectangle(
-        (wx - 22, wy - 20, min(width - 36, wx + ww + 18), score_bottom + 22),
-        radius=22,
-        fill=(1, 3, 8, 46),
-        outline=(*primary, 38),
-        width=1,
-    )
+    draw.line((wx - 14, wy - 8, min(width - 48, wx + ww - 24), wy - 18), fill=(*primary, 30), width=1)
+    draw.line((wx + 4, score_bottom + 12, min(width - 54, wx + ww - 42), score_bottom + 2), fill=(*secondary, 22), width=1)
     draw.polygon(
         [
             (px + int(pw * 0.68), py + int(ph * 0.30)),
@@ -3131,7 +3129,7 @@ def draw_photo_first_editorial_depth_bridge(
             (wx + int(ww * 0.52), score_bottom + 28),
             (px + int(pw * 0.58), py + int(ph * 0.88)),
         ],
-        fill=(*primary, 34),
+        fill=(*primary, 22),
     )
     draw.polygon(
         [
@@ -3141,7 +3139,7 @@ def draw_photo_first_editorial_depth_bridge(
             (sx + int(sw * 0.64), sy + 14),
             (sx + int(sw * 0.16), sy + 2),
         ],
-        fill=(*secondary, 28),
+        fill=(*secondary, 18),
     )
     draw.polygon(
         [
@@ -3150,7 +3148,7 @@ def draw_photo_first_editorial_depth_bridge(
             (stage_right - 12, lower_bottom - 22),
             (stage_left + 22, lower_bottom + 3),
         ],
-        fill=(1, 3, 8, 34),
+        fill=(1, 3, 8, 12),
     )
     draw.polygon(
         [
@@ -3159,20 +3157,19 @@ def draw_photo_first_editorial_depth_bridge(
             (hx + hw - 18, lower_bottom - 10),
             (hx + 16, lower_bottom + 4),
         ],
-        fill=(*primary, 28),
+        fill=(*primary, 14),
     )
-    draw.line((sx + 30, sy - 16, sx + sw - 34, sy - 26), fill=(*PALETTE["gold"], 70), width=1)
-    draw.line((hx + 28, hy - 12, hx + hw - 40, hy - 18), fill=(*secondary, 44), width=1)
-    draw.rectangle((stage_left + 4, lower_top + 18, stage_left + 8, lower_bottom - 18), fill=(*primary, 62))
-    draw.line((stage_left + 20, lower_top + 10, stage_right - 34, lower_top - 4), fill=(*PALETTE["gold"], 58), width=1)
-    draw.line((stage_left + 28, lower_bottom - 10, stage_right - 52, lower_bottom - 24), fill=(*secondary, 36), width=1)
-    draw.line((wx - 8, wy + wh - 8, wx + ww - 34, wy + wh - 8), fill=(*primary, 38), width=1)
-    draw.line((lx + 10, ly + lh - 10, lx + lw - 44, ly + lh - 10), fill=(*secondary, 28), width=1)
+    draw.line((sx + 34, sy - 10, sx + sw - 40, sy - 18), fill=(*PALETTE["gold"], 68), width=2)
+    draw.line((hx + 28, hy - 10, hx + hw - 40, hy - 14), fill=(*secondary, 30), width=1)
+    draw.rectangle((stage_left + 4, lower_top + 24, stage_left + 7, lower_bottom - 24), fill=(*primary, 42))
+    draw.line((stage_left + 24, lower_top + 8, stage_right - 44, lower_top - 2), fill=(*PALETTE["gold"], 42), width=1)
+    draw.line((wx - 8, wy + wh - 8, wx + ww - 44, wy + wh - 8), fill=(*primary, 28), width=1)
+    draw.line((lx + 10, ly + lh - 10, lx + lw - 54, ly + lh - 10), fill=(*secondary, 20), width=1)
 
     glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow, "RGBA")
-    glow_draw.ellipse((sx - 120, sy - 96, sx + sw + 130, lower_bottom + 80), fill=(*PALETTE["gold"], 28))
-    glow_draw.ellipse((wx - 70, wy - 78, wx + ww + 90, score_bottom + 96), fill=(*primary, 30))
+    glow_draw.ellipse((sx - 100, sy - 76, sx + sw + 110, lower_bottom + 58), fill=(*PALETTE["gold"], 18))
+    glow_draw.ellipse((wx - 62, wy - 62, wx + ww + 72, score_bottom + 74), fill=(*primary, 18))
     if ImageFilter is not None:
         glow = glow.filter(ImageFilter.GaussianBlur(30))
         bridge = bridge.filter(ImageFilter.GaussianBlur(0.45))
@@ -3353,10 +3350,10 @@ def draw_photo_first_score_row(
             (x + w + 4, y + h - 4),
             (x + 18, y + h + 3),
         ],
-        fill=(0, 0, 0, 7 if winner else 4),
+        fill=(0, 0, 0, 3 if winner else 1),
     )
     if ImageFilter is not None:
-        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(18))
+        rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(12))
     image.alpha_composite(rail_shadow)
     draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 38 if winner else 18), width=2 if winner else 1)
     draw.line((x + 1, y + 40, x + 1, y + h - 40), fill=(*accent, 50 if winner else 20), width=2 if winner else 1)
@@ -3385,9 +3382,9 @@ def draw_photo_first_score_row(
     if ImageFilter is not None:
         score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
     image.alpha_composite(score_glow)
-    draw.line((sx + 8, sy + 14, sx + 8, sy + sh - 14), fill=(*accent, 68 if winner else 30), width=2)
-    draw.line((sx + 24, sy + sh - 8, sx + sw - 6, sy + sh - 8), fill=(*accent, 32 if winner else 16), width=1)
-    draw.line((sx + 30, sy + 8, sx + sw - 14, sy + 8), fill=(248, 250, 255, 82 if winner else 34), width=1)
+    draw.line((sx + 8, sy + 14, sx + 8, sy + sh - 14), fill=(*accent, 58 if winner else 24), width=2)
+    draw.line((sx + 24, sy + sh - 8, sx + sw - 12, sy + sh - 8), fill=(*accent, 24 if winner else 12), width=1)
+    draw.line((sx + 36, sy + 8, sx + sw - 24, sy + 8), fill=(248, 250, 255, 54 if winner else 24), width=1)
     cell = photo_first_score_digit_cell_box(score_box)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"] + (12 if winner else 4), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
@@ -3425,10 +3422,7 @@ def draw_photo_first_score_context_rail(
     if ImageFilter is not None:
         shadow = shadow.filter(ImageFilter.GaussianBlur(12))
     image.alpha_composite(shadow)
-    draw.polygon(
-        [(x + 10, y + 13), (x + w - 12, y + 8), (x + w - 20, y + h - 9), (x + 5, y + h - 13)],
-        fill=(2, 4, 9, 18),
-    )
+    draw.line((x + 28, y + 13, x + w - 34, y + 8), fill=(*PALETTE["gold"], 26), width=1)
     draw.line((x + 7, y + 19, x + 7, y + h - 19), fill=(*primary, 96), width=2)
     draw.line((x + 30, y + 13, x + w - 30, y + 13), fill=(*PALETTE["gold"], 30), width=1)
     context_type = photo_first_type_spec("context_rail", compact=h <= 54)
@@ -3464,7 +3458,7 @@ def draw_photo_first_score_bridge_accent(
 
 def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], module: Dict[str, Any], accent: tuple[int, int, int], canvas_copy: Dict[str, str] | None = None) -> None:
     x, y, w, h = box
-    compact = h < 104
+    compact = h <= 104
     draw = ImageDraw.Draw(image, "RGBA")
     wash = Image.new("RGBA", image.size, (0, 0, 0, 0))
     wash_draw = ImageDraw.Draw(wash, "RGBA")
@@ -3475,7 +3469,7 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
             (x + w - 24, y + h - 10),
             (x + 20, y + h + 6),
         ],
-        fill=(0, 0, 0, 16),
+        fill=(0, 0, 0, 8),
     )
     wash_draw.polygon(
         [
@@ -3484,16 +3478,16 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
             (x + int(w * 0.86), y + h - 2),
             (x + 34, y + h - 4),
         ],
-        fill=(*accent, 9),
+        fill=(*accent, 7),
     )
     if ImageFilter is not None:
-        wash = wash.filter(ImageFilter.GaussianBlur(9))
+        wash = wash.filter(ImageFilter.GaussianBlur(6))
     image.alpha_composite(wash)
     band = Image.new("RGBA", image.size, (0, 0, 0, 0))
     band_draw = ImageDraw.Draw(band, "RGBA")
-    band_draw.line((x + 34, y + 16, x + w - 44, y + 5), fill=(*PALETTE["gold"], 42), width=1)
-    band_draw.line((x + 34, y + h - 11, x + int(x + w * 0.52), y + h - 18), fill=(248, 250, 255, 10), width=1)
-    band_draw.line((x + 16, y + 26, x + 16, y + h - 22), fill=(*accent, 78), width=1)
+    band_draw.line((x + 34, y + 12, x + w - 44, y + 5), fill=(*PALETTE["gold"], 62), width=2)
+    band_draw.line((x + 40, y + h - 10, x + int(x + w * 0.46), y + h - 15), fill=(248, 250, 255, 12), width=1)
+    band_draw.line((x + 16, y + 20, x + 16, y + h - 20), fill=(*accent, 62), width=1)
     image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
@@ -3501,6 +3495,21 @@ def draw_photo_first_stat_strip(image: Any, box: Tuple[int, int, int, int], modu
     stat_line = clean(copy.get("stat_line")) or public_stat_line(module.get("callouts") or [])
     athlete_type = photo_first_type_spec("athlete_line", compact=compact)
     stat_type = photo_first_type_spec("stat", compact=compact)
+    if compact:
+        caption = f"{last_name(player).title()}: {stat_line}" if player and stat_line else (stat_line or athlete_line)
+        draw_reference_text(
+            image,
+            (x + 32, y + max(15, h // 2 - 15), w - 64, 34),
+            caption,
+            stat_type["font"],
+            max(stat_type["resolved_size"], athlete_type["resolved_min"]),
+            stat_type["resolved_min"],
+            PALETTE["ink"],
+            max_lines=1,
+            uppercase=False,
+            stroke=stat_type["stroke"],
+        )
+        return
     draw_reference_text(
         image,
         (x + 32, y + (20 if not compact else 15), w - 64, 40 if not compact else 30),
