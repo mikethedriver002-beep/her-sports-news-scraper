@@ -174,7 +174,14 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
                     "missing_operator_confirmed_at_utc": 2,
                     "operator_return_ready_for_review": 1,
                 },
-                "rows": [],
+                "rows": [
+                    {
+                        "cluster_headline": "Golden State Valkyries beat New York Liberty",
+                        "manual_confirmation_row_ref": "confirmation_id=confirm_a4ddfb3bda6246c7",
+                        "manual_return_status": "operator_return_missing_required_fields",
+                        "manual_next_step": "Open breaking_public_signal_next_action_v1.csv and the listed confirmation intake row; fill only human-confirmed checked URL, confirmation result, and confirmation timestamp before any source-trust review.",
+                    }
+                ],
             }
         ),
         encoding="utf-8",
@@ -207,6 +214,7 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert "operator_confirmed_at_utc" in html
     assert "operator_confidence" not in html
     assert "missing_confirmed_at_utc=2" in html
+    assert "source-trust review" in html
     assert "breaking_public_signal_confirmation_intake.csv" in markdown
 
     command_center.write_outputs(payload)
@@ -219,12 +227,13 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert "rerun Results" in game_source_row["lane_detail"]
     breaking_row = next(row for row in csv_rows if row["lane"] == "Breaking/public-signal returns")
     assert breaking_row["operator_return_fields"] == "operator_checked_url, operator_confirmation_result, operator_confirmed_at_utc, operator_notes"
-    assert breaking_row["lane_detail"] == "rows=4; missing_checked_url=3; missing_confirmation_result=2; missing_confirmed_at_utc=2; ready_for_operator_review=1"
+    assert breaking_row["lane_detail"] == "rows=4; missing_checked_url=3; missing_confirmation_result=2; missing_confirmed_at_utc=2; ready_for_operator_review=1; first_missing_next=Open breaking_public_signal_next_action_v1.csv and the listed confirmation intake row; fill only human-confirmed checked URL, confirmation result, and confirmation timestamp before any source-trust review."
     assert manifest["guardrails"]["automatic_downloads"] is False
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["counts"]["ready_to_open"] == 6
     assert "does not fetch sources" in synthesis_md
     assert "missing_confirmed_at_utc=2" in synthesis_md
+    assert "source-trust review" in synthesis_md
     assert "Resolved local path" in synthesis_md
 
 
