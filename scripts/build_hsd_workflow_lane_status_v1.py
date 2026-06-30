@@ -18,6 +18,7 @@ VERSION = "hsd-workflow-lane-status-v1-review-only"
 DEFAULT_INTAKE = "operator/inbox/workflow_lane_status_intake.csv"
 DEFAULT_OUTPUT_STEM = "workflow_lane_status_dashboard"
 DEFAULT_NUDGE_STEM = "workflow_lane_nudge_synthesis"
+DEFAULT_RECOVERY_STEM = "workflow_durable_lane_recovery_packet"
 
 LANE_ROSTER = [
     {
@@ -148,6 +149,22 @@ NUDGE_FIELDS = [
     "next_packet",
     "lifecycle_action",
     "manual_conductor_prompt",
+    "guardrail_note",
+    "review_only",
+    "automatic_changes",
+]
+
+RECOVERY_FIELDS = [
+    "rank",
+    "lane_id",
+    "lane",
+    "durable_lane_thread_status",
+    "exact_start_prompt",
+    "exact_recover_prompt",
+    "anchor_artifacts",
+    "owner_thread",
+    "last_pr_merged",
+    "next_conductor_action",
     "guardrail_note",
     "review_only",
     "automatic_changes",
@@ -507,6 +524,49 @@ def durable_lane_recovery_cue(thread_status: str, next_packet: str, lane_owner_t
     return next_packet or lane_owner_thread
 
 
+def durable_lane_exact_start_prompt(lane_id: str) -> str:
+    if lane_id == "games_schedule_stats":
+        return (
+            "Open `game_source_confirmation_next_action_v1.csv`, `game_source_research_worksheet_v1.csv`, and "
+            "`game_fact_confirmation_status_v1.csv`, then continue the first incomplete games/stats confirmation row "
+            "from current `origin/main`."
+        )
+    if lane_id == "breaking_public_signal":
+        return (
+            "Open `breaking_public_signal_clusters.md` and `breaking_public_signal_confirmation_intake.csv`, then "
+            "fill the first missing confirmation row before any story path."
+        )
+    return "Open the lane-specific confirmation artifact from current `origin/main`."
+
+
+def durable_lane_exact_recover_prompt(lane_id: str) -> str:
+    if lane_id == "games_schedule_stats":
+        return (
+            "If the lane thread is missing, recover or relink the durable games/stats lane explicitly, then use the "
+            "confirmation next-action and research worksheet rows before any story or render path."
+        )
+    if lane_id == "breaking_public_signal":
+        return (
+            "If the lane thread is missing, recover or relink the durable breaking/public-signal lane explicitly, "
+            "then continue from the clusters and confirmation intake rows."
+        )
+    return "If the lane thread is missing, recover or relink the durable lane explicitly before continuing."
+
+
+def durable_lane_anchor_artifacts(lane_id: str) -> str:
+    if lane_id == "games_schedule_stats":
+        return (
+            "game_source_confirmation_next_action_v1.csv; game_source_research_worksheet_v1.csv; "
+            "game_fact_confirmation_status_v1.csv; story_proof_card_v1.csv; final_score_stat_proof_v1.csv"
+        )
+    if lane_id == "breaking_public_signal":
+        return (
+            "breaking_public_signal_clusters.md; breaking_public_signal_confirmation_intake.csv; "
+            "breaking_public_signal_next_action_v1.csv; breaking_public_signal_return_summary_v1.csv"
+        )
+    return ""
+
+
 def restart_status(status: str, restart_needed: str, next_packet: str, lane_owner_thread: str) -> str:
     if boolish(restart_needed):
         return "restart_ready_from_current_main" if next_packet else "restart_needed_missing_next_packet"
@@ -624,6 +684,35 @@ def build_nudge_rows(lanes: list[dict[str, str]]) -> list[dict[str, str]]:
         }
         rows.append(row)
     rows.sort(key=nudge_sort_key)
+    for index, row in enumerate(rows, 1):
+        row["rank"] = str(index)
+    return rows
+
+
+def build_recovery_rows(lanes: list[dict[str, str]]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for lane in lanes:
+        status = lane.get("durable_lane_thread_status", "")
+        if not status or status == "thread_reference_present":
+            continue
+        rows.append(
+            {
+                "rank": "",
+                "lane_id": lane["lane_id"],
+                "lane": lane["lane"],
+                "durable_lane_thread_status": status,
+                "exact_start_prompt": durable_lane_exact_start_prompt(lane["lane_id"]),
+                "exact_recover_prompt": durable_lane_exact_recover_prompt(lane["lane_id"]),
+                "anchor_artifacts": durable_lane_anchor_artifacts(lane["lane_id"]),
+                "owner_thread": lane["lane_owner_thread"] or lane["pending_thread"] or "",
+                "last_pr_merged": lane["last_pr_merged"],
+                "next_conductor_action": lane["durable_lane_recovery_cue"],
+                "guardrail_note": "Manual recovery prompt only; do not create threads, close branches, delete worktrees, rebase branches, change approval/download/source/publish state, or publish.",
+                "review_only": "true",
+                "automatic_changes": "false",
+            }
+        )
+    rows.sort(key=lambda row: row["lane_id"])
     for index, row in enumerate(rows, 1):
         row["rank"] = str(index)
     return rows
@@ -908,6 +997,54 @@ def render_markdown(payload: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_recovery_markdown(payload: dict[str, Any]) -> str:
+    rows = payload.get("durable_lane_recovery", [])
+    lines = [
+        "# HSD Durable Lane Recovery Packet",
+        "",
+        "Status: review-only conductor operator prompt packet.",
+        "",
+        f"Generated: `{payload['generated_at_utc']}`",
+        f"Version: `{payload['version']}`",
+        "",
+        "## Summary",
+        "",
+        f"- Missing durable lanes: `{payload['missing_durable_lane_count']}`",
+        f"- Recovery rows: `{len(rows)}`",
+        "",
+        "## Exact Recovery Prompts",
+        "",
+        "| Rank | Lane | Thread status | Start prompt | Recover prompt | Anchor artifacts | Owner thread | Next conductor action |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    if not rows:
+        lines.append("| - | - | - | - | - | - | - | No missing durable lane thread refs need recovery. |")
+    for row in rows:
+        lines.append(
+            "| {rank} | {lane} | `{status}` | {start} | {recover} | {anchors} | {owner} | {action} |".format(
+                rank=row["rank"],
+                lane=row["lane"],
+                status=row["durable_lane_thread_status"],
+                start=row["exact_start_prompt"],
+                recover=row["exact_recover_prompt"],
+                anchors=row["anchor_artifacts"] or "-",
+                owner=row["owner_thread"] or "-",
+                action=row["next_conductor_action"],
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- Review-only and artifact-only.",
+            "- Manual recovery cues only; do not create, close, archive, rebase, or rewrite threads or branches automatically.",
+            "- No approval, download, source, publish-ready, or publishing state changes.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def render_nudge_markdown(payload: dict[str, Any]) -> str:
     rows = payload.get("nudge_synthesis", [])
     lines = [
@@ -972,6 +1109,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     worktrees = collect_worktree_branches() if not args.skip_worktree_lookup else []
     rows = lane_rows(intake_rows, open_prs, git_state, worktrees, as_of, args.stale_after_hours)
     nudge_rows = build_nudge_rows(rows)
+    recovery_rows = build_recovery_rows(rows)
     workflow_row = next((row for row in rows if row["lane_id"] == "workflow_overhaul"), {})
     missing_durable_lane_rows = [
         row
@@ -1020,6 +1158,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "nudge_synthesis": nudge_rows,
         "nudge_synthesis_count": len(nudge_rows),
         "nudge_synthesis_p1_count": sum(1 for row in nudge_rows if row["priority"] == "P1"),
+        "durable_lane_recovery": recovery_rows,
+        "durable_lane_recovery_count": len(recovery_rows),
         "lane_count": len(rows),
         "missing_durable_lane_count": len(missing_durable_lane_rows),
         "missing_durable_lane_ids": [row["lane_id"] for row in missing_durable_lane_rows],
@@ -1121,6 +1261,36 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
         },
     )
     nudge_csv_path = write_csv(f"{DEFAULT_NUDGE_STEM}.csv", payload["nudge_synthesis"], NUDGE_FIELDS)
+    recovery_md_path = write_text(f"{DEFAULT_RECOVERY_STEM}.md", render_recovery_markdown(payload))
+    recovery_json_path = write_json(
+        f"{DEFAULT_RECOVERY_STEM}.json",
+        {
+            "version": payload["version"],
+            "generated_at_utc": payload["generated_at_utc"],
+            "status": "workflow_durable_lane_recovery_ready",
+            "review_only": True,
+            "automatic_changes": False,
+            "counts": {
+                "rows": payload["durable_lane_recovery_count"],
+                "missing_durable_lane_count": payload["missing_durable_lane_count"],
+            },
+            "guardrails": {
+                "review_only": True,
+                "automatic_changes": False,
+                "thread_creation": False,
+                "thread_closure": False,
+                "branch_closure": False,
+                "branch_rewrite": False,
+                "approval_state_change": False,
+                "source_enablement": False,
+                "asset_downloads": False,
+                "publish_ready_movement": False,
+                "publishing": False,
+            },
+            "rows": payload["durable_lane_recovery"],
+        },
+    )
+    recovery_csv_path = write_csv(f"{DEFAULT_RECOVERY_STEM}.csv", payload["durable_lane_recovery"], RECOVERY_FIELDS)
     return {
         "markdown": str(md_path),
         "json": str(json_path),
@@ -1128,6 +1298,9 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
         "nudge_markdown": str(nudge_md_path),
         "nudge_json": str(nudge_json_path),
         "nudge_csv": str(nudge_csv_path),
+        "recovery_markdown": str(recovery_md_path),
+        "recovery_json": str(recovery_json_path),
+        "recovery_csv": str(recovery_csv_path),
     }
 
 
@@ -1162,6 +1335,7 @@ def main(argv: list[str] | None = None) -> int:
                 "stale_lane_count": payload["stale_lane_count"],
                 "nudge_synthesis_count": payload["nudge_synthesis_count"],
                 "nudge_synthesis_p1_count": payload["nudge_synthesis_p1_count"],
+                "durable_lane_recovery_count": payload["durable_lane_recovery_count"],
                 "blocked_lane_count": payload["blocked_lane_count"],
                 "guardrail_warning_count": payload["guardrail_warning_count"],
                 "outputs": outputs,

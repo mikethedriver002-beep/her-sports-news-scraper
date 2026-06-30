@@ -31,6 +31,9 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "workflow_lane_nudge_synthesis.md" in artifact_paths
     assert "workflow_lane_nudge_synthesis.csv" in artifact_paths
     assert "workflow_lane_nudge_synthesis.json" in artifact_paths
+    assert "workflow_durable_lane_recovery_packet.md" in artifact_paths
+    assert "workflow_durable_lane_recovery_packet.csv" in artifact_paths
+    assert "workflow_durable_lane_recovery_packet.json" in artifact_paths
     assert "breaking_public_signal_queue.md" in artifact_paths
     assert "breaking_public_signal_queue.csv" in artifact_paths
     assert "breaking_public_signal_manifest.json" in artifact_paths
@@ -7027,6 +7030,7 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
         },
     )
     Path("release_readiness_guardrail_rollup.md").write_text("# Rollup\n", encoding="utf-8")
+    Path("workflow_durable_lane_recovery_packet.md").write_text("# Recovery packet\n", encoding="utf-8")
 
     payload = command_center.build_payload()
     html = command_center.render_html(payload)
@@ -7047,9 +7051,11 @@ def test_command_center_surfaces_release_readiness_evidence_rollup(tmp_path, mon
     assert "Guardrail rollup" in html
     assert "workflow stale: 1" in html
     assert "workflow missing durable: 2" in html
+    assert "Open recovery packet" in html
     assert "restart-needed: <code>2</code>" in html
     assert "latest_artifact_guardrail_scan" in html
     assert "release_readiness_guardrail_rollup.md" in markdown
+    assert "workflow_durable_lane_recovery_packet.md" in markdown
     assert "Workflow lane status: workflow_lane_status_ready; stale brakes: 1; missing durable lanes: 2; restart-needed: 2; lifecycle actions: 1" in markdown
 
 

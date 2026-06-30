@@ -62,6 +62,7 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert manifest["lifecycle_action_lane_count"] == 0
     assert manifest["stale_lane_count"] == 0
     assert manifest["nudge_synthesis_count"] == 3
+    assert manifest["durable_lane_recovery_count"] == 2
     assert manifest["nudge_synthesis_p1_count"] == 0
     assert nudge_manifest["status"] == "workflow_lane_nudge_synthesis_ready"
     assert nudge_manifest["automatic_changes"] is False
@@ -85,6 +86,16 @@ def test_builds_review_only_workflow_lane_status_outputs(tmp_path: Path, monkeyp
     assert nudge_rows[0]["automatic_changes"] == "false"
     assert "HSD Workflow Lane Nudge Synthesis" in nudge_markdown
     assert "No force-deleting worktrees." in nudge_markdown
+    recovery_manifest = json.loads((tmp_path / "run" / "workflow_durable_lane_recovery_packet.json").read_text(encoding="utf-8"))
+    recovery_rows = list(csv.DictReader((tmp_path / "run" / "workflow_durable_lane_recovery_packet.csv").open(newline="", encoding="utf-8")))
+    recovery_markdown = (tmp_path / "run" / "workflow_durable_lane_recovery_packet.md").read_text(encoding="utf-8")
+    assert recovery_manifest["status"] == "workflow_durable_lane_recovery_ready"
+    assert recovery_manifest["counts"]["rows"] == 2
+    assert [row["lane_id"] for row in recovery_rows] == ["breaking_public_signal", "games_schedule_stats"]
+    assert recovery_rows[0]["exact_start_prompt"].startswith("Open `breaking_public_signal_clusters.md`")
+    assert recovery_rows[1]["exact_start_prompt"].startswith("Open `game_source_confirmation_next_action_v1.csv`")
+    assert "HSD Durable Lane Recovery Packet" in recovery_markdown
+    assert "If the lane thread is missing, recover or relink the durable breaking/public-signal lane explicitly" in recovery_markdown
     assert manifest["stale_lane_threshold_hours"] == 48
     assert manifest["workflow_overhaul_heartbeat"]["active"] is True
     assert manifest["workflow_overhaul_heartbeat"]["status"] == "heartbeat_visible_needs_conductor_check"
@@ -704,8 +715,12 @@ def test_local_runner_and_command_center_collect_workflow_lane_status() -> None:
     assert "workflow_lane_status_dashboard.md" in runner
     assert "workflow_lane_status_dashboard.csv" in runner
     assert "workflow_lane_status_dashboard.json" in runner
+    assert "workflow_durable_lane_recovery_packet.md" in runner
+    assert "workflow_durable_lane_recovery_packet.csv" in runner
+    assert "workflow_durable_lane_recovery_packet.json" in runner
     assert "workflow_lane_nudge_synthesis.md" in runner
     assert "workflow_lane_nudge_synthesis.csv" in runner
     assert "workflow_lane_nudge_synthesis.json" in runner
     assert "(\"Decision\", \"Workflow lane status\", \"workflow_lane_status_dashboard.md\")" in command_center
+    assert "(\"Decision\", \"Workflow durable lane recovery packet\", \"workflow_durable_lane_recovery_packet.md\")" in command_center
     assert "(\"Decision\", \"Workflow lane nudge synthesis\", \"workflow_lane_nudge_synthesis.md\")" in command_center

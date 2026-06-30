@@ -518,6 +518,9 @@ ARTIFACTS = [
     ("Decision", "Workflow lane status", "workflow_lane_status_dashboard.md"),
     ("Decision", "Workflow lane status data", "workflow_lane_status_dashboard.csv"),
     ("Decision", "Workflow lane status manifest", "workflow_lane_status_dashboard.json"),
+    ("Decision", "Workflow durable lane recovery packet", "workflow_durable_lane_recovery_packet.md"),
+    ("Decision", "Workflow durable lane recovery packet data", "workflow_durable_lane_recovery_packet.csv"),
+    ("Decision", "Workflow durable lane recovery packet manifest", "workflow_durable_lane_recovery_packet.json"),
     ("Decision", "Workflow lane nudge synthesis", "workflow_lane_nudge_synthesis.md"),
     ("Decision", "Workflow lane nudge synthesis data", "workflow_lane_nudge_synthesis.csv"),
     ("Decision", "Workflow lane nudge synthesis manifest", "workflow_lane_nudge_synthesis.json"),
@@ -8538,6 +8541,7 @@ def render_release_readiness_checks(rows: Iterable[Dict[str, Any]]) -> str:
 
 def render_release_readiness_panel(panel: Dict[str, Any]) -> str:
     missing = ", ".join(clean(item) for item in panel.get("missing_inputs", []) if clean(item)) or "none"
+    recovery_packet = "workflow_durable_lane_recovery_packet.md" if as_int(panel.get("workflow_missing_durable_lanes")) else ""
     return f"""
       <div class="panel" style="margin-bottom:16px">
         <div class="section-heading">
@@ -8559,6 +8563,7 @@ def render_release_readiness_panel(panel: Dict[str, Any]) -> str:
         <p class="muted" style="margin-top:10px">{html.escape(clean(panel.get('next_step')))}</p>
         <p class="muted" style="margin-top:6px">Latest files checked: <code>{as_int(panel.get('latest_scan_files_checked'))}</code>; violations: <code>{as_int(panel.get('latest_scan_violations'))}</code>; missing inputs: <code>{html.escape(missing)}</code>.</p>
         <p class="muted" style="margin-top:6px">Workflow lane status: <code>{html.escape(clean(panel.get('workflow_status')))}</code>; stale brakes: <code>{as_int(panel.get('workflow_stale_lanes'))}</code>; missing durable lanes: <code>{as_int(panel.get('workflow_missing_durable_lanes'))}</code>; restart-needed: <code>{as_int(panel.get('workflow_restart_needed'))}</code>; lifecycle actions: <code>{as_int(panel.get('workflow_lifecycle_actions'))}</code>.</p>
+        <p class="muted" style="margin-top:6px">Durable lane recovery packet: {open_link(recovery_packet, 'Open recovery packet') if recovery_packet else 'none'}</p>
         <div class="table-wrap" style="margin-top:12px">
           <table>
             <thead><tr><th>Check</th><th>Status</th><th>Detail</th><th>Evidence</th><th>Next step</th></tr></thead>
@@ -11759,6 +11764,7 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Latest guardrail scan: {release_panel.get('latest_scan_status') or 'not_run'}; files checked: {release_panel.get('latest_scan_files_checked', 0)}; violations: {release_panel.get('latest_scan_violations', 0)}",
         f"- Conductor audit: {release_panel.get('conductor_status') or 'not_run'}; collision blockers: {release_panel.get('conductor_collision_blockers', 0)}",
         f"- Workflow lane status: {release_panel.get('workflow_status') or 'not_run'}; stale brakes: {release_panel.get('workflow_stale_lanes', 0)}; missing durable lanes: {release_panel.get('workflow_missing_durable_lanes', 0)}; restart-needed: {release_panel.get('workflow_restart_needed', 0)}; lifecycle actions: {release_panel.get('workflow_lifecycle_actions', 0)}",
+        f"- Durable lane recovery packet: {'workflow_durable_lane_recovery_packet.md' if release_panel.get('workflow_missing_durable_lanes', 0) else 'none'}",
         f"- Next step: {release_panel.get('next_step') or 'Run the release-readiness rollup before release review.'}",
         "- Artifact: `release_readiness_guardrail_rollup.md`",
     ]
