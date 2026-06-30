@@ -4098,7 +4098,7 @@ def seed_asset_availability_audit_files() -> None:
         {
             "status": "hockey_softball_action_photo_return_completeness_checklist_ready",
             "generated_at_utc": "2026-06-29T00:03:05+00:00",
-            "checklist_rows": 4,
+            "rows": 4,
             "womens_hockey_rows": 2,
             "softball_rows": 2,
             "generated_ready_rows": 0,

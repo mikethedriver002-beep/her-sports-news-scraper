@@ -2514,7 +2514,16 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         RUN_COMMANDS["data/asset_registry/hockey_softball_action_photo_first_paste_guide.md"],
         context="hockey/softball action-photo first paste guide",
     )
-    hockey_softball_action_photo_return_completeness_rows = as_int(hockey_softball_action_photo_return_completeness_manifest.get("checklist_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0
+    hockey_softball_action_photo_return_completeness_rows = (
+        as_int(
+            first_present(
+                hockey_softball_action_photo_return_completeness_manifest.get("rows"),
+                hockey_softball_action_photo_return_completeness_manifest.get("checklist_rows"),
+            )
+        )
+        if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict)
+        else 0
+    )
     hockey_softball_action_photo_return_completeness_cue = packet_freshness_cue(
         "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md",
         hockey_softball_action_photo_return_completeness_rows,
