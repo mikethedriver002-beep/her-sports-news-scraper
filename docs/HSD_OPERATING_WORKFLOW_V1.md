@@ -137,6 +137,8 @@ Use `lifecycle_action` only for manual conductor cues: `nudge`, `replace_reboot`
 
 The workflow dashboard also flags expected durable lanes such as `games_schedule_stats` and `breaking_public_signal` when their thread reference is missing. Those rows use `durable_lane_thread_status` plus `durable_lane_recovery_cue` so the conductor can recover or relink the lane explicitly instead of assuming an invisible chat is still active.
 
+The companion `workflow_durable_lane_recovery_packet.md` turns those missing-thread rows into exact operator prompts, including the lane-specific artifacts to open first and the manual recovery cue to use if the durable lane thread has gone quiet.
+
 When no intake row exists, the dashboard also scans local Git worktrees for `codex/` branches whose names match lane hints such as `renderer`, `asset`, `games`, `breaking`, `copy`, `qa`, or `workflow`. These rows are marked as worktree hints and should be checked by the conductor before treating them as active lane truth. Use `--skip-worktree-lookup` for fixture tests or intentionally isolated runs.
 
 If the workflow-overhaul row has no manual intake, open PR, current branch, or worktree hint, the dashboard keeps it visible as `heartbeat_visible_needs_conductor_check` instead of letting the conductor lose the lane in a fully unreported table. That heartbeat is a checklist/status cue only: confirm `origin/main`, open PR count, worktree hints, next-action synthesis, and conductor audit before nudging one small review-only workflow packet.
