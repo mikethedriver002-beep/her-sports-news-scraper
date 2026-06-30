@@ -38,4 +38,3 @@ This checklist is keyed to APFAC manual first-action cards and tells the operato
 - Missing until human paste: `candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required`
 - Keep blank until human gate: `download_approved|quarantine_target_hint|operator_decision|operator_notes`
 - Run after paste: `.\.venv\Scripts\python.exe scripts\report_hsd_action_photo_research_return_import_stub_v1.py`
-
