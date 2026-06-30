@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.59.0-borderless-score-wash"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.60.0-soft-review-wash"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -249,6 +249,8 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "lower_third_editorial_rail" in manifest["render_background_cues"]
     assert "lower_third_no_heavy_stat_cards" in manifest["render_background_cues"]
     assert "reduced_lower_rail_panel_weight" in manifest["render_background_cues"]
+    assert "soft_review_wash" in manifest["render_background_cues"]
+    assert "open_manual_context_rail" in manifest["render_background_cues"]
     assert "score_rows_typography_over_wash" in manifest["render_background_cues"]
     assert "anti_dashboard_visual_qa" in manifest["render_background_cues"]
     assert "generated_preview_qa" in manifest["render_background_cues"]
@@ -453,6 +455,69 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert "boxed scoreboard" in board or "dashboard card" in board
     assert "manual QA/intake" in board or "athlete-led action-photo candidate" in board
     assert not (tmp_path / "render_handoff_top_packet" / "draft_preview.png").exists()
+
+
+def test_manual_review_renderer_softens_no_score_review_card(tmp_path: Path) -> None:
+    latest_handoff = tmp_path / "outputs" / "local" / "latest" / "files" / "render_handoff_top_packet"
+    latest_handoff.mkdir(parents=True)
+    packet = {
+        "packet_id": "render_prep_1_news",
+        "packet_status": "ready_for_manual_render_review",
+        "title": "Verified update ready for operator review",
+        "copy_headline": "Verified update ready for operator review",
+        "copy_dek": "Manual review packet ready for source check.",
+        "copy_context": "Manual source review required before any post.",
+        "source_artifact": "news_fact_packets.csv",
+        "source_cue": "source review required",
+        "template_fit": "news_fact_card_review",
+        "asset_requirement": "No player asset required",
+    }
+    (latest_handoff / "handoff_manifest.json").write_text(
+        json.dumps(
+            {
+                "generated_at_utc": "2026-06-30T01:00:00+00:00",
+                "handoff_status": "ready_for_manual_review",
+                "guardrails": {"review_only": True, "auto_render": False, "auto_publish": False, "paid_apis": False},
+                "packet": packet,
+            }
+        ),
+        encoding="utf-8",
+    )
+    for name in ["README.md", "copy_sheet.md", "asset_checklist.md", "source_proof.md", "manual_renderer_prompt.md"]:
+        (latest_handoff / name).write_text(f"# {name}\n", encoding="utf-8")
+
+    run_dir = tmp_path / "run" / "files"
+    run_dir.mkdir(parents=True)
+    env = os.environ.copy()
+    env["HSD_RUN_OUTPUT_DIR"] = str(run_dir)
+
+    python_exe = REPO / ".venv" / "Scripts" / "python.exe"
+    if not python_exe.exists():
+        python_exe = Path(sys.executable)
+
+    proc = subprocess.run(
+        [str(python_exe), str(SCRIPT)],
+        cwd=tmp_path,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stderr
+    preview = Image.open(run_dir / "render_handoff_top_packet" / "draft_preview.png").convert("RGB")
+    context_crop = preview.crop((86, 920, 984, 1218))
+    raw = context_crop.tobytes()
+    pixel_count = context_crop.width * context_crop.height
+    near_white_ratio = sum(
+        1 for index in range(0, len(raw), 3) if raw[index] >= 252 and raw[index + 1] >= 252 and raw[index + 2] >= 252
+    ) / pixel_count
+    accent_ratio = sum(
+        1 for index in range(0, len(raw), 3) if raw[index + 1] > 150 and raw[index + 2] > 150 and raw[index] < 120
+    ) / pixel_count
+
+    assert near_white_ratio < 0.18
+    assert accent_ratio > 0.001
 
 
 def test_manual_review_renderer_parses_final_score_for_mobile_first_card() -> None:
