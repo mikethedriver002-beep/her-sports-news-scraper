@@ -4042,6 +4042,61 @@ def seed_asset_availability_audit_files() -> None:
             "publish_ready": False,
         },
     )
+    (registry_dir / "hockey_softball_action_photo_return_completeness_checklist.md").write_text(
+        "# Hockey/Softball Action-Photo Return Completeness Checklist\n",
+        encoding="utf-8",
+    )
+    write_csv(
+        (registry_dir / "hockey_softball_action_photo_return_completeness_checklist.csv").as_posix(),
+        [
+            {
+                "checklist_rank": f"HSC{index:02d}",
+                "handoff_rank": handoff_rank,
+                "sport_family": sport_family,
+                "missing_required_fields": "source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_notes",
+                "source_url_present": "no",
+                "operator_notes_present": "no",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "review_only": "true",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            }
+            for index, (handoff_rank, sport_family) in enumerate(
+                [
+                    ("AH01", "womens_hockey"),
+                    ("AH05", "womens_hockey"),
+                    ("AH02", "softball"),
+                    ("AH06", "softball"),
+                ],
+                start=1,
+            )
+        ],
+    )
+    write_json(
+        (registry_dir / "hockey_softball_action_photo_return_completeness_checklist.json").as_posix(),
+        {
+            "status": "hockey_softball_action_photo_return_completeness_checklist_ready",
+            "generated_at_utc": "2026-06-29T00:03:05+00:00",
+            "checklist_rows": 4,
+            "womens_hockey_rows": 2,
+            "softball_rows": 2,
+            "generated_ready_rows": 0,
+            "generated_download_approval_rows": 0,
+            "blank_source_url_rows": 4,
+            "missing_notes_rows": 4,
+            "review_only": True,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
     write_json(
         (action_photo_dir / "review_only_action_photo_external_research_packet_manifest_v1.json").as_posix(),
         {
@@ -5888,6 +5943,17 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_renderer_unblock_triage_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_renderer_unblock_triage_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_renderer_unblock_triage_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_rows"] == 4
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_womens_hockey_rows"] == 2
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_softball_rows"] == 2
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_generated_ready_rows"] == 0
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_generated_download_approval_rows"] == 0
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_blank_source_url_rows"] == 4
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_missing_notes_rows"] == 4
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["hockey_softball_action_photo_return_completeness_freshness_status"] == "packet_ready"
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_rows"] == 10
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_source_url_present_rows"] == 0
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_rights_class_present_rows"] == 0
@@ -5985,6 +6051,14 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Action-photo renderer-unblock triage rows: 2" in markdown
     assert "Action-photo renderer-unblock triage generated ready/download approvals: 0/0" in markdown
     assert "Action-photo renderer-unblock triage asset/headshot/marker writes: False/False/False" in markdown
+    assert "H/S return checklist" in html
+    assert "H/S checklist ready/dl" in html
+    assert "H/S checklist blanks" in html
+    assert "Hockey/softball action-photo return completeness rows: 4" in markdown
+    assert "Hockey/softball action-photo return completeness generated ready/download approvals: 0/0" in markdown
+    assert "Hockey/softball action-photo return completeness blank source_url rows: 4" in markdown
+    assert "Hockey/softball action-photo return completeness missing notes rows: 4" in markdown
+    assert "Hockey/softball action-photo return completeness asset/headshot/marker writes: False/False/False" in markdown
     assert "Logo packet: New York Liberty | unapproved_required_logo | WNBA logo review: New York Liberty" in markdown
     assert "registered=assets/leagues/wnba/logos/new_york_liberty/logo.png" in markdown
     assert "source=assets/leagues/wnba/teams/new_york_liberty/logo.svg" in markdown
@@ -6511,6 +6585,12 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_research_handoff.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_research_handoff.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_research_handoff.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_first_paste_guide.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_first_paste_guide.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
+    assert artifact_by_path["data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_asset_review_triage.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_asset_review_triage.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_asset_review_triage.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"

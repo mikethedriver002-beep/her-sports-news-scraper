@@ -130,6 +130,13 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
     assert report["totals"]["action_photo_first_paste_guide_generated_download_approval_rows"] == 0
     assert report["totals"]["action_photo_first_paste_guide_generated_ready_rows"] == 0
     assert report["totals"]["action_photo_first_paste_guide_blank_source_url_rows"] == 4
+    assert report["totals"]["action_photo_return_completeness_checklist_rows"] == 4
+    assert report["totals"]["action_photo_return_completeness_checklist_womens_hockey_rows"] == 2
+    assert report["totals"]["action_photo_return_completeness_checklist_softball_rows"] == 2
+    assert report["totals"]["action_photo_return_completeness_checklist_generated_download_approval_rows"] == 0
+    assert report["totals"]["action_photo_return_completeness_checklist_generated_ready_rows"] == 0
+    assert report["totals"]["action_photo_return_completeness_checklist_blank_source_url_rows"] == 4
+    assert report["totals"]["action_photo_return_completeness_checklist_missing_notes_rows"] == 4
     assert report["totals"]["review_triage_rows"] == 38
     assert report["totals"]["review_triage_logo_rows"] == 20
     assert report["totals"]["review_triage_athlete_rows"] == 18
@@ -255,6 +262,19 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         "generated_download_approval_rows": 0,
         "generated_ready_rows": 0,
         "blank_source_url_rows": 4,
+        "action_photo_research_return_intake": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+    }
+    assert report["action_photo_return_completeness_checklist"] == {
+        "md": "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md",
+        "csv": "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv",
+        "json": "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json",
+        "rows": 4,
+        "womens_hockey_rows": 2,
+        "softball_rows": 2,
+        "generated_download_approval_rows": 0,
+        "generated_ready_rows": 0,
+        "blank_source_url_rows": 4,
+        "missing_notes_rows": 4,
         "action_photo_research_return_intake": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
     }
     assert report["source_research_return_intake"] == {
@@ -746,6 +766,49 @@ def test_hockey_softball_asset_workflow_readiness_reports_review_only_clarity(tm
         first_paste_csv_rows = list(csv.DictReader(handle))
     assert len(first_paste_csv_rows) == 4
     assert list(first_paste_csv_rows[0].keys()) == workflow.ACTION_PHOTO_FIRST_PASTE_GUIDE_FIELDS
+    completeness_path = tmp_path / "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json"
+    completeness = json.loads(completeness_path.read_text(encoding="utf-8"))
+    assert completeness["status"] == "hockey_softball_action_photo_return_completeness_checklist_ready"
+    assert completeness["rows"] == 4
+    assert completeness["womens_hockey_rows"] == 2
+    assert completeness["softball_rows"] == 2
+    assert completeness["generated_download_approval_rows"] == 0
+    assert completeness["generated_ready_rows"] == 0
+    assert completeness["blank_source_url_rows"] == 4
+    assert completeness["missing_notes_rows"] == 4
+    assert completeness["action_photo_research_return_intake_file"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
+    assert completeness["asset_downloads"] is False
+    assert completeness["headshot_writes"] is False
+    assert completeness["approved_marker_writes"] is False
+    assert completeness["publish_ready"] is False
+    completeness_rows = completeness["checklist_rows_detail"]
+    assert [row["checklist_rank"] for row in completeness_rows] == ["HSC01", "HSC02", "HSC03", "HSC04"]
+    assert [row["handoff_rank"] for row in completeness_rows] == ["AH01", "AH05", "AH02", "AH06"]
+    assert all(row["candidate_ready_for_later_human_download_decision_review"] == "no" for row in completeness_rows)
+    assert all(row["download_approved"] == "no" for row in completeness_rows)
+    assert all("source_url" in row["missing_required_fields"] for row in completeness_rows)
+    assert all("operator_notes" in row["missing_required_fields"] for row in completeness_rows)
+    for row in completeness_rows:
+        for field in [
+            "approval_state_change",
+            "candidate_state_change",
+            "asset_downloads",
+            "headshot_writes",
+            "logo_writes",
+            "segmentation_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            assert row[field] == "false"
+    completeness_csv_path = tmp_path / "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv"
+    with completeness_csv_path.open(newline="", encoding="utf-8") as handle:
+        completeness_csv_rows = list(csv.DictReader(handle))
+    assert len(completeness_csv_rows) == 4
+    assert list(completeness_csv_rows[0].keys()) == workflow.ACTION_PHOTO_RETURN_COMPLETENESS_CHECKLIST_FIELDS
     triage_path = tmp_path / "data/asset_registry/hockey_softball_asset_review_triage.json"
     triage = json.loads(triage_path.read_text(encoding="utf-8"))
     assert triage["status"] == "hockey_softball_asset_review_triage_ready"
