@@ -238,6 +238,10 @@ Thumbs.db
 /PHASE2G_PACKAGE_MANIFEST.json
 /asset_desk_manifest.json
 /asset_manifest.csv
+
+# Review-only quarantine downloads are local operator artifacts.
+/data/assets/quarantine/review_only_candidates/**
+!/data/assets/quarantine/review_only_candidates/README.md
 /asset_manifest.json
 /asset_rights_review.csv
 /asset_source_seed_list.csv
