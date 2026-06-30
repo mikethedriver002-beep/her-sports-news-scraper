@@ -10,7 +10,8 @@ Preflight board for manually researched action-photo URL/evidence rows. This tel
 - Ready for human download decision: `1`
 - Lead-only / research return missing: `9`
 - Validation issues: `0`
-- Rows with human quarantine-download approval recorded: `0`
+- Human intake rows with a recorded yes download flag: `1`
+- Generated preflight rows with a recorded yes download flag: `0`
 - Review-only rows: `10`
 - Publish-ready rows: `0`
 
@@ -39,7 +40,7 @@ Preflight board for manually researched action-photo URL/evidence rows. This tel
 
 | Preflight ID | Queue ID | Ready? | Lead Status | Action Status | Identity Status | Missing Fields | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APQP001 | APQ001 | yes | research_return_pasted_preflight_only | action_photo_candidate | identity_ready_for_human_review | `` | Ready for a later human quarantine-download decision; do not download unless Mike separately records a quarantine-only approval in the intake and keeps the quarantine target. |
+| APQP001 | APQ001 | yes | research_return_pasted_preflight_only | action_photo_candidate | identity_ready_for_human_review | `` | Human intake records a yes download flag for quarantine-only review; this preflight still does not download files or approve assets. |
 | APQP002 | APQ002 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |
 | APQP003 | APQ003 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |
 | APQP004 | APQ004 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |

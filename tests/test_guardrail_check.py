@@ -91,6 +91,54 @@ def test_scan_directory_blocks_truthy_generated_csv(tmp_path: Path) -> None:
     ]
 
 
+def test_scan_directory_allows_complete_human_action_photo_download_intake_row(tmp_path: Path) -> None:
+    artifact = (
+        tmp_path
+        / "data"
+        / "asset_registry"
+        / "action_photo_candidates"
+        / "review_only_action_photo_research_return_intake_v1.csv"
+    )
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text(
+        "\n".join(
+            [
+                "candidate_queue_id,source_url,entity_id,rights_class,identity_confidence,intended_review_only_use,download_approved,quarantine_target_hint,review_only,publish_ready",
+                "APQ001,https://example.com/source,wnba:caitlin-clark,official_review_needed,confirmed_official,review_only_action_photo_candidate_quarantine_decision_prep,yes,data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/operator_fill_required.jpg,true,false",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    config = guardrail.load_guardrails()
+
+    assert guardrail.scan_directory(tmp_path, config) == []
+
+
+def test_scan_directory_blocks_incomplete_human_action_photo_download_intake_row(tmp_path: Path) -> None:
+    artifact = (
+        tmp_path
+        / "data"
+        / "asset_registry"
+        / "action_photo_candidates"
+        / "review_only_action_photo_research_return_intake_v1.csv"
+    )
+    artifact.parent.mkdir(parents=True)
+    artifact.write_text(
+        "\n".join(
+            [
+                "candidate_queue_id,source_url,entity_id,rights_class,identity_confidence,intended_review_only_use,download_approved,quarantine_target_hint,review_only,publish_ready",
+                "APQ001,,wnba:caitlin-clark,official_review_needed,confirmed_official,review_only_action_photo_candidate_quarantine_decision_prep,yes,assets/not-quarantine/apq001.jpg,true,false",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    config = guardrail.load_guardrails()
+
+    violations = guardrail.scan_directory(tmp_path, config)
+
+    assert [(violation.code, violation.line) for violation in violations] == [("truthy_guardrail_csv", 2)]
+
+
 def test_scan_directory_blocks_truthy_generated_json(tmp_path: Path) -> None:
     artifact = tmp_path / "artifact.json"
     artifact.write_text(json.dumps({"rows": [{"publish_ready": True}]}), encoding="utf-8")

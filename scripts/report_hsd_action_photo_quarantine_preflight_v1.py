@@ -65,6 +65,8 @@ def manifest(return_rows: List[Mapping[str, str]], preflight_rows: List[Mapping[
         "action_photo_status_counts": action_photo_status_counts(preflight_rows),
         "identity_confidence_status_counts": identity_confidence_status_counts(preflight_rows),
         "download_approved_yes_rows": sum(1 for row in preflight_rows if clean(row.get("download_approved")) == "yes"),
+        "human_intake_download_approved_yes_rows": sum(1 for row in return_rows if clean(row.get("download_approved")) == "yes"),
+        "generated_download_approved_yes_rows": sum(1 for row in preflight_rows if clean(row.get("download_approved")) == "yes"),
         "review_only_rows": sum(1 for row in preflight_rows if clean(row.get("review_only")) == "true"),
         "publish_ready_rows": sum(1 for row in preflight_rows if clean(row.get("publish_ready")) == "true"),
         "review_only": True,
@@ -91,7 +93,7 @@ def main() -> int:
     preflight_rows = action_photo_quarantine_preflight_rows(return_rows)
     issues = validate_action_photo_quarantine_preflight_rows(preflight_rows, return_rows)
     write_csv(OUT_QUARANTINE_PREFLIGHT_CSV, preflight_rows, ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS)
-    write_text(OUT_QUARANTINE_PREFLIGHT_MD, render_action_photo_quarantine_preflight(preflight_rows, issues, GENERATED_AT_UTC))
+    write_text(OUT_QUARANTINE_PREFLIGHT_MD, render_action_photo_quarantine_preflight(preflight_rows, issues, GENERATED_AT_UTC, return_rows))
     write_json(OUT_QUARANTINE_PREFLIGHT_JSON, manifest(return_rows, preflight_rows, issues))
     print(json.dumps({"version": VERSION, "status": "ok", "preflight_rows": len(preflight_rows), "validation_issue_count": len(issues)}, indent=2))
     return 1 if issues else 0

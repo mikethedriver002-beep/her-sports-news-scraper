@@ -109,6 +109,33 @@ def is_truthy(value: Any, truthy_values: set[str]) -> bool:
     return str(value).strip().lower() in truthy_values
 
 
+def allowed_human_download_approval_intake_row(path: Path, field: str, row: dict[str, str], config: dict[str, Any]) -> bool:
+    if field != "download_approved":
+        return False
+    display = display_path(path).lower()
+    allowed_paths = [str(path).lower().replace("\\", "/").lstrip("./") for path in config.get("human_download_approval_intake_csv_exceptions", [])]
+    if not any(display == allowed or display.endswith(f"/{allowed}") for allowed in allowed_paths):
+        return False
+    required_fields = [
+        "source_url",
+        "entity_id",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+        "quarantine_target_hint",
+    ]
+    if any(not str(row.get(required, "")).strip() for required in required_fields):
+        return False
+    quarantine_hint = normalize_path(str(row.get("quarantine_target_hint", "")).strip()).lower()
+    if not quarantine_hint.startswith("data/assets/quarantine/review_only_candidates/"):
+        return False
+    if str(row.get("review_only", "")).strip().lower() != "true":
+        return False
+    if str(row.get("publish_ready", "")).strip().lower() != "false":
+        return False
+    return True
+
+
 def truthy_text_pattern(field: str, truthy_values: set[str]) -> re.Pattern[str]:
     values = "|".join(re.escape(value) for value in sorted(truthy_values, key=len, reverse=True))
     return re.compile(rf"(?<![a-z0-9_]){re.escape(field.lower())}\b\s*(?:=|:|\||\s)\s*(?:{values})(?![a-z0-9_])")
@@ -353,6 +380,8 @@ def scan_csv_file(path: Path, config: dict[str, Any]) -> list[Violation]:
         for row_number, row in enumerate(reader, start=2):
             for field in fields.intersection(row.keys()):
                 if is_truthy(row.get(field, ""), truthy_values):
+                    if allowed_human_download_approval_intake_row(path, field, row, config):
+                        continue
                     violations.append(
                         Violation(
                             "truthy_guardrail_csv",
