@@ -4777,17 +4777,21 @@ def action_photo_quarantine_preflight_rows(return_rows: List[Mapping[str, str]])
         key = candidate_duplicate_key(normalized)
         duplicate_status = "duplicate_candidate_key" if key and key_counts.get(key, 0) > 1 else "unique_or_unfilled"
         lead_status = "lead_only_research_return_missing" if not pasted else "research_return_pasted_preflight_only"
+        human_download_approved = normalized["download_approved"] == "yes"
+        download_decision_known = normalized["download_approved"] in {"no", "yes"}
         ready = (
             pasted
             and not missing_required
             and duplicate_status != "duplicate_candidate_key"
             and identity_status == "identity_ready_for_human_review"
             and action_status == "action_photo_candidate"
-            and normalized["download_approved"] == "no"
+            and download_decision_known
             and normalized["review_only"] == "true"
             and normalized["publish_ready"] == "false"
         )
-        if ready:
+        if ready and human_download_approved:
+            manual_next_action = "Human intake records a yes download flag for quarantine-only review; this preflight still does not download files or approve assets."
+        elif ready:
             manual_next_action = "Ready for a later human quarantine-download decision; do not download unless Mike separately records a quarantine-only approval in the intake and keeps the quarantine target."
         elif not pasted:
             manual_next_action = "Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight."
@@ -4812,7 +4816,7 @@ def action_photo_quarantine_preflight_rows(return_rows: List[Mapping[str, str]])
                 "action_photo_status": action_status,
                 "lead_status": lead_status,
                 "ready_for_human_download_decision": "yes" if ready else "no",
-                "download_approved": normalized["download_approved"],
+                "download_approved": "no",
                 "quarantine_target_hint": normalized["quarantine_target_hint"],
                 "manual_next_action": manual_next_action,
                 "review_only": normalized["review_only"],
@@ -4882,9 +4886,16 @@ def validate_action_photo_quarantine_preflight_rows(rows: Iterable[Mapping[str, 
     return issues
 
 
-def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+def render_action_photo_quarantine_preflight(
+    rows: List[Mapping[str, str]],
+    issues: List[Mapping[str, str]],
+    generated_at: str,
+    return_rows: Iterable[Mapping[str, str]] = (),
+) -> str:
     ready_rows = [row for row in rows if clean(row.get("ready_for_human_download_decision")) == "yes"]
     lead_rows = [row for row in rows if clean(row.get("lead_status")) == "lead_only_research_return_missing"]
+    return_rows_list = list(return_rows)
+    human_intake_download_approved_yes_rows = sum(1 for row in return_rows_list if clean(row.get("download_approved")) == "yes")
     missing_counts: Dict[str, int] = {}
     for row in rows:
         for field in clean(row.get("missing_required_fields")).split("|"):
@@ -4903,7 +4914,8 @@ def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issu
         f"- Ready for human download decision: `{len(ready_rows)}`",
         f"- Lead-only / research return missing: `{len(lead_rows)}`",
         f"- Validation issues: `{len(issues)}`",
-        f"- Rows with human quarantine-download approval recorded: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Human intake rows with a recorded yes download flag: `{human_intake_download_approved_yes_rows}`",
+        f"- Generated preflight rows with a recorded yes download flag: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
         f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
         f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
         "",
@@ -6899,7 +6911,15 @@ def main() -> int:
     write_text(OUT_EXTERNAL_RESEARCH_PACKET_PROMPT_MD, render_external_research_packet_prompt(external_research_export_manifest))
     write_json(OUT_EXTERNAL_RESEARCH_PACKET_MANIFEST_JSON, external_research_export_manifest)
     write_csv(OUT_QUARANTINE_PREFLIGHT_CSV, quarantine_preflight_rows, ACTION_PHOTO_QUARANTINE_PREFLIGHT_FIELDS)
-    write_text(OUT_QUARANTINE_PREFLIGHT_MD, render_action_photo_quarantine_preflight(quarantine_preflight_rows, quarantine_preflight_issues, generated_at))
+    write_text(
+        OUT_QUARANTINE_PREFLIGHT_MD,
+        render_action_photo_quarantine_preflight(
+            quarantine_preflight_rows,
+            quarantine_preflight_issues,
+            generated_at,
+            research_return_rows,
+        ),
+    )
     write_json(
         OUT_QUARANTINE_PREFLIGHT_JSON,
         {
@@ -6925,6 +6945,8 @@ def main() -> int:
                 for status in sorted({row["identity_confidence_status"] for row in quarantine_preflight_rows})
             },
             "download_approved_yes_rows": sum(1 for row in quarantine_preflight_rows if row["download_approved"] == "yes"),
+            "human_intake_download_approved_yes_rows": sum(1 for row in research_return_rows if clean(row.get("download_approved")) == "yes"),
+            "generated_download_approved_yes_rows": sum(1 for row in quarantine_preflight_rows if row["download_approved"] == "yes"),
             "review_only_rows": sum(1 for row in quarantine_preflight_rows if row["review_only"] == "true"),
             "publish_ready_rows": sum(1 for row in quarantine_preflight_rows if row["publish_ready"] == "true"),
             "worksheet_csv": OUT_QUARANTINE_PREFLIGHT_CSV.as_posix(),

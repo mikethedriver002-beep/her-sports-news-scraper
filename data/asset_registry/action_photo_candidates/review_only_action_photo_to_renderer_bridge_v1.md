@@ -11,7 +11,7 @@ This bridge aggregates the external action-photo research return review, shared 
 - Operator decision: `hold_renderer_action_photo_manual_gate`
 - Render packet: `Golden State Valkyries beat New York Liberty`
 - Active asset stop/go: `hold_required_manual_asset_review`
-- Blocking reasons: `no_human_download_approved_rows|render_handoff_asset_stop_go_hold_required_manual_asset_review|renderer_hero_asset_required_approved_local_athlete_photo`
+- Blocking reasons: `render_handoff_asset_stop_go_hold_required_manual_asset_review|renderer_hero_asset_required_approved_local_athlete_photo`
 
 ## Gate Rollup
 
@@ -20,13 +20,13 @@ This bridge aggregates the external action-photo research return review, shared 
 - Shared import rows with data/ready rows: `1/1`
 - Manual bridge lanes/source rows: `2/103`
 - Renderer triage rows: `2`
-- Quarantine ready/lead-only/download-approved rows: `1/9/0`
+- Quarantine ready/lead-only/generated-download-approved/human-intake-download-approved rows: `1/9/0/1`
 
 ## First Manual Action
 
 - Queue/review: `APQ001` / `APQP001`
 - Candidate page lead: `https://fever.wnba.com/news/fevers-poise-clarks-gravity-earn-fever-commissioners-cup-win-to-advance-to-finals`
-- Next action: APQ001/APQP001 now has human-reviewed source, identity, rights, action-context, and use metadata. Next step is a separate human quarantine-download decision; keep download_approved=no until Mike explicitly edits the intake for quarantine-only download review.
+- Next action: APQ001/APQP001 has human-reviewed source, identity, rights, action-context, use metadata, and a human intake yes download flag for quarantine-only review. Next step is a separate local quarantine candidate download run only if Mike explicitly requests it; this bridge still does not download or approve assets.
 
 ## Validation
 

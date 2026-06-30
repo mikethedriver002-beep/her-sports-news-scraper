@@ -41,6 +41,8 @@
     "identity_ready_for_human_review": 1
   },
   "download_approved_yes_rows": 0,
+  "human_intake_download_approved_yes_rows": 1,
+  "generated_download_approved_yes_rows": 0,
   "review_only_rows": 10,
   "publish_ready_rows": 0,
   "review_only": true,
@@ -79,7 +81,7 @@
       "ready_for_human_download_decision": "yes",
       "download_approved": "no",
       "quarantine_target_hint": "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/operator_fill_required.jpg",
-      "manual_next_action": "Ready for a later human quarantine-download decision; do not download unless Mike separately records a quarantine-only approval in the intake and keeps the quarantine target.",
+      "manual_next_action": "Human intake records a yes download flag for quarantine-only review; this preflight still does not download files or approve assets.",
       "review_only": "true",
       "publish_ready": "false"
     },

@@ -96,6 +96,8 @@ def test_quarantine_preflight_reads_human_intake_without_rewriting_it(tmp_path: 
             "notes": "Official Fever page verified by Mike; rights still manual-review only.",
             "manual_reviewer": "Mike",
             "manual_review_status": "ready_for_human_download_decision",
+            "manual_next_action": "Mike recorded the download flag as yes for quarantine-only review; do not download from this preflight.",
+            "download_approved": "yes",
         }
     )
     write_intake(intake, [complete, blank_return_row("APQ002")])
@@ -115,6 +117,8 @@ def test_quarantine_preflight_reads_human_intake_without_rewriting_it(tmp_path: 
     assert manifest["ready_for_human_download_decision_rows"] == 1
     assert manifest["lead_only_rows"] == 1
     assert manifest["download_approved_yes_rows"] == 0
+    assert manifest["human_intake_download_approved_yes_rows"] == 1
+    assert manifest["generated_download_approved_yes_rows"] == 0
     assert manifest["source_fetching"] is False
     assert manifest["auto_source_enablement"] is False
     assert manifest["asset_downloads"] is False
@@ -131,9 +135,12 @@ def test_quarantine_preflight_reads_human_intake_without_rewriting_it(tmp_path: 
     assert rows[0]["action_photo_status"] == "action_photo_candidate"
     assert rows[0]["identity_confidence_status"] == "identity_ready_for_human_review"
     assert rows[0]["download_approved"] == "no"
+    assert "yes download flag" in rows[0]["manual_next_action"]
     assert rows[0]["review_only"] == "true"
     assert rows[0]["publish_ready"] == "false"
     assert rows[1]["lead_status"] == "lead_only_research_return_missing"
+    assert "Human intake rows with a recorded yes download flag: `1`" in markdown
+    assert "Generated preflight rows with a recorded yes download flag: `0`" in markdown
     assert "does not download files, approve assets" in markdown
 
 

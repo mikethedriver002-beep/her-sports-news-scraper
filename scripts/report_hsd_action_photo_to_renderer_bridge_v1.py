@@ -67,6 +67,7 @@ BRIDGE_FIELDS = [
     "quarantine_ready_rows",
     "quarantine_lead_only_rows",
     "download_approved_yes_rows",
+    "human_intake_download_approved_yes_rows",
     "next_queue_id",
     "next_review_id",
     "next_candidate_page_url",
@@ -134,6 +135,7 @@ def bridge_blocking_reasons(
     import_ready_rows: int,
     quarantine_ready_rows: int,
     download_approved_yes_rows: int,
+    human_intake_download_approved_yes_rows: int,
     active_asset_stop_go: str,
     hero_asset_required: str,
 ) -> List[str]:
@@ -151,7 +153,7 @@ def bridge_blocking_reasons(
         reasons.append("shared_import_review_has_no_ready_rows")
     if quarantine_ready_rows == 0:
         reasons.append("quarantine_preflight_has_no_ready_rows")
-    if download_approved_yes_rows == 0:
+    if human_intake_download_approved_yes_rows == 0:
         reasons.append("no_human_download_approved_rows")
     if active_asset_stop_go and active_asset_stop_go != "go_manual_asset_review_clear":
         reasons.append(f"render_handoff_asset_stop_go_{active_asset_stop_go}")
@@ -194,6 +196,10 @@ def bridge_row() -> Dict[str, str]:
     import_ready_rows = as_int(import_manifest.get("ready_for_later_human_download_decision_review_rows"))
     quarantine_ready_rows = as_int(preflight_manifest.get("ready_for_human_download_decision_rows"))
     download_approved_yes_rows = as_int(preflight_manifest.get("download_approved_yes_rows"))
+    human_intake_download_approved_yes_rows = max(
+        as_int(preflight_manifest.get("human_intake_download_approved_yes_rows")),
+        as_int(import_manifest.get("human_intake_download_approved_yes_rows")),
+    )
     active_asset_stop_go = clean(packet.get("active_asset_stop_go"))
     hero_asset_required = clean(packet.get("hero_asset_required"))
     blocking_reasons = bridge_blocking_reasons(
@@ -204,6 +210,7 @@ def bridge_row() -> Dict[str, str]:
         import_ready_rows=import_ready_rows,
         quarantine_ready_rows=quarantine_ready_rows,
         download_approved_yes_rows=download_approved_yes_rows,
+        human_intake_download_approved_yes_rows=human_intake_download_approved_yes_rows,
         active_asset_stop_go=active_asset_stop_go,
         hero_asset_required=hero_asset_required,
     )
@@ -211,7 +218,13 @@ def bridge_row() -> Dict[str, str]:
     first_queue_id = clean(preflight_ready_first.get("candidate_queue_id")) or clean(external_first.get("candidate_queue_id")) or clean(triage_first.get("card_id"))
     first_review_id = clean(preflight_ready_first.get("preflight_id")) or clean(external_first.get("review_id")) or clean(triage_first.get("triage_id"))
     first_url = clean(preflight_ready_first.get("candidate_photo_url")) or clean(external_first.get("normalized_candidate_page_url")) or clean(triage_first.get("manual_source_lead"))
-    if preflight_ready_first:
+    if preflight_ready_first and human_intake_download_approved_yes_rows > 0:
+        next_action = (
+            f"{first_queue_id}/{first_review_id} has human-reviewed source, identity, rights, action-context, use metadata, "
+            "and a human intake yes download flag for quarantine-only review. Next step is a separate local "
+            "quarantine candidate download run only if Mike explicitly requests it; this bridge still does not download or approve assets."
+        )
+    elif preflight_ready_first:
         next_action = (
             f"{first_queue_id}/{first_review_id} now has human-reviewed source, identity, rights, action-context, and use metadata. "
             "Next step is a separate human quarantine-download decision; keep download_approved=no until Mike explicitly edits the intake for quarantine-only download review."
@@ -256,6 +269,7 @@ def bridge_row() -> Dict[str, str]:
         "quarantine_ready_rows": str(quarantine_ready_rows),
         "quarantine_lead_only_rows": str(as_int(preflight_manifest.get("lead_only_rows"))),
         "download_approved_yes_rows": str(download_approved_yes_rows),
+        "human_intake_download_approved_yes_rows": str(human_intake_download_approved_yes_rows),
         "next_queue_id": first_queue_id,
         "next_review_id": first_review_id,
         "next_candidate_page_url": first_url,
@@ -328,7 +342,7 @@ def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str
         f"- Shared import rows with data/ready rows: `{clean(row.get('import_rows_with_data'))}/{clean(row.get('import_ready_rows'))}`",
         f"- Manual bridge lanes/source rows: `{clean(row.get('manual_bridge_rows'))}/{clean(row.get('manual_bridge_source_rows'))}`",
         f"- Renderer triage rows: `{clean(row.get('renderer_unblock_triage_rows'))}`",
-        f"- Quarantine ready/lead-only/download-approved rows: `{clean(row.get('quarantine_ready_rows'))}/{clean(row.get('quarantine_lead_only_rows'))}/{clean(row.get('download_approved_yes_rows'))}`",
+        f"- Quarantine ready/lead-only/generated-download-approved/human-intake-download-approved rows: `{clean(row.get('quarantine_ready_rows'))}/{clean(row.get('quarantine_lead_only_rows'))}/{clean(row.get('download_approved_yes_rows'))}/{clean(row.get('human_intake_download_approved_yes_rows'))}`",
         "",
         "## First Manual Action",
         "",
@@ -388,6 +402,7 @@ def manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> 
         "quarantine_ready_rows": as_int(row.get("quarantine_ready_rows")),
         "quarantine_lead_only_rows": as_int(row.get("quarantine_lead_only_rows")),
         "download_approved_yes_rows": as_int(row.get("download_approved_yes_rows")),
+        "human_intake_download_approved_yes_rows": as_int(row.get("human_intake_download_approved_yes_rows")),
         "next_queue_id": clean(row.get("next_queue_id")),
         "next_review_id": clean(row.get("next_review_id")),
         "next_candidate_page_url": clean(row.get("next_candidate_page_url")),
