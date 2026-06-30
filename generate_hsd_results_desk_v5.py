@@ -236,6 +236,7 @@ GAME_FACT_CONFIRMATION_STATUS_FIELDS = [
 ]
 GAME_SOURCE_CONFIRMATION_NEXT_ACTION_FIELDS = [
     "action_rank",
+    "operator_review_order_cue",
     "event_uid",
     "game_date",
     "league",
@@ -255,6 +256,7 @@ GAME_SOURCE_CONFIRMATION_NEXT_ACTION_FIELDS = [
     "missing_expected_game_flag",
     "conflict_or_lag_note",
     "official_or_public_source_cue",
+    "second_source_check_cue",
     "recap_render_readiness",
     "recap_render_human_review_gate",
     "source_url",
@@ -274,6 +276,7 @@ GAME_SOURCE_CONFIRMATION_NEXT_ACTION_FIELDS = [
 ]
 GAME_SOURCE_RESEARCH_WORKSHEET_FIELDS = [
     "worksheet_rank",
+    "worksheet_import_cue",
     "event_uid",
     "game_date",
     "league",
@@ -283,6 +286,7 @@ GAME_SOURCE_RESEARCH_WORKSHEET_FIELDS = [
     "research_need",
     "current_source_tier",
     "official_or_public_source_cue",
+    "second_source_check_cue",
     "source_confidence",
     "source_freshness_status",
     "schedule_fact_status",
@@ -385,6 +389,7 @@ FINAL_SCORE_STAT_PROOF_CONFIRMATION_FIELDS = [
 FINAL_SCORE_STAT_PROOF_REVIEW_ORDER_FIELDS = [
     "review_order",
     "review_phase",
+    "score_stat_review_sequence_cue",
     "event_uid",
     "game_date",
     "matchup",
@@ -1753,6 +1758,28 @@ def source_confirmation_public_cue(row: Dict[str, Any]) -> str:
     return "source_class_unknown_manual_confirmation_required"
 
 
+def source_second_check_cue(row: Dict[str, Any]) -> str:
+    tier = clean(row.get("source_confirmation_tier"))
+    stats_status = clean(row.get("stats_fact_status"))
+    game_status = clean(row.get("game_status"))
+    source_url = clean(row.get("source_url"))
+    stats_source_url = clean(row.get("stats_source_url")) or clean(row.get("box_score_or_stat_source_url"))
+    missing = clean(row.get("missing_confirmation"))
+    if not source_url or "source_missing" in tier or missing not in ("", "none"):
+        return "find_primary_free_public_source_before_second_source_check"
+    if "multi_source" in tier:
+        return "multiple_free_public_sources_present_operator_cross_check"
+    if game_status in {"scheduled", "live"}:
+        return "recheck_same_public_scoreboard_after_game_window_before_final_use"
+    if "stats_source_confirmed" in stats_status and stats_source_url and stats_source_url != source_url:
+        return "score_and_stats_sources_present_operator_cross_check"
+    if "stats_source_confirmed" in stats_status or "box_score" in stats_status:
+        return "single_box_score_source_present_second_free_public_source_recommended_before_copy_or_render"
+    if clean(row.get("recap_candidate")) == "Yes" or game_status == "final":
+        return "find_second_free_public_box_score_or_recap_before_named_stat_use"
+    return "free_public_source_currentness_recheck_operator_verify"
+
+
 def source_confirmation_review_priority(row: Dict[str, Any]) -> str:
     missing = clean(row.get("missing_confirmation"))
     freshness = clean(row.get("source_freshness_status"))
@@ -1843,6 +1870,7 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
         rows.append(
             {
                 "action_rank": "",
+                "operator_review_order_cue": "",
                 "event_uid": event_uid,
                 "game_date": clean(item.get("game_date")),
                 "league": clean(item.get("league")),
@@ -1862,6 +1890,7 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
                 "missing_expected_game_flag": missing_expected,
                 "conflict_or_lag_note": source_confirmation_lag_note(item),
                 "official_or_public_source_cue": source_confirmation_public_cue(item),
+                "second_source_check_cue": source_second_check_cue(item),
                 "recap_render_readiness": clean(item.get("recap_render_readiness")),
                 "recap_render_human_review_gate": recap_render_human_review_gate(item, priority),
                 "source_url": clean(item.get("source_url")),
@@ -1890,6 +1919,7 @@ def game_source_confirmation_next_action_rows(fact_rows: List[Dict[str, Any]]) -
     rows.sort(key=lambda row: (priority_order.get(row.get("review_priority"), 9), row.get("game_date", ""), row.get("matchup", "")))
     for index, row in enumerate(rows, start=1):
         row["action_rank"] = str(index)
+        row["operator_review_order_cue"] = "START_HERE_first_incomplete_game_source_confirmation_row" if index == 1 else "continue_in_action_rank_order"
     return rows
 
 
@@ -1954,7 +1984,7 @@ def game_source_confirmation_next_action_report_md(summary: Dict[str, Any], rows
         lines.append(f"{row.get('action_rank')}. **{row.get('matchup')}** | {row.get('game_date')} | {row.get('review_priority')}")
         lines.append(f"   - state={row.get('confirmation_state')} | confidence={row.get('source_confidence') or 'n/a'} | tier={row.get('source_confirmation_tier')} | freshness={row.get('source_freshness_status')} | age_min={row.get('source_freshness_age_minutes') or 'n/a'}")
         lines.append(f"   - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
-        lines.append(f"   - missing={row.get('missing_confirmation')} | source_cue={row.get('official_or_public_source_cue')} | lag={row.get('conflict_or_lag_note')}")
+        lines.append(f"   - start={row.get('operator_review_order_cue')} | missing={row.get('missing_confirmation')} | source_cue={row.get('official_or_public_source_cue')} | second_check={row.get('second_source_check_cue')} | lag={row.get('conflict_or_lag_note')}")
         lines.append(f"   - recap_render={row.get('recap_render_readiness') or 'n/a'} | gate={row.get('recap_render_human_review_gate')}")
         lines.append(f"   - open={row.get('source_row_to_open')} | proof={row.get('proof_row_to_open') or 'not required'} | intake={row.get('manual_intake_path') or 'not required'}")
         lines.append(f"   - next={row.get('source_confirmation_next_action')}")
@@ -2041,6 +2071,7 @@ def game_source_research_worksheet_rows(next_action_rows: List[Dict[str, Any]]) 
         rows.append(
             {
                 "worksheet_rank": clean(item.get("action_rank")),
+                "worksheet_import_cue": "import_or_edit_this_csv_row_only; keep_operator_fields_blank_until_human_verification",
                 "event_uid": clean(item.get("event_uid")),
                 "game_date": clean(item.get("game_date")),
                 "league": clean(item.get("league")),
@@ -2050,6 +2081,7 @@ def game_source_research_worksheet_rows(next_action_rows: List[Dict[str, Any]]) 
                 "research_need": need,
                 "current_source_tier": clean(item.get("source_confirmation_tier")),
                 "official_or_public_source_cue": clean(item.get("official_or_public_source_cue")),
+                "second_source_check_cue": clean(item.get("second_source_check_cue")) or source_second_check_cue(item),
                 "source_confidence": clean(item.get("source_confidence")),
                 "source_freshness_status": clean(item.get("source_freshness_status")),
                 "schedule_fact_status": clean(item.get("schedule_fact_status")),
@@ -2141,7 +2173,7 @@ def game_source_research_worksheet_report_md(summary: Dict[str, Any], rows: List
         lines.append("No game source research worksheet rows were generated in this run.")
     for row in rows[:80]:
         lines.append(f"{row.get('worksheet_rank')}. **{row.get('matchup')}** | {row.get('game_date')} | {row.get('research_need')}")
-        lines.append(f"   - tier={row.get('current_source_tier')} | cue={row.get('official_or_public_source_cue')} | confidence={row.get('source_confidence') or 'n/a'}")
+        lines.append(f"   - import={row.get('worksheet_import_cue')} | tier={row.get('current_source_tier')} | cue={row.get('official_or_public_source_cue')} | second_check={row.get('second_source_check_cue')} | confidence={row.get('source_confidence') or 'n/a'}")
         lines.append(f"   - schedule={row.get('schedule_fact_status')} | result={row.get('result_fact_status')} | stats={row.get('stats_fact_status')}")
         lines.append(f"   - source={row.get('scoreboard_source_url') or 'missing'} | box_score={row.get('box_score_or_stat_source_url') or 'manual check'} | source_type={row.get('source_type_to_verify')}")
         lines.append(f"   - open={row.get('source_row_to_open')} | proof={row.get('proof_row_to_open') or 'not required'} | intake={row.get('manual_intake_path') or 'not required'}")
@@ -2463,10 +2495,12 @@ def final_score_stat_proof_review_order_rows(proof_rows: List[Dict[str, Any]]) -
         render_cue = "Score check first, then named player stat checks before render/copy use."
         if fact_type == "named_player_stat_line":
             render_cue = "Confirm named player, team, and stat line before any render/copy use."
+        sequence_cue = "confirm_final_score_source_before_named_stat_rows_for_this_event" if fact_type == "final_score" else "confirm_matching_final_score_row_first_then_this_named_stat_row"
         rows.append(
             {
                 "review_order": str(index),
                 "review_phase": phase(proof),
+                "score_stat_review_sequence_cue": sequence_cue,
                 "event_uid": clean(proof.get("event_uid")),
                 "game_date": clean(proof.get("game_date")),
                 "matchup": clean(proof.get("matchup")),
@@ -2525,6 +2559,7 @@ def final_score_stat_proof_review_walkthrough_md(rows: List[Dict[str, Any]]) -> 
         lines.append(f"{row.get('review_order')}. **{row.get('matchup')}** | {row.get('fact_label')} | {row.get('proof_status')}")
         lines.append(f"   - fact={row.get('fact_value') or 'missing'}")
         lines.append(f"   - source={row.get('source_url') or 'missing'}")
+        lines.append(f"   - sequence={row.get('score_stat_review_sequence_cue')}")
         lines.append(f"   - proof={row.get('proof_row_to_open')}")
         lines.append(f"   - evidence={row.get('evidence_artifact_row')}")
         lines.append(f"   - record={row.get('intake_row_to_record')}")
