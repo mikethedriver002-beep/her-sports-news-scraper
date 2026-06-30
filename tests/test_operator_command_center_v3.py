@@ -76,6 +76,44 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "story_proof_card_v1.json" in artifact_paths
 
 
+def test_command_center_links_adobe_visual_qa_artifacts() -> None:
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    packet_command = ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_packet_v1.py"
+    importer_command = ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_adobe_visual_qa_intake_v1.py"
+    plan_command = ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py"
+
+    packet_artifacts = [
+        "adobe_visual_qa_packet/README.md",
+        "adobe_visual_qa_packet/manifest.json",
+        "adobe_visual_qa_packet/manual_adobe_visual_qa_intake.csv",
+        "adobe_visual_qa_packet/open_packet_in_explorer.ps1",
+        "adobe_visual_qa_packet/drafts/draft_preview_ig_feed.png",
+        "adobe_visual_qa_packet/drafts/draft_preview_story.png",
+        "adobe_visual_qa_packet/drafts/draft_preview_square.png",
+        "adobe_visual_qa_packet/drafts/draft_preview_visual_contact_sheet.png",
+    ]
+    importer_artifacts = [
+        "adobe_visual_qa_result_manifest.json",
+        "adobe_visual_qa_result_report.md",
+        "adobe_visual_qa_revision_requests.csv",
+    ]
+    plan_artifacts = [
+        "adobe_visual_qa_renderer_revision_plan.md",
+        "adobe_visual_qa_renderer_revision_plan.csv",
+        "adobe_visual_qa_renderer_revision_plan.json",
+    ]
+
+    for path in packet_artifacts:
+        assert path in artifact_paths
+        assert command_center.RUN_COMMANDS[path] == packet_command
+    for path in importer_artifacts:
+        assert path in artifact_paths
+        assert command_center.RUN_COMMANDS[path] == importer_command
+    for path in plan_artifacts:
+        assert path in artifact_paths
+        assert command_center.RUN_COMMANDS[path] == plan_command
+
+
 def test_visual_qa_cues_warn_on_action_photo_risk_after_display_truncation() -> None:
     padding = " ".join(["editorial-context"] * 30)
     qa = {
@@ -4856,6 +4894,130 @@ def seed_manual_visual_qa_decision_files() -> None:
             ],
         },
     )
+    adobe_packet = Path("adobe_visual_qa_packet")
+    adobe_drafts = adobe_packet / "drafts"
+    adobe_refs = adobe_packet / "references"
+    adobe_drafts.mkdir(parents=True, exist_ok=True)
+    adobe_refs.mkdir(parents=True, exist_ok=True)
+    (adobe_packet / "README.md").write_text("# Adobe visual QA packet\nReview-only packet.\n", encoding="utf-8")
+    (adobe_packet / "open_packet_in_explorer.ps1").write_text(
+        "Invoke-Item -LiteralPath $PSScriptRoot\n",
+        encoding="utf-8",
+    )
+    write_json(
+        "adobe_visual_qa_packet/manifest.json",
+        {
+            "status": "adobe_visual_qa_packet_ready",
+            "review_only": True,
+            "auto_approval": False,
+            "auto_publish": False,
+            "asset_downloads": False,
+            "approved_marker_writes": False,
+        },
+    )
+    for draft_file in [
+        adobe_drafts / "draft_preview_ig_feed.png",
+        adobe_drafts / "draft_preview_story.png",
+        adobe_drafts / "draft_preview_square.png",
+        adobe_drafts / "draft_preview_visual_contact_sheet.png",
+    ]:
+        draft_file.write_bytes(b"fake adobe review draft")
+    adobe_intake_fields = [
+        "format",
+        "crop_fit",
+        "title_safety",
+        "score_rail_dashboard_violation",
+        "lower_stat_strip_violation",
+        "logo_readiness",
+        "action_photo_suitability",
+        "operator_decision",
+        "revision_request",
+        "operator_notes",
+    ]
+    write_csv_with_fields(
+        "adobe_visual_qa_packet/manual_adobe_visual_qa_intake.csv",
+        [
+            {
+                "format": "ig_feed_4x5",
+                "crop_fit": "pass",
+                "title_safety": "pass",
+                "score_rail_dashboard_violation": "minor",
+                "lower_stat_strip_violation": "minor",
+                "logo_readiness": "pass",
+                "action_photo_suitability": "revise",
+                "operator_decision": "revise",
+                "revision_request": "Soften the score split.",
+                "operator_notes": "Review-only fixture row.",
+            }
+        ],
+        adobe_intake_fields,
+    )
+    write_json(
+        "adobe_visual_qa_result_manifest.json",
+        {
+            "status": "adobe_visual_qa_revision_requests_ready",
+            "review_only": True,
+            "approval_state_change": "none",
+            "auto_approval": False,
+            "auto_publish": False,
+            "asset_downloads": False,
+            "approved_marker_writes": False,
+        },
+    )
+    Path("adobe_visual_qa_result_report.md").write_text(
+        "# Adobe visual QA result\nReview-only imported operator notes.\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "adobe_visual_qa_revision_requests.csv",
+        [
+            {
+                "format": "ig_feed_4x5",
+                "operator_decision": "revise",
+                "revision_request": "Soften the score split.",
+                "operator_notes": "Review-only fixture row.",
+                "review_only": "true",
+                "approval_state_change": "none",
+                "publish_ready": "false",
+            }
+        ],
+        [
+            "format",
+            "operator_decision",
+            "revision_request",
+            "operator_notes",
+            "review_only",
+            "approval_state_change",
+            "publish_ready",
+        ],
+    )
+    write_json(
+        "adobe_visual_qa_renderer_revision_plan.json",
+        {
+            "status": "adobe_visual_qa_renderer_revision_plan_ready",
+            "review_only": True,
+            "auto_approval": False,
+            "auto_publish": False,
+            "renderer_behavior_changed": False,
+        },
+    )
+    Path("adobe_visual_qa_renderer_revision_plan.md").write_text(
+        "# Adobe renderer revision plan\nReview-only renderer revision guidance.\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "adobe_visual_qa_renderer_revision_plan.csv",
+        [
+            {
+                "format": "ig_feed_4x5",
+                "priority": "P1",
+                "revision_focus": "score_rail_dashboard_violation",
+                "review_only": "true",
+                "publish_ready": "false",
+            }
+        ],
+        ["format", "priority", "revision_focus", "review_only", "publish_ready"],
+    )
     write_json(
         "manual_visual_qa_approval_intake.json",
         {"status": "ready_for_manual_decision", "approval_status": "not_approved_operator_input_required"},
@@ -6739,6 +6901,18 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "action-photo return path" in decision_shortcuts["render_next_level_editorial_qa.md"]["purpose"]
     assert artifact_by_path["manual_visual_qa_report.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_checklist.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
+    assert artifact_by_path["adobe_visual_qa_packet/README.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_packet_v1.py"
+    assert artifact_by_path["adobe_visual_qa_packet/manual_adobe_visual_qa_intake.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_packet_v1.py"
+    assert artifact_by_path["adobe_visual_qa_packet/drafts/draft_preview_ig_feed.png"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_packet_v1.py"
+    assert artifact_by_path["adobe_visual_qa_result_report.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_adobe_visual_qa_intake_v1.py"
+    assert artifact_by_path["adobe_visual_qa_revision_requests.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_adobe_visual_qa_intake_v1.py"
+    assert artifact_by_path["adobe_visual_qa_renderer_revision_plan.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py"
+    assert artifact_by_path["adobe_visual_qa_renderer_revision_plan.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py"
+    assert decision_shortcuts["adobe_visual_qa_packet/README.md"]["exists"] is True
+    assert "review-only Adobe packet" in decision_shortcuts["adobe_visual_qa_packet/README.md"]["purpose"]
+    assert "approve_for_manual_next_step" in decision_shortcuts["adobe_visual_qa_packet/manual_adobe_visual_qa_intake.csv"]["purpose"]
+    assert "without approving or publishing assets" in decision_shortcuts["adobe_visual_qa_result_report.md"]["purpose"]
+    assert "renderer revision planning only" in decision_shortcuts["adobe_visual_qa_revision_requests.csv"]["purpose"]
     assert artifact_by_path["manual_visual_qa_approval_intake.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_approval_intake.csv"]["run_command"] == ".\\hsd.cmd run -Mode render"
     assert artifact_by_path["manual_visual_qa_operator_decision_draft.md"]["run_command"] == ".\\hsd.cmd run -Mode render"
@@ -7974,6 +8148,15 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "manual_visual_qa_report.md" in runner
     assert "manual_visual_qa_manifest.json" in runner
     assert "manual_visual_qa_checklist.csv" in runner
+    assert "adobe_visual_qa_packet/README.md" in runner
+    assert "adobe_visual_qa_packet/manual_adobe_visual_qa_intake.csv" in runner
+    assert "adobe_visual_qa_packet/drafts/draft_preview_ig_feed.png" in runner
+    assert "adobe_visual_qa_result_manifest.json" in runner
+    assert "adobe_visual_qa_result_report.md" in runner
+    assert "adobe_visual_qa_revision_requests.csv" in runner
+    assert "adobe_visual_qa_renderer_revision_plan.md" in runner
+    assert "adobe_visual_qa_renderer_revision_plan.csv" in runner
+    assert "adobe_visual_qa_renderer_revision_plan.json" in runner
     assert "manual_visual_qa_approval_intake.md" in runner
     assert "manual_visual_qa_approval_intake.csv" in runner
     assert "manual_visual_qa_approval_intake.json" in runner
