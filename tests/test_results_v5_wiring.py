@@ -508,19 +508,23 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
 
     assert rows[0]["event_uid"] == "expected_missing"
     assert by_id["expected_missing"]["review_priority"] == "P0_manual_confirmation_required"
+    assert by_id["expected_missing"]["operator_review_order_cue"] == "START_HERE_first_incomplete_game_source_confirmation_row"
     assert by_id["expected_missing"]["source_confidence"] == "0.00"
     assert by_id["expected_missing"]["schedule_fact_status"] == "schedule_source_missing_or_low_confidence_manual_review_required"
     assert by_id["expected_missing"]["stats_fact_status"] == "stats_evidence_row_missing_manual_review_required"
     assert by_id["expected_missing"]["missing_expected_game_flag"] == "Yes"
     assert by_id["expected_missing"]["recap_render_human_review_gate"] == "blocked_manual_source_confirmation_required"
     assert by_id["expected_missing"]["official_or_public_source_cue"] == "no_matched_free_public_source_manual_confirmation_required"
+    assert by_id["expected_missing"]["second_source_check_cue"] == "find_primary_free_public_source_before_second_source_check"
     assert "missing_games_alert_v5.csv" in by_id["expected_missing"]["source_confirmation_next_action"]
     assert by_id["event_confirmed"]["review_priority"] == "P1_source_freshness_or_lag_check"
+    assert by_id["event_confirmed"]["operator_review_order_cue"] == "continue_in_action_rank_order"
     assert by_id["event_confirmed"]["source_confidence"] == "0.92"
     assert by_id["event_confirmed"]["result_fact_status"] == "final_score_source_confirmed_free_public_operator_verify"
     assert by_id["event_confirmed"]["recap_render_readiness"] == "athlete_led_manual_render_candidate"
     assert by_id["event_confirmed"]["recap_render_human_review_gate"] == "blocked_source_freshness_check_required"
     assert by_id["event_confirmed"]["proof_row_to_open"] == "story_proof_card_v1.csv event_id=event_confirmed; candidate_id=card789"
+    assert by_id["event_confirmed"]["second_source_check_cue"] == "single_box_score_source_present_second_free_public_source_recommended_before_copy_or_render"
     assert "confirm the source is current" in by_id["event_confirmed"]["source_confirmation_next_action"]
     assert by_id["event_confirmed"]["manual_confirmation_return_fields"] == "operator_checked_source_url, operator_source_confirmation_status, operator_source_confirmation_notes"
     assert by_id["event_confirmed"]["operator_checked_source_url"] == ""
@@ -528,6 +532,7 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
     assert by_id["event_confirmed"]["operator_source_confirmation_notes"] == ""
     assert by_id["event_scheduled"]["review_priority"] == "P3_result_pending_monitor"
     assert by_id["event_scheduled"]["recap_render_human_review_gate"] == "blocked_result_pending_not_recap_or_render_ready"
+    assert by_id["event_scheduled"]["second_source_check_cue"] == "recheck_same_public_scoreboard_after_game_window_before_final_use"
     assert by_id["event_scheduled"]["source_enablement"] == "none_existing_local_artifacts_only"
     assert all(row["operator_checked_source_url"] == "" for row in rows)
     assert all(row["operator_source_confirmation_status"] == "" for row in rows)
@@ -546,6 +551,8 @@ def test_game_source_confirmation_next_action_board_prioritizes_manual_and_fresh
     assert "Review-only, artifact-only source confirmation triage" in report
     assert "No paid APIs" in report
     assert "confidence=0.92" in report
+    assert "START_HERE_first_incomplete_game_source_confirmation_row" in report
+    assert "second_check=single_box_score_source_present_second_free_public_source_recommended_before_copy_or_render" in report
     assert "gate=blocked_source_freshness_check_required" in report
     assert "manual_return_fields_prefilled: `False`" in report
     assert "return_fields=operator_checked_source_url, operator_source_confirmation_status, operator_source_confirmation_notes" in report
@@ -606,12 +613,15 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
     by_id = {row["event_uid"]: row for row in rows}
 
     assert by_id["event_confirmed"]["research_need"] == "confirm_final_score_and_named_stat_source_before_recap"
+    assert by_id["event_confirmed"]["worksheet_import_cue"] == "import_or_edit_this_csv_row_only; keep_operator_fields_blank_until_human_verification"
     assert by_id["event_confirmed"]["box_score_or_stat_source_url"] == "https://www.espn.com/wnba/game/_/gameId/401"
     assert by_id["event_confirmed"]["source_type_to_verify"] == "public_scoreboard_box_score_operator_verify"
+    assert by_id["event_confirmed"]["second_source_check_cue"] == "single_box_score_source_present_second_free_public_source_recommended_before_copy_or_render"
     assert "Open proof row: story_proof_card_v1.csv event_id=event_confirmed" in by_id["event_confirmed"]["source_proof_next_action"]
     assert "Record human confirmation only in: final_score_stat_proof_confirmation_intake_v1.csv proof_id=stat456" in by_id["event_confirmed"]["source_proof_next_action"]
     assert by_id["event_missing"]["research_need"] == "find_official_or_public_schedule_result_stat_source"
     assert by_id["event_missing"]["source_type_to_verify"] == "official_or_reputable_public_schedule_result_stat_source_needed"
+    assert by_id["event_missing"]["second_source_check_cue"] == "find_primary_free_public_source_before_second_source_check"
     assert "Find a free official or reputable public source" in by_id["event_missing"]["operator_research_prompt"]
     assert "Leave operator fields blank until a human verifies" in by_id["event_missing"]["source_proof_next_action"]
     for row in rows:
@@ -637,6 +647,8 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
     assert "Operator fields are intentionally blank" in report
     assert "No fetching, paid APIs" in report
     assert "source_type=public_scoreboard_box_score_operator_verify" in report
+    assert "import=import_or_edit_this_csv_row_only" in report
+    assert "second_check=single_box_score_source_present_second_free_public_source_recommended_before_copy_or_render" in report
     assert "proof_next=" in report
 
 
@@ -788,10 +800,13 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     player_one_review = [row for row in review_rows if row["named_player"] == "Player One"][0]
     score_review = [row for row in review_rows if row["event_uid"] == "event_confirmed" and row["fact_type"] == "final_score"][0]
     assert missing_review["source_confirmation_cue"] == "free_public_box_score_stat_source_needed_manual_check"
+    assert missing_review["score_stat_review_sequence_cue"] == "confirm_matching_final_score_row_first_then_this_named_stat_row"
     assert player_one_review["player_team"] == "Indiana Fever"
     assert player_one_review["stat_line"] == "PTS 24, REB 8"
     assert player_one_review["source_confirmation_cue"] == "free_public_box_score_stat_source_present_operator_verify"
+    assert player_one_review["score_stat_review_sequence_cue"] == "confirm_matching_final_score_row_first_then_this_named_stat_row"
     assert score_review["source_confirmation_cue"] == "free_public_final_score_source_present_operator_verify"
+    assert score_review["score_stat_review_sequence_cue"] == "confirm_final_score_source_before_named_stat_rows_for_this_event"
     assert all(row["proof_row_to_open"].startswith("final_score_stat_proof_v1.csv proof_id=") for row in review_rows)
     assert all(row["intake_row_to_record"].startswith("final_score_stat_proof_confirmation_intake_v1.csv proof_id=") for row in review_rows)
     assert all(row["story_proof_card_row_to_open"].startswith("story_proof_card_v1.csv event_id=") for row in review_rows)
@@ -802,6 +817,7 @@ def test_final_score_stat_proof_splits_named_player_stat_lines() -> None:
     walkthrough = module.final_score_stat_proof_review_walkthrough_md(review_rows)
     assert "Review Order" in walkthrough
     assert "final_score_stat_proof_confirmation_intake_v1.csv" in walkthrough
+    assert "confirm_matching_final_score_row_first_then_this_named_stat_row" in walkthrough
     assert "does not approve anything" in walkthrough
 
     catalog_rows = [
