@@ -2729,48 +2729,155 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         if isinstance(apq001_manual_review_manifest.get("manual_operator_decision_counts"), dict)
         else {}
     )
-    if not apq001_manual_decision_counts:
-        apq001_manual_decision_counts = count_field_values(apq001_manual_review_findings, "operator_decision")
     apq001_handoff_recommendation_counts = (
         apq001_manual_review_manifest.get("renderer_handoff_recommendation_counts")
         if isinstance(apq001_manual_review_manifest.get("renderer_handoff_recommendation_counts"), dict)
         else {}
     )
-    if not apq001_handoff_recommendation_counts:
-        apq001_handoff_recommendation_counts = count_field_values(
-            apq001_manual_review_findings,
-            "renderer_handoff_recommendation",
-        )
-    apq001_manual_review_status = clean(apq001_manual_review_manifest.get("status")) or "not_generated"
-    apq001_manual_review_validation_issues = as_int(apq001_manual_review_manifest.get("validation_issue_count"))
-    apq001_manual_review_guardrail_flags = [
-        yes(apq001_manual_review_manifest.get("image_edits")),
-        yes(apq001_manual_review_manifest.get("new_downloads")),
-        yes(apq001_manual_review_manifest.get("asset_downloads")),
-        yes(apq001_manual_review_manifest.get("approval_state_change")),
-        yes(apq001_manual_review_manifest.get("approved_marker_writes")),
-        yes(apq001_manual_review_manifest.get("headshot_writes")),
-        yes(apq001_manual_review_manifest.get("renderer_behavior_change")),
-        yes(apq001_manual_review_manifest.get("publish_ready")),
-        yes(apq001_manual_review_manifest.get("publishing")),
-        yes(apq001_manual_review_manifest.get("move_files")),
-    ]
-    if (
-        apq001_manual_review_status == "apq001_manual_review_result_artifacts_ready"
-        and apq001_manual_review_validation_issues == 0
-        and not any(apq001_manual_review_guardrail_flags)
-    ):
+
+    # =========================================================================
+    # OPTIMIZED: DETAILED APQ001 OPERATIONAL STATE EVALUATION
+    # =========================================================================
+    apq001_status = clean(apq001_manual_review_manifest.get("status")) or "not_generated"
+    apq001_validation_issues = as_int(apq001_manual_review_manifest.get("validation_issue_count"))
+
+    # Extract the exact decision telemetry from our imported review-only record
+    apq001_handoff_counts = apq001_manual_review_manifest.get("renderer_handoff_recommendation_counts", {})
+    if not isinstance(apq001_handoff_counts, dict):
+        apq001_handoff_counts = {}
+    apq001_fill_required = as_int(apq001_handoff_counts.get("operator_fill_required", 0))
+    apq001_suitable_recheck = as_int(apq001_handoff_counts.get("suitable_for_renderer_recheck", 0))
+    apq001_needs_notes = as_int(apq001_handoff_counts.get("needs_crop_or_layout_notes", 0))
+
+    # Guardrail Enforcement Validation Block
+    apq001_safety_compromised = any(
+        [
+            yes(apq001_manual_review_manifest.get("approval_state_change")),
+            yes(apq001_manual_review_manifest.get("approved_marker_writes")),
+            yes(apq001_manual_review_manifest.get("publish_ready")),
+            yes(apq001_manual_review_manifest.get("publishing")),
+            yes(apq001_manual_review_manifest.get("move_files")),
+        ]
+    )
+
+    if apq001_safety_compromised:
         apq001_manual_review_next_action = (
-            "APQ001 manual review is imported as review-only findings. Next lane: build a renderer recheck planning packet from these notes while keeping the candidate in quarantine."
+            "CRITICAL GUARDRAIL LEAK: APQ001 review manifest contains a true value for forbidden write/publish fields. "
+            "Halt execution and sanitize import state."
         )
-    elif apq001_manual_review_status == "not_generated":
+        apq001_cockpit_badge = "GUARDRAIL_VIOLATION"
+        apq001_tone = "bad"
+    elif apq001_validation_issues > 0:
         apq001_manual_review_next_action = (
-            "Run the APQ001 manual review importer after the manual asset review and renderer handoff worksheets are filled."
+            f"Fix {apq001_validation_issues} structural validation errors inside the review package manifest."
         )
+        apq001_cockpit_badge = "VALIDATION_HOLD"
+        apq001_tone = "warn"
+    elif apq001_status == "apq001_manual_review_result_artifacts_ready":
+        if apq001_fill_required > 0:
+            apq001_manual_review_next_action = (
+                f"APQ001 intake passed, but {apq001_fill_required} fields remain unpopulated in "
+                f"renderer_handoff_review_checklist.csv. Clear these slots to unblock formatting specifications."
+            )
+            apq001_cockpit_badge = "OPERATOR_FILL_REQUIRED"
+            apq001_tone = "warn"
+        elif apq001_needs_notes > 0 and apq001_suitable_recheck == 0:
+            apq001_manual_review_next_action = (
+                "CROP HOLD: Ingested asset flags layout anomalies. Review crop fit mapping rows inside "
+                "apq001_manual_review_result_findings.csv before starting renderer script modifications."
+            )
+            apq001_cockpit_badge = "REVISE_CROP_FIT"
+            apq001_tone = "neutral"
+        else:
+            apq001_manual_review_next_action = (
+                "CLEAN RECHECK LANE: Asset is safely recorded in the quarantine reviewer registry. "
+                "Ready for localized structural prototyping in the renderer P0 design branch."
+            )
+            apq001_cockpit_badge = "LANE_READY_FOR_RENDERER"
+            apq001_tone = "good"
     else:
         apq001_manual_review_next_action = (
-            "Review APQ001 manual review validation issues before any renderer planning step."
+            "Intake queue empty. Run build_hsd_apq001_manual_review_packet_v1.py to open a new review cell."
         )
+        apq001_cockpit_badge = "AWAITING_INTAKE"
+        apq001_tone = "neutral"
+
+    apq001_manual_review_status = apq001_status
+    apq001_manual_review_validation_issues = apq001_validation_issues
+
+    # =========================================================================
+    # OPTIMIZED: DETAILED ADOBE VISUAL QA OPERATIONAL STATE EVALUATION
+    # =========================================================================
+    adobe_qa_manifest = read_json("adobe_visual_qa_result_manifest.json")
+    adobe_qa_status = clean(adobe_qa_manifest.get("status")) or "not_generated"
+    adobe_qa_decisions = adobe_qa_manifest.get("operator_decision_counts", {})
+    if not isinstance(adobe_qa_decisions, dict):
+        adobe_qa_decisions = {}
+    adobe_qa_revise_count = as_int(adobe_qa_decisions.get("revise", 0))
+
+    adobe_qa_safety_compromised = any(
+        [
+            yes(adobe_qa_manifest.get("publish_ready")),
+            yes(adobe_qa_manifest.get("publishing")),
+            yes(adobe_qa_manifest.get("move_files")),
+        ]
+    )
+
+    if adobe_qa_safety_compromised:
+        adobe_qa_next_action = (
+            "STOP: Adobe QA importer breached isolation boundaries. Clean staging directories immediately."
+        )
+        adobe_qa_badge = "GUARDRAIL_VIOLATION"
+        adobe_qa_tone = "bad"
+    elif adobe_qa_status == "adobe_visual_qa_revision_requests_ready":
+        if adobe_qa_revise_count > 0:
+            adobe_qa_next_action = (
+                f"VISUAL DEBT LOCK: Adobe QA importer records {adobe_qa_revise_count} design variations with state='revise'. "
+                "Next action: build a revision plan to process critique themes (typography, safe zones)."
+            )
+            adobe_qa_badge = "REVISION_PLAN_REQUIRED"
+            adobe_qa_tone = "warn"
+        else:
+            adobe_qa_next_action = (
+                "All visual variants cleared by automated checking. Standing by for manual composition overrides."
+            )
+            adobe_qa_badge = "QA_CLEAR"
+            adobe_qa_tone = "good"
+    else:
+        adobe_qa_next_action = (
+            "No active visual critique packages imported. Run import_hsd_adobe_visual_qa_intake_v1.py to stage incoming reviews."
+        )
+        adobe_qa_badge = "NO_PACKETS"
+        adobe_qa_tone = "neutral"
+
+    html_action_board = f"""
+    <div class="card action-board-box">
+      <div class="card-header">Real-Time Operator Next-Action Console</div>
+      <div class="card-body">
+        <table class="table command-center-table">
+          <thead>
+            <tr>
+              <th>Operating Lane</th>
+              <th>Status State</th>
+              <th>Plain-English Directive</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-row-{apq001_tone}">
+              <td><strong>Action Photo (APQ001)</strong></td>
+              <td><span class="badge badge-{apq001_tone}">{html.escape(apq001_cockpit_badge)}</span></td>
+              <td>{html.escape(apq001_manual_review_next_action)}</td>
+            </tr>
+            <tr class="table-row-{adobe_qa_tone}">
+              <td><strong>Adobe Visual QA</strong></td>
+              <td><span class="badge badge-{adobe_qa_tone}">{html.escape(adobe_qa_badge)}</span></td>
+              <td>{html.escape(adobe_qa_next_action)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    """
     apq001_recheck_priority_counts = (
         apq001_renderer_recheck_manifest.get("priority_counts")
         if isinstance(apq001_renderer_recheck_manifest.get("priority_counts"), dict)
@@ -3208,6 +3315,16 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "apq001_manual_review_publishing": yes(apq001_manual_review_manifest.get("publishing")),
         "apq001_manual_review_move_files": yes(apq001_manual_review_manifest.get("move_files")),
         "apq001_manual_review_next_action": apq001_manual_review_next_action,
+        "adobe_visual_qa_status": adobe_qa_status,
+        "adobe_visual_qa_operator_decision_summary": compact_counts(adobe_qa_decisions, ["hold", "revise", "approve_for_manual_next_step"]),
+        "adobe_visual_qa_validation_issues": as_int(adobe_qa_manifest.get("validation_issue_count")),
+        "adobe_visual_qa_publish_ready": yes(adobe_qa_manifest.get("publish_ready")),
+        "adobe_visual_qa_publishing": yes(adobe_qa_manifest.get("publishing")),
+        "adobe_visual_qa_move_files": yes(adobe_qa_manifest.get("move_files")),
+        "adobe_visual_qa_next_action": adobe_qa_next_action,
+        "adobe_visual_qa_badge": adobe_qa_badge,
+        "adobe_visual_qa_tone": adobe_qa_tone,
+        "html_action_board": html_action_board,
         "apq001_renderer_recheck_status": apq001_recheck_status,
         "apq001_renderer_recheck_generated_at": clean(apq001_renderer_recheck_manifest.get("generated_at_utc")),
         "apq001_renderer_recheck_source_findings": as_int(apq001_renderer_recheck_manifest.get("source_finding_rows")),
@@ -11081,6 +11198,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           <p class="muted">{html.escape(clean(panel.get('action_photo_apq001_next_action')))}</p>
           <p class="muted">{html.escape(clean(panel.get('apq001_manual_review_next_action')))}</p>
           <p class="muted">{html.escape(clean(panel.get('apq001_renderer_recheck_next_action')))}</p>
+          {panel.get('html_action_board', '')}
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
           {packet_freshness_html(panel, 'logo_contact_sheet', 'Logo contact sheet')}
           {packet_freshness_html(panel, 'womens_soccer_logo_contact_sheet', "Women's soccer logo contact sheet")}
