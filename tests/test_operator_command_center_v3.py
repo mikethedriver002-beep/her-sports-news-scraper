@@ -3094,19 +3094,26 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
     assert liberty_intake["official_source_candidate"] == "https://liberty.wnba.com/"
     assert liberty_intake["current_legacy_registry_source"] == "https://upload.wikimedia.org/new-york-liberty-logo.png"
     assert liberty_intake["current_unapproved_status"] == "unapproved_review_required"
-    assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv"
+    assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/wnba_team_logo_review_intake.csv"
+    assert "wnba_team_logo_contact_sheet.md" in liberty_intake["operator_next_actions"]
+    assert "validate_hsd_wnba_asset_registry_v1.py" in liberty_intake["rerun_commands"]
+    assert "generate_hsd_wnba_logo_contact_sheet_v1.py" in liberty_intake["rerun_commands"]
     assert liberty_intake["approval_state_change"] == "false"
     assert liberty_intake["asset_downloads"] == "false"
     assert "Manual Logo Verification Intake Bridge" in intake_md
-    assert "Human-edited manual intake files: `data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv`" in intake_md
+    assert "Human-edited intake file: `data/asset_registry/wnba/wnba_team_logo_review_intake.csv`" in intake_md
+    assert "Rerun commands:" in intake_md
     assert len(league_mark_intake_rows) == 1
     wnba_intake = league_mark_intake_rows[0]
     assert wnba_intake["entity_name"] == "WNBA"
     assert wnba_intake["manual_intake_files"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
     assert wnba_intake["template_requirement_rule"] == "non_blocking_until_selected_template_requires_league_mark"
+    assert "wnba_league_mark_review_intake.csv" in wnba_intake["operator_next_actions"]
+    assert "validate_hsd_wnba_asset_registry_v1.py" in wnba_intake["rerun_commands"]
     assert "mark_not_required_for_selected_template" in wnba_intake["allowed_manual_outcomes"]
     assert "Manual League-Mark Context Intake" in league_intake_md
     assert "optional/non-blocking unless the selected template explicitly requires it" in league_intake_md
+    assert "Rerun commands:" in league_intake_md
     assert "Cannot clear automatically because" in html
     assert "Manual Logo Verification Intake Bridge" in html
     assert "Manual League-Mark Context Intake" in html
@@ -6850,7 +6857,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert liberty_intake["official_source_candidate"] == "https://example.test/liberty-logo.png"
     assert liberty_intake["current_legacy_registry_source"] == "https://example.test/liberty-logo.png"
     assert liberty_intake["current_unapproved_status"] == "operator_logo_review_required"
-    assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv"
+    assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/wnba_team_logo_review_intake.csv"
+    assert "wnba_team_logo_contact_sheet.md" in liberty_intake["operator_next_actions"]
+    assert "validate_hsd_wnba_asset_registry_v1.py" in liberty_intake["rerun_commands"]
     assert liberty_intake["approval_state_change"] == "false"
     assert liberty_intake["asset_downloads"] == "false"
     assert payload["operator_decision_panel"]["qa_status"] == "human_review_required"
@@ -7037,6 +7046,8 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/wnba/athlete_photo_catalog.md"]["run_command"] == ".\\hsd.cmd run -Mode asset-audit"
     assert artifact_by_path["data/asset_registry/wnba/logo_review_catalog_report.md"]["run_command"] == ".\\hsd.cmd run -Mode asset-audit"
     assert artifact_by_path["data/asset_registry/wnba/logo_review_packets.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/wnba_team_logo_review_intake.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py"
+    assert artifact_by_path["data/asset_registry/wnba/wnba_league_mark_review_intake.csv"]["title"] == "WNBA league mark review intake"
     assert artifact_by_path["data/asset_registry/hockey_softball_next_decision_worksheet.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_next_decision_worksheet.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_next_decision_worksheet.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
@@ -7526,11 +7537,16 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Official source candidate: https://example.test/liberty-logo.png" in logo_intake
     assert "Current legacy registry source: https://example.test/liberty-logo.png" in logo_intake
     assert "Current unapproved status: `operator_logo_review_required`" in logo_intake
-    assert "Human-edited manual intake files: `data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv`" in logo_intake
+    assert "Human-edited intake file: `data/asset_registry/wnba/wnba_team_logo_review_intake.csv`" in logo_intake
+    assert "Companion review artifacts: `data/asset_registry/wnba/wnba_team_logo_contact_sheet.md`" in logo_intake
+    assert "Rerun commands: `.\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py" in logo_intake
     assert "approval_state_change=false" in logo_intake
     logo_intake_rows = list(csv.DictReader(Path("render_handoff_top_packet/manual_logo_verification_intake.csv").open(encoding="utf-8")))
     assert len(logo_intake_rows) == 1
     assert logo_intake_rows[0]["entity_name"] == "New York Liberty"
+    assert logo_intake_rows[0]["manual_intake_files"] == "data/asset_registry/wnba/wnba_team_logo_review_intake.csv"
+    assert "wnba_team_logo_contact_sheet.md" in logo_intake_rows[0]["companion_artifacts"]
+    assert "generate_hsd_operator_command_center_v2.py" in logo_intake_rows[0]["rerun_commands"]
     assert logo_intake_rows[0]["approval_state_change"] == "false"
     assert logo_intake_rows[0]["asset_downloads"] == "false"
     league_intake = Path("render_handoff_top_packet/manual_league_mark_context_intake.md").read_text(encoding="utf-8")
@@ -7538,11 +7554,15 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert "Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`" in league_intake
     assert "Selected-template rule: keep WNBA league mark optional/non-blocking unless the selected template explicitly requires it." in league_intake
     assert "Template requirement rule: `non_blocking_until_selected_template_requires_league_mark`" in league_intake
+    assert "Operator next actions: inspect data/asset_registry/wnba/logo_review_catalog_report.md" in league_intake
+    assert "Rerun commands: `.\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py" in league_intake
     assert "approval_state_change=false" in league_intake
     league_intake_rows = list(csv.DictReader(Path("render_handoff_top_packet/manual_league_mark_context_intake.csv").open(encoding="utf-8")))
     assert len(league_intake_rows) == 1
     assert league_intake_rows[0]["entity_name"] == "WNBA"
     assert league_intake_rows[0]["manual_intake_files"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
+    assert "wnba_team_logo_contact_sheet.md" in league_intake_rows[0]["companion_artifacts"]
+    assert "generate_hsd_operator_command_center_v2.py" in league_intake_rows[0]["rerun_commands"]
     assert league_intake_rows[0]["approval_state_change"] == "false"
     assert league_intake_rows[0]["asset_downloads"] == "false"
     active_queue_rows = list(csv.DictReader(Path("render_handoff_top_packet/active_asset_review_queue.csv").open(encoding="utf-8")))

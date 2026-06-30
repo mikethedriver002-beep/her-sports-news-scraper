@@ -246,6 +246,9 @@ MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS = [
     "manual_review_packet",
     "operator_copy_target",
     "required_manual_checks",
+    "operator_next_actions",
+    "companion_artifacts",
+    "rerun_commands",
     "allowed_manual_outcomes",
     "cannot_clear_automatically_because",
     "review_only",
@@ -279,6 +282,9 @@ MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS = [
     "manual_review_packet",
     "operator_copy_target",
     "required_manual_checks",
+    "operator_next_actions",
+    "companion_artifacts",
+    "rerun_commands",
     "allowed_manual_outcomes",
     "template_requirement_rule",
     "cannot_clear_automatically_because",
@@ -814,6 +820,7 @@ ARTIFACTS = [
     ("Graphics", "WNBA team logo contact sheet data", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv"),
     ("Graphics", "WNBA team logo review intake", "data/asset_registry/wnba/wnba_team_logo_review_intake.csv"),
     ("Graphics", "WNBA team logo contact sheet manifest", "data/asset_registry/wnba/wnba_team_logo_contact_sheet.json"),
+    ("Graphics", "WNBA league mark review intake", "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"),
     ("Graphics", "Women's soccer logo contact sheet", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.md"),
     ("Graphics", "Women's soccer logo contact sheet image", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.png"),
     ("Graphics", "Women's soccer logo contact sheet data", "data/asset_registry/womens_soccer/womens_soccer_logo_contact_sheet.csv"),
@@ -6784,16 +6791,31 @@ def manual_logo_verification_intake_rows(source_board_rows: List[Dict[str, str]]
             "current_unapproved_status": clean(row.get("manual_approval_status")) or "unapproved_review_required",
             "source_policy_status": clean(row.get("source_policy_status")) or clean(row.get("evidence_gap_status")),
             "evidence_gap_status": clean(row.get("evidence_gap_status")),
-            "manual_intake_files": "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv",
+            "manual_intake_files": "data/asset_registry/wnba/wnba_team_logo_review_intake.csv",
             "manual_intake_files_detail": (
-                "Human operator verifies the local logo against the official source, then manually edits "
-                "team_logos.csv approval fields and logo_sources.csv source metadata if evidence supports it."
+                "Human operator inspects the WNBA logo contact sheet and records review-only logo/source readiness "
+                "answers in wnba_team_logo_review_intake.csv. Registry edits remain a separate manual follow-up."
             ),
             "manual_review_packet": clean(row.get("manual_review_packet")) or "data/asset_registry/wnba/logo_review_catalog_report.md",
             "operator_copy_target": clean(row.get("operator_copy_target")) or "operator/assets/brand_logos/README.md",
             "required_manual_checks": (
-                "confirm exact local logo path exists; compare logo to official Liberty/WNBA source; confirm current "
-                "legacy registry source; decide whether manual registry edit is justified"
+                "open the WNBA team logo contact sheet; inspect the local logo and source row; answer source/logo "
+                "readiness questions in the WNBA team logo review intake CSV; keep decisions review-only"
+            ),
+            "operator_next_actions": (
+                "inspect data/asset_registry/wnba/wnba_team_logo_contact_sheet.md; fill only human-reviewed fields in "
+                "data/asset_registry/wnba/wnba_team_logo_review_intake.csv; rerun the WNBA asset registry validator, "
+                "WNBA logo contact sheet generator, and Command Center refresh"
+            ),
+            "companion_artifacts": (
+                "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md|"
+                "data/asset_registry/wnba/wnba_team_logo_contact_sheet.csv|"
+                "data/asset_registry/wnba/logo_review_packets.csv"
+            ),
+            "rerun_commands": (
+                ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py | "
+                ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py | "
+                ".\\.venv\\Scripts\\python.exe generate_hsd_operator_command_center_v2.py"
             ),
             "allowed_manual_outcomes": "hold_logo_slot|revise_logo_source_metadata|human_edit_registry_after_review",
             "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because")),
@@ -6845,8 +6867,23 @@ def manual_league_mark_context_intake_rows(source_board_rows: List[Dict[str, str
             "manual_review_packet": clean(row.get("manual_review_packet")) or "data/asset_registry/wnba/logo_review_catalog_report.md",
             "operator_copy_target": clean(row.get("operator_copy_target")) or "operator/assets/brand_logos/README.md",
             "required_manual_checks": (
-                "confirm the selected template actually requires a league mark; if yes, verify an exact local WNBA "
-                "mark path and official/free source evidence before any later registry edit"
+                "confirm whether the selected template explicitly requires a league mark; if not, mark it as context "
+                "only; if yes, verify exact local WNBA mark path and official/free source evidence before any later registry edit"
+            ),
+            "operator_next_actions": (
+                "inspect data/asset_registry/wnba/logo_review_catalog_report.md for league-mark context; answer "
+                "league-mark readiness questions in data/asset_registry/wnba/wnba_league_mark_review_intake.csv; "
+                "rerun the WNBA asset registry validator, WNBA logo contact sheet generator, and Command Center refresh"
+            ),
+            "companion_artifacts": (
+                "data/asset_registry/wnba/logo_review_catalog_report.md|"
+                "data/asset_registry/wnba/logo_review_packets.csv|"
+                "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md"
+            ),
+            "rerun_commands": (
+                ".\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py | "
+                ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py | "
+                ".\\.venv\\Scripts\\python.exe generate_hsd_operator_command_center_v2.py"
             ),
             "allowed_manual_outcomes": (
                 "verify_league_mark_for_review_only_renderer_use|hold_league_mark|"
@@ -7107,7 +7144,9 @@ def render_manual_logo_verification_intake(packet: Dict[str, str] | None, rows: 
         "## Summary",
         "",
         f"- Intake bridge rows: {len(rows)}",
-        "- Human-edited intake files: `data/asset_registry/wnba/team_logos.csv`; `data/asset_registry/wnba/logo_sources.csv`",
+        "- Human-edited intake file: `data/asset_registry/wnba/wnba_team_logo_review_intake.csv`",
+        "- Companion review artifacts: `data/asset_registry/wnba/wnba_team_logo_contact_sheet.md`; `data/asset_registry/wnba/logo_review_packets.csv`",
+        "- Rerun after manual review: `.\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py`; `.\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py`; `.\\.venv\\Scripts\\python.exe generate_hsd_operator_command_center_v2.py`",
         "- Use this as review guidance only. The operator must make any registry edits manually after source review.",
         "",
         "## Rows",
@@ -7129,6 +7168,9 @@ def render_manual_logo_verification_intake(packet: Dict[str, str] | None, rows: 
             f"- Manual review packet: `{clean(row.get('manual_review_packet'))}`",
             f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`",
             f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
+            f"- Operator next actions: {clean(row.get('operator_next_actions'))}",
+            f"- Companion artifacts: `{clean(row.get('companion_artifacts'))}`",
+            f"- Rerun commands: `{clean(row.get('rerun_commands'))}`",
             f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
             f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
             f"- Guardrails: review_only={clean(row.get('review_only'))}; approval_state_change={clean(row.get('approval_state_change'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}; publishing={clean(row.get('publishing'))}",
@@ -7167,7 +7209,9 @@ def render_manual_league_mark_context_intake(packet: Dict[str, str] | None, rows
         "",
         f"- Intake bridge rows: {len(rows)}",
         "- Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`",
+        "- Companion review artifacts: `data/asset_registry/wnba/logo_review_catalog_report.md`; `data/asset_registry/wnba/logo_review_packets.csv`; `data/asset_registry/wnba/wnba_team_logo_contact_sheet.md`",
         "- Selected-template rule: keep WNBA league mark optional/non-blocking unless the selected template explicitly requires it.",
+        "- Rerun after manual review: `.\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py`; `.\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py`; `.\\.venv\\Scripts\\python.exe generate_hsd_operator_command_center_v2.py`",
         "- Use this as review guidance only. The operator must make any registry edits manually after source and local-file review.",
         "",
         "## Rows",
@@ -7190,6 +7234,9 @@ def render_manual_league_mark_context_intake(packet: Dict[str, str] | None, rows
             f"- Manual review packet: `{clean(row.get('manual_review_packet'))}`",
             f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`",
             f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
+            f"- Operator next actions: {clean(row.get('operator_next_actions'))}",
+            f"- Companion artifacts: `{clean(row.get('companion_artifacts'))}`",
+            f"- Rerun commands: `{clean(row.get('rerun_commands'))}`",
             f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
             f"- Template requirement rule: `{clean(row.get('template_requirement_rule'))}`",
             f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
@@ -9491,9 +9538,13 @@ def render_manual_logo_verification_intake_cards(rows: Iterable[Dict[str, str]])
                 <div><span>Human-edited files</span><strong>{html.escape(short(clean(row.get('manual_intake_files')), 160))}</strong></div>
               </div>
               <p class="muted"><strong>Required manual checks:</strong> {html.escape(short(clean(row.get('required_manual_checks')), 220))}</p>
+              <p class="muted"><strong>Operator next actions:</strong> {html.escape(short(clean(row.get('operator_next_actions')), 260))}</p>
+              <p class="muted"><strong>Rerun commands:</strong> {html.escape(short(clean(row.get('rerun_commands')), 260))}</p>
               <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')), 220))}</p>
               <div class="asset-blocker-actions">
                 {intake_link}
+                {open_link('data/asset_registry/wnba/wnba_team_logo_contact_sheet.md', 'Open contact sheet')}
+                {open_link('data/asset_registry/wnba/wnba_team_logo_review_intake.csv', 'Open team intake CSV')}
                 {open_link(clean(row.get('manual_review_packet')) or 'data/asset_registry/wnba/logo_review_catalog_report.md', 'Open review packet')}
                 {pill('no downloads')}
                 {pill('no auto-approval')}
@@ -9510,7 +9561,7 @@ def render_manual_logo_verification_intake_panel(rows: Iterable[Dict[str, str]])
     return f"""
       <div class="decision-desk-section">
         <div class="row-kicker">Manual Logo Verification Intake Bridge {pill(str(len(intake_rows)) + ' rows')} {pill('review-only')} {pill('approval change: false')}</div>
-        <p class="muted">Human verification path for selected-template logo blockers. This only points to exact evidence and human-edited intake files; it does not approve assets or change registry state.</p>
+        <p class="muted">Human verification path for selected-template logo blockers. Inspect the WNBA contact sheet, fill only review-only team-logo intake fields, then rerun the existing validator, contact-sheet generator, and Command Center refresh. This does not approve assets or change registry state.</p>
         <div class="asset-blocker-grid">
           {render_manual_logo_verification_intake_cards(intake_rows)}
         </div>
@@ -9545,9 +9596,13 @@ def render_manual_league_mark_context_intake_cards(rows: Iterable[Dict[str, str]
               </div>
               <p class="muted"><strong>Selected-template rule:</strong> {html.escape(short(clean(row.get('selected_template_blocking_reason')), 220))}</p>
               <p class="muted"><strong>Required manual checks:</strong> {html.escape(short(clean(row.get('required_manual_checks')), 220))}</p>
+              <p class="muted"><strong>Operator next actions:</strong> {html.escape(short(clean(row.get('operator_next_actions')), 260))}</p>
+              <p class="muted"><strong>Rerun commands:</strong> {html.escape(short(clean(row.get('rerun_commands')), 260))}</p>
               <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')), 220))}</p>
               <div class="asset-blocker-actions">
                 {intake_link}
+                {open_link('data/asset_registry/wnba/wnba_league_mark_review_intake.csv', 'Open league intake CSV')}
+                {open_link('data/asset_registry/wnba/wnba_team_logo_contact_sheet.md', 'Open contact sheet')}
                 {open_link(clean(row.get('manual_review_packet')) or 'data/asset_registry/wnba/logo_review_catalog_report.md', 'Open logo catalog')}
                 {pill('no downloads')}
                 {pill('no auto-approval')}
@@ -9564,7 +9619,7 @@ def render_manual_league_mark_context_intake_panel(rows: Iterable[Dict[str, str]
     return f"""
       <div class="decision-desk-section">
         <div class="row-kicker">Manual League-Mark Context Intake {pill(str(len(intake_rows)) + ' rows')} {pill('optional unless required')} {pill('approval change: false')}</div>
-        <p class="muted">Human review path for WNBA league-mark context. If a selected template does not require a league mark, this remains non-blocking review-only context.</p>
+        <p class="muted">Human review path for WNBA league-mark context. If a selected template does not require a league mark, this remains non-blocking review-only context; fill only the manual intake CSV and rerun the existing WNBA validator/contact-sheet/Command Center refresh.</p>
         <div class="asset-blocker-grid">
           {render_manual_league_mark_context_intake_cards(intake_rows)}
         </div>
@@ -13247,10 +13302,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Intake bridge rows: {len(logo_intake)}",
         "- Artifact: `render_handoff_top_packet/manual_logo_verification_intake.md`",
         "- Data: `render_handoff_top_packet/manual_logo_verification_intake.csv`",
+        "- Human-edited intake file: `data/asset_registry/wnba/wnba_team_logo_review_intake.csv`",
+        "- Operator next action: inspect the WNBA team logo contact sheet and intake CSV, answer source/logo readiness questions, keep manual decisions review-only, then rerun the validator/contact-sheet generator and Command Center refresh.",
         "- Guardrails: review-only, approval_state_change=false, no downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
-        f"- Logo intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_logo_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_legacy_source={item.get('current_legacy_registry_source') or 'missing'} | status={item.get('current_unapproved_status') or 'manual_review_required'} | human_files={item.get('manual_intake_files')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
+        f"- Logo intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_logo_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_legacy_source={item.get('current_legacy_registry_source') or 'missing'} | status={item.get('current_unapproved_status') or 'manual_review_required'} | human_files={item.get('manual_intake_files')} | next={item.get('operator_next_actions')} | rerun={item.get('rerun_commands')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
         for item in logo_intake[:8]
     )
     league_mark_intake = payload.get("manual_league_mark_context_intake", [])
@@ -13263,10 +13320,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         "- Data: `render_handoff_top_packet/manual_league_mark_context_intake.csv`",
         "- Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`",
         "- Selected-template rule: WNBA league mark is optional/non-blocking unless the selected template explicitly requires it.",
+        "- Operator next action: answer league-mark context/readiness questions, keep manual decisions review-only, then rerun the validator/contact-sheet generator and Command Center refresh.",
         "- Guardrails: review-only, approval_state_change=false, no downloads, no auto-approval, no file movement, no publishing, no publish-ready lane.",
     ]
     lines.extend(
-        f"- League-mark intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_league_mark_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_registry_source={item.get('current_registry_source') or 'missing'} | status={item.get('current_approval_status') or 'manual_review_required'} | template_rule={item.get('template_requirement_rule')} | human_file={item.get('manual_intake_files')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
+        f"- League-mark intake row: {item.get('entity_name') or item.get('entity_id')} | local={item.get('local_league_mark_path') or 'missing'} | official={item.get('official_source_candidate') or 'manual lookup required'} | current_registry_source={item.get('current_registry_source') or 'missing'} | status={item.get('current_approval_status') or 'manual_review_required'} | template_rule={item.get('template_requirement_rule')} | human_file={item.get('manual_intake_files')} | next={item.get('operator_next_actions')} | rerun={item.get('rerun_commands')} | approval_change={item.get('approval_state_change')} | downloads={item.get('asset_downloads')} | publish_ready={item.get('publish_ready')}"
         for item in league_mark_intake[:8]
     )
     athlete_photo_panel = payload["athlete_photo_onboarding_panel"]
