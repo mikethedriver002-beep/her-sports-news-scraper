@@ -76,6 +76,32 @@ def test_command_center_links_breaking_public_signal_artifacts() -> None:
     assert "story_proof_card_v1.json" in artifact_paths
 
 
+def test_visual_qa_cues_warn_on_action_photo_risk_after_display_truncation() -> None:
+    padding = " ".join(["editorial-context"] * 30)
+    qa = {
+        "checks": [
+            {
+                "check_id": "action_photo_readiness_review",
+                "check_label": "Action-photo readiness review cue",
+                "qa_result": "pass_human_review_required",
+                "passed": True,
+                "evidence": (
+                    f"final_score_context=True; {padding}; "
+                    "candidate_status=not_available_to_renderer; "
+                    "premium final-score editorial needs a manually cleared action-photo candidate."
+                ),
+            }
+        ]
+    }
+
+    cue = command_center.build_visual_qa_cues(qa)[0]
+
+    assert cue["label"] == "Action-photo readiness"
+    assert cue["tone"] == "warn"
+    assert "not_available_to_renderer" not in cue["evidence"]
+    assert cue["evidence"].endswith("...")
+
+
 def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     seed_daily_ops_files()
