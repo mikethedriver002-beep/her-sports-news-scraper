@@ -4788,7 +4788,7 @@ def action_photo_quarantine_preflight_rows(return_rows: List[Mapping[str, str]])
             and normalized["publish_ready"] == "false"
         )
         if ready:
-            manual_next_action = "Ready for a human download_approved=yes decision; do not download until a human edits approval fields and keeps quarantine target."
+            manual_next_action = "Ready for a later human quarantine-download decision; do not download unless Mike separately records a quarantine-only approval in the intake and keeps the quarantine target."
         elif not pasted:
             manual_next_action = "Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight."
         else:
@@ -4895,7 +4895,7 @@ def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issu
         "",
         f"Generated: `{generated_at}`",
         "",
-        "Preflight board for manually researched action-photo URL/evidence rows. This tells Mike which rows are ready for a human `download_approved=yes` decision under the local-download law. It does not download files, approve assets, write headshots, create `.approved` markers, move files to publish-ready lanes, or publish.",
+        "Preflight board for manually researched action-photo URL/evidence rows. This tells Mike which rows are ready for a later human quarantine-download decision under the local-download law. It does not download files, approve assets, write headshots, create `.approved` markers, move files to publish-ready lanes, or publish.",
         "",
         "## Summary",
         "",
@@ -4903,7 +4903,7 @@ def render_action_photo_quarantine_preflight(rows: List[Mapping[str, str]], issu
         f"- Ready for human download decision: `{len(ready_rows)}`",
         f"- Lead-only / research return missing: `{len(lead_rows)}`",
         f"- Validation issues: `{len(issues)}`",
-        f"- Rows with `download_approved=yes`: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
+        f"- Rows with human quarantine-download approval recorded: `{sum(1 for row in rows if clean(row.get('download_approved')) == 'yes')}`",
         f"- Review-only rows: `{sum(1 for row in rows if clean(row.get('review_only')) == 'true')}`",
         f"- Publish-ready rows: `{sum(1 for row in rows if clean(row.get('publish_ready')) == 'true')}`",
         "",

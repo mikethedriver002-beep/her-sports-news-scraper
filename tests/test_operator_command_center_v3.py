@@ -266,9 +266,6 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json",
-        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
-        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
-        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv",
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json",
@@ -295,6 +292,17 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         assert path in artifact_paths
         assert path in mirrored_paths
         assert command_center.RUN_COMMANDS[path] == command
+
+    quarantine_preflight_command = ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py"
+    quarantine_preflight_paths = {
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json",
+    }
+    for path in quarantine_preflight_paths:
+        assert path in artifact_paths
+        assert path in mirrored_paths
+        assert command_center.RUN_COMMANDS[path] == quarantine_preflight_command
 
     import_review_command = ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
     import_review_paths = {
@@ -6858,6 +6866,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"

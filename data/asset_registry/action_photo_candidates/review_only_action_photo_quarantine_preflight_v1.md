@@ -1,16 +1,16 @@
 # Review-Only Action Photo Quarantine Preflight v1
 
-Generated: `2026-06-28T00:00:00+00:00`
+Generated: `2026-06-30T00:00:00+00:00`
 
-Preflight board for manually researched action-photo URL/evidence rows. This tells Mike which rows are ready for a human `download_approved=yes` decision under the local-download law. It does not download files, approve assets, write headshots, create `.approved` markers, move files to publish-ready lanes, or publish.
+Preflight board for manually researched action-photo URL/evidence rows. This tells Mike which rows are ready for a later human quarantine-download decision under the local-download law. It does not download files, approve assets, write headshots, create `.approved` markers, move files to publish-ready lanes, or publish.
 
 ## Summary
 
 - Preflight rows: `10`
-- Ready for human download decision: `0`
-- Lead-only / research return missing: `10`
+- Ready for human download decision: `1`
+- Lead-only / research return missing: `9`
 - Validation issues: `0`
-- Rows with `download_approved=yes`: `0`
+- Rows with human quarantine-download approval recorded: `0`
 - Review-only rows: `10`
 - Publish-ready rows: `0`
 
@@ -26,20 +26,20 @@ Preflight board for manually researched action-photo URL/evidence rows. This tel
 
 ## Missing Field Counts
 
-- `candidate_photo_url`: `10`
-- `entity_id`: `10`
-- `evidence_url`: `10`
-- `identity_anchor_url`: `10`
-- `identity_confidence`: `10`
-- `intended_review_only_use`: `10`
-- `rights_class`: `10`
-- `source_url`: `10`
+- `candidate_photo_url`: `9`
+- `entity_id`: `9`
+- `evidence_url`: `9`
+- `identity_anchor_url`: `9`
+- `identity_confidence`: `9`
+- `intended_review_only_use`: `9`
+- `rights_class`: `9`
+- `source_url`: `9`
 
 ## Queue Preview
 
 | Preflight ID | Queue ID | Ready? | Lead Status | Action Status | Identity Status | Missing Fields | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| APQP001 | APQ001 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |
+| APQP001 | APQ001 | yes | research_return_pasted_preflight_only | action_photo_candidate | identity_ready_for_human_review | `` | Ready for a later human quarantine-download decision; do not download unless Mike separately records a quarantine-only approval in the intake and keeps the quarantine target. |
 | APQP002 | APQ002 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |
 | APQP003 | APQ003 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |
 | APQP004 | APQ004 | no | lead_only_research_return_missing | missing_candidate_photo_url | identity_missing | `source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|candidate_photo_url|evidence_url|identity_anchor_url` | Run the research bundle, paste URL/evidence rows into the return intake, then regenerate this preflight. |

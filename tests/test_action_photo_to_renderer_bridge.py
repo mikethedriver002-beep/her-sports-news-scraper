@@ -266,6 +266,74 @@ def test_to_renderer_bridge_rolls_up_action_photo_blockers_without_side_effects(
     assert "Start with APQ001/APER001" in markdown
 
 
+def test_to_renderer_bridge_prefers_human_ready_preflight_row(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path))
+    seed_bridge_inputs(tmp_path)
+    module = load_module()
+    action_root = tmp_path / "data/asset_registry/action_photo_candidates"
+    write_json(
+        action_root / "review_only_action_photo_research_return_import_review_v1.json",
+        {
+            "status": "action_photo_research_return_import_review_ready",
+            "import_review_rows": 10,
+            "rows_with_research_return_data": 1,
+            "ready_for_later_human_download_decision_review_rows": 1,
+            "generated_download_approved_yes_rows": 0,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+        },
+    )
+    write_json(
+        action_root / "review_only_action_photo_quarantine_preflight_v1.json",
+        {
+            "status": "action_photo_quarantine_preflight_ready",
+            "preflight_rows": 10,
+            "ready_for_human_download_decision_rows": 1,
+            "lead_only_rows": 9,
+            "download_approved_yes_rows": 0,
+            "missing_required_field_counts": {"source_url": 9},
+            "review_only": True,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
+    write_csv(
+        action_root / "review_only_action_photo_quarantine_preflight_v1.csv",
+        [
+            {
+                "preflight_id": "APQP001",
+                "candidate_queue_id": "APQ001",
+                "candidate_photo_url": "https://fever.wnba.com/news/action-photo-page",
+                "ready_for_human_download_decision": "yes",
+            }
+        ],
+        ["preflight_id", "candidate_queue_id", "candidate_photo_url", "ready_for_human_download_decision"],
+    )
+
+    assert module.main() == 0
+
+    root = tmp_path / "data/asset_registry/action_photo_candidates"
+    manifest = json.loads((root / "review_only_action_photo_to_renderer_bridge_v1.json").read_text(encoding="utf-8"))
+
+    assert manifest["import_rows_with_data"] == 1
+    assert manifest["import_ready_rows"] == 1
+    assert manifest["quarantine_ready_rows"] == 1
+    assert manifest["quarantine_lead_only_rows"] == 9
+    assert manifest["download_approved_yes_rows"] == 0
+    assert manifest["next_queue_id"] == "APQ001"
+    assert manifest["next_review_id"] == "APQP001"
+    assert manifest["next_candidate_page_url"] == "https://fever.wnba.com/news/action-photo-page"
+    assert "shared_return_intake_has_no_human_pasted_rows" not in manifest["blocking_reasons"]
+    assert "external_return_direct_image_url_holds" not in manifest["blocking_reasons"]
+    assert "no_human_download_approved_rows" in manifest["blocking_reasons"]
+    assert "separate human quarantine-download decision" in manifest["bridge_rows_detail"][0]["next_manual_action"]
+
+
 def test_to_renderer_bridge_validator_blocks_guardrail_drift() -> None:
     module = load_module()
     row = {

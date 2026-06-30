@@ -20,6 +20,7 @@ MANUAL_BRIDGE_JSON = ROOT / "review_only_action_photo_manual_research_bridge_v1.
 RENDERER_TRIAGE_JSON = ROOT / "review_only_action_photo_renderer_unblock_manual_return_triage_v1.json"
 RENDERER_TRIAGE_CSV = ROOT / "review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv"
 QUARANTINE_PREFLIGHT_JSON = ROOT / "review_only_action_photo_quarantine_preflight_v1.json"
+QUARANTINE_PREFLIGHT_CSV = ROOT / "review_only_action_photo_quarantine_preflight_v1.csv"
 HANDOFF_MANIFEST_JSON = Path("render_handoff_top_packet/handoff_manifest.json")
 LATEST_HANDOFF_MANIFEST_JSON = Path("outputs/local/latest/files/render_handoff_top_packet/handoff_manifest.json")
 OUT_MD = ROOT / "review_only_action_photo_to_renderer_bridge_v1.md"
@@ -112,6 +113,13 @@ def first_triage_row(rows: List[Mapping[str, str]]) -> Mapping[str, str]:
     return rows[0] if rows else {}
 
 
+def first_ready_preflight_row(rows: List[Mapping[str, str]]) -> Mapping[str, str]:
+    for row in rows:
+        if clean(row.get("ready_for_human_download_decision")) == "yes":
+            return row
+    return {}
+
+
 def handoff_packet(manifest: Mapping[str, Any]) -> Mapping[str, Any]:
     packet = manifest.get("packet")
     return packet if isinstance(packet, dict) else {}
@@ -130,11 +138,12 @@ def bridge_blocking_reasons(
     hero_asset_required: str,
 ) -> List[str]:
     reasons: List[str] = []
-    if external_missing_rows:
+    external_holds_are_active = quarantine_ready_rows == 0 and import_ready_rows == 0
+    if external_holds_are_active and external_missing_rows:
         reasons.append("external_return_missing_rows")
-    if external_direct_image_hold_rows:
+    if external_holds_are_active and external_direct_image_hold_rows:
         reasons.append("external_return_direct_image_url_holds")
-    if external_identity_vocab_mismatch_rows:
+    if external_holds_are_active and external_identity_vocab_mismatch_rows:
         reasons.append("external_return_identity_vocabulary_holds")
     if import_rows_with_data == 0:
         reasons.append("shared_return_intake_has_no_human_pasted_rows")
@@ -171,8 +180,10 @@ def bridge_row() -> Dict[str, str]:
     packet = handoff_packet(handoff_manifest)
     external_rows = read_csv(EXTERNAL_REVIEW_CSV)
     triage_rows = read_csv(RENDERER_TRIAGE_CSV)
+    preflight_rows = read_csv(QUARANTINE_PREFLIGHT_CSV)
     external_first = first_external_review_row(external_rows)
     triage_first = first_triage_row(triage_rows)
+    preflight_ready_first = first_ready_preflight_row(preflight_rows)
 
     external_missing_rows = as_int(external_manifest.get("missing_external_return_rows"))
     external_direct_image_hold_rows = as_int(external_manifest.get("direct_image_url_hold_rows"))
@@ -197,11 +208,16 @@ def bridge_row() -> Dict[str, str]:
         hero_asset_required=hero_asset_required,
     )
     renderer_unblocked = not blocking_reasons
-    first_queue_id = clean(external_first.get("candidate_queue_id")) or clean(triage_first.get("card_id"))
-    first_review_id = clean(external_first.get("review_id")) or clean(triage_first.get("triage_id"))
-    first_url = clean(external_first.get("normalized_candidate_page_url")) or clean(triage_first.get("manual_source_lead"))
-    next_action = clean(external_first.get("manual_next_action")) or clean(triage_first.get("manual_next_action"))
-    if first_queue_id:
+    first_queue_id = clean(preflight_ready_first.get("candidate_queue_id")) or clean(external_first.get("candidate_queue_id")) or clean(triage_first.get("card_id"))
+    first_review_id = clean(preflight_ready_first.get("preflight_id")) or clean(external_first.get("review_id")) or clean(triage_first.get("triage_id"))
+    first_url = clean(preflight_ready_first.get("candidate_photo_url")) or clean(external_first.get("normalized_candidate_page_url")) or clean(triage_first.get("manual_source_lead"))
+    if preflight_ready_first:
+        next_action = (
+            f"{first_queue_id}/{first_review_id} now has human-reviewed source, identity, rights, action-context, and use metadata. "
+            "Next step is a separate human quarantine-download decision; keep download_approved=no until Mike explicitly edits the intake for quarantine-only download review."
+        )
+    elif first_queue_id:
+        next_action = clean(external_first.get("manual_next_action")) or clean(triage_first.get("manual_next_action"))
         next_action = (
             f"Start with {first_queue_id}/{first_review_id}: {next_action} "
             "Then paste the human-reviewed source, identity, rights, action-context, and use metadata into the shared return intake; "
