@@ -130,6 +130,8 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert "missing_official_url" in html
     assert "operator_decision, operator_notes" in html
     assert "operator_found_official_url" in html
+    assert "operator_confirmed_at_utc" in html
+    assert "operator_confidence" not in html
     assert "breaking_public_signal_confirmation_intake.csv" in markdown
 
     command_center.write_outputs(payload)
@@ -138,6 +140,8 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     manifest = json.loads(Path("operator_next_action_synthesis.json").read_text(encoding="utf-8"))
     synthesis_md = Path("operator_next_action_synthesis.md").read_text(encoding="utf-8")
     assert len(csv_rows) == 6
+    breaking_row = next(row for row in csv_rows if row["lane"] == "Breaking/public-signal returns")
+    assert breaking_row["operator_return_fields"] == "operator_checked_url, operator_confirmation_result, operator_confirmed_at_utc, operator_notes"
     assert manifest["guardrails"]["automatic_downloads"] is False
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["counts"]["ready_to_open"] == 6

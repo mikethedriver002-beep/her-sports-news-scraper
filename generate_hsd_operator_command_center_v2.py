@@ -8153,7 +8153,7 @@ def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
             "Use the breaking/public-signal next-action board to choose rows, then paste manual confirmation details into the confirmation intake.",
             "breaking_public_signal_next_action_v1.md",
             "breaking_public_signal_confirmation_intake.csv",
-            "operator_checked_url, operator_confirmation_result, operator_confidence, operator_notes",
+            "operator_checked_url, operator_confirmation_result, operator_confirmed_at_utc, operator_notes",
             guardrail,
         ),
         next_action_synthesis_row(
