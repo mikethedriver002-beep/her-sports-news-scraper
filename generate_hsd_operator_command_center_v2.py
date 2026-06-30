@@ -378,6 +378,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json",
@@ -863,6 +866,9 @@ ARTIFACTS = [
     ("Graphics", "Action-photo research return import review", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md"),
     ("Graphics", "Action-photo research return import review data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv"),
     ("Graphics", "Action-photo research return import review manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json"),
+    ("Graphics", "Action-photo external research return review", "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md"),
+    ("Graphics", "Action-photo external research return review data", "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv"),
+    ("Graphics", "Action-photo external research return review manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json"),
     ("Graphics", "Action-photo manual research bridge", "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md"),
     ("Graphics", "Action-photo manual research bridge data", "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv"),
     ("Graphics", "Action-photo manual research bridge manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json"),
@@ -1168,6 +1174,9 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_external_research_return_review_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py",
@@ -2194,6 +2203,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_operator_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_candidate_operator_worksheet_v1.json")
     action_photo_research_return_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.json")
     action_photo_research_return_import_review_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json")
+    action_photo_external_research_return_review_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json")
     action_photo_manual_research_bridge_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json")
     action_photo_manual_first_action_cards_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.json")
     action_photo_manual_return_evidence_checklist_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.json")
@@ -2349,6 +2359,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         action_photo_research_return_import_review_rows,
         RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md"],
         context="action-photo research return import review",
+    )
+    action_photo_external_research_return_review_rows = as_int(action_photo_external_research_return_review_manifest.get("review_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0
+    action_photo_external_research_return_review_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md",
+        action_photo_external_research_return_review_rows,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md"],
+        context="action-photo external research return review",
     )
     action_photo_manual_research_bridge_rows = as_int(action_photo_manual_research_bridge_manifest.get("bridge_rows")) if isinstance(action_photo_manual_research_bridge_manifest, dict) else 0
     action_photo_manual_research_bridge_cue = packet_freshness_cue(
@@ -2848,6 +2865,20 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_research_return_import_review_asset_downloads": bool(action_photo_research_return_import_review_manifest.get("asset_downloads")) if isinstance(action_photo_research_return_import_review_manifest, dict) else False,
         "action_photo_research_return_import_review_headshot_writes": bool(action_photo_research_return_import_review_manifest.get("headshot_writes")) if isinstance(action_photo_research_return_import_review_manifest, dict) else False,
         "action_photo_research_return_import_review_approved_marker_writes": bool(action_photo_research_return_import_review_manifest.get("approved_marker_writes")) if isinstance(action_photo_research_return_import_review_manifest, dict) else False,
+        "action_photo_external_research_return_review_status": clean(action_photo_external_research_return_review_manifest.get("status")) if isinstance(action_photo_external_research_return_review_manifest, dict) else "",
+        "action_photo_external_research_return_review_generated_at": clean(action_photo_external_research_return_review_manifest.get("generated_at_utc")) if isinstance(action_photo_external_research_return_review_manifest, dict) else "",
+        "action_photo_external_research_return_review_rows": action_photo_external_research_return_review_rows,
+        "action_photo_external_research_return_review_returned_rows": as_int(action_photo_external_research_return_review_manifest.get("external_return_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0,
+        "action_photo_external_research_return_review_missing_rows": as_int(action_photo_external_research_return_review_manifest.get("missing_external_return_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0,
+        "action_photo_external_research_return_review_direct_image_hold_rows": as_int(action_photo_external_research_return_review_manifest.get("direct_image_url_hold_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0,
+        "action_photo_external_research_return_review_identity_vocab_mismatch_rows": as_int(action_photo_external_research_return_review_manifest.get("identity_vocabulary_mismatch_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0,
+        "action_photo_external_research_return_review_ready_rows": as_int(action_photo_external_research_return_review_manifest.get("ready_for_later_human_download_decision_review_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0,
+        "action_photo_external_research_return_review_generated_download_approval_rows": as_int(action_photo_external_research_return_review_manifest.get("generated_download_approval_rows")) if isinstance(action_photo_external_research_return_review_manifest, dict) else 0,
+        "action_photo_external_research_return_review_source_fetching": bool(action_photo_external_research_return_review_manifest.get("source_fetching")) if isinstance(action_photo_external_research_return_review_manifest, dict) else False,
+        "action_photo_external_research_return_review_auto_source_enablement": bool(action_photo_external_research_return_review_manifest.get("auto_source_enablement")) if isinstance(action_photo_external_research_return_review_manifest, dict) else False,
+        "action_photo_external_research_return_review_asset_downloads": bool(action_photo_external_research_return_review_manifest.get("asset_downloads")) if isinstance(action_photo_external_research_return_review_manifest, dict) else False,
+        "action_photo_external_research_return_review_headshot_writes": bool(action_photo_external_research_return_review_manifest.get("headshot_writes")) if isinstance(action_photo_external_research_return_review_manifest, dict) else False,
+        "action_photo_external_research_return_review_approved_marker_writes": bool(action_photo_external_research_return_review_manifest.get("approved_marker_writes")) if isinstance(action_photo_external_research_return_review_manifest, dict) else False,
         "action_photo_manual_research_bridge_status": clean(action_photo_manual_research_bridge_manifest.get("status")) if isinstance(action_photo_manual_research_bridge_manifest, dict) else "",
         "action_photo_manual_research_bridge_generated_at": clean(action_photo_manual_research_bridge_manifest.get("generated_at_utc")) if isinstance(action_photo_manual_research_bridge_manifest, dict) else "",
         "action_photo_manual_research_bridge_rows": action_photo_manual_research_bridge_rows,
@@ -2967,6 +2998,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_research_return_import_review_freshness_status": action_photo_research_return_import_review_cue["status"],
         "action_photo_research_return_import_review_freshness_detail": action_photo_research_return_import_review_cue["detail"],
         "action_photo_research_return_import_review_refresh_command": action_photo_research_return_import_review_cue["run_command"],
+        "action_photo_external_research_return_review_freshness_status": action_photo_external_research_return_review_cue["status"],
+        "action_photo_external_research_return_review_freshness_detail": action_photo_external_research_return_review_cue["detail"],
+        "action_photo_external_research_return_review_refresh_command": action_photo_external_research_return_review_cue["run_command"],
         "action_photo_manual_research_bridge_freshness_status": action_photo_manual_research_bridge_cue["status"],
         "action_photo_manual_research_bridge_freshness_detail": action_photo_manual_research_bridge_cue["detail"],
         "action_photo_manual_research_bridge_refresh_command": action_photo_manual_research_bridge_cue["run_command"],
@@ -3310,6 +3344,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Action-photo research return import review", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md", "Review-only import summary of human-pasted return rows; generated download_approved stays no and no assets are written."),
             file_shortcut("Action-photo research return import review data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv", "Machine-readable missing-field, human-download-intake cue, and later human decision-review readiness summary."),
             file_shortcut("Action-photo research return import review manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json", "Counts and guardrails for the action-photo research return import review stub."),
+            file_shortcut("Action-photo external research return review", "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.md", "Review-only summary of Mike's supplied external research-return CSV; flags missing APQ rows, direct image URL holds, and identity vocabulary mismatch without writing the shared intake."),
+            file_shortcut("Action-photo external research return review data", "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.csv", "Machine-readable external return review rows; ready/download approval fields remain no."),
+            file_shortcut("Action-photo external research return review manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_return_review_v1.json", "Counts and guardrails for the supplied external research-return review artifact."),
             file_shortcut("Action-photo manual research bridge", "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md", "Two-lane manual bridge from women's soccer and hockey/softball boards to the shared action-photo return intake; review-only and no downloads."),
             file_shortcut("Action-photo manual research bridge data", "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv", "Machine-readable manual first-action cues, source row counts, shared import-review state, and guardrails."),
             file_shortcut("Action-photo manual research bridge manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json", "Counts and guardrails for the action-photo manual research bridge."),
@@ -10421,6 +10458,11 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Import ready review</span><strong>{html.escape(str(panel.get('action_photo_research_return_import_review_ready_rows', 0)))}</strong></div>
             <div><span>Import generated dl</span><strong>{html.escape(str(panel.get('action_photo_research_return_import_review_generated_download_yes_rows', 0)))}</strong></div>
             <div><span>Import fetch/enable</span><strong>{html.escape(str(panel.get('action_photo_research_return_import_review_source_fetching', False)).lower())}/{html.escape(str(panel.get('action_photo_research_return_import_review_auto_source_enablement', False)).lower())}</strong></div>
+            <div><span>External return rows</span><strong>{html.escape(str(panel.get('action_photo_external_research_return_review_returned_rows', 0)))}/{html.escape(str(panel.get('action_photo_external_research_return_review_rows', 0)))}</strong></div>
+            <div><span>External missing APQ</span><strong>{html.escape(str(panel.get('action_photo_external_research_return_review_missing_rows', 0)))}</strong></div>
+            <div><span>External direct holds</span><strong>{html.escape(str(panel.get('action_photo_external_research_return_review_direct_image_hold_rows', 0)))}</strong></div>
+            <div><span>External identity holds</span><strong>{html.escape(str(panel.get('action_photo_external_research_return_review_identity_vocab_mismatch_rows', 0)))}</strong></div>
+            <div><span>External ready/dl</span><strong>{html.escape(str(panel.get('action_photo_external_research_return_review_ready_rows', 0)))}/{html.escape(str(panel.get('action_photo_external_research_return_review_generated_download_approval_rows', 0)))}</strong></div>
             <div><span>Manual bridge lanes</span><strong>{html.escape(str(panel.get('action_photo_manual_research_bridge_rows', 0)))}</strong></div>
             <div><span>Bridge source rows</span><strong>{html.escape(str(panel.get('action_photo_manual_research_bridge_source_rows', 0)))}</strong></div>
             <div><span>Bridge import data</span><strong>{html.escape(str(panel.get('action_photo_manual_research_bridge_import_rows_with_data', 0)))}</strong></div>
@@ -10537,6 +10579,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'womens_soccer_external_research', "Women's soccer external research intake")}
           {packet_freshness_html(panel, 'action_photo_research_run_bundle', "Action-photo research run bundle")}
           {packet_freshness_html(panel, 'action_photo_research_return_import_review', "Action-photo research return import review")}
+          {packet_freshness_html(panel, 'action_photo_external_research_return_review', "Action-photo external research return review")}
           {packet_freshness_html(panel, 'action_photo_manual_research_bridge', "Action-photo manual research bridge")}
           {packet_freshness_html(panel, 'action_photo_manual_first_action_cards', "Action-photo manual first-action cards")}
           {packet_freshness_html(panel, 'action_photo_manual_return_evidence_checklist', "Action-photo manual return evidence checklist")}
@@ -12273,6 +12316,13 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo research return import review source-fetching/auto-source-enable: {asset_panel.get('action_photo_research_return_import_review_source_fetching', False)}/{asset_panel.get('action_photo_research_return_import_review_auto_source_enablement', False)}",
         f"- Action-photo research return import review asset/headshot/marker writes: {asset_panel.get('action_photo_research_return_import_review_asset_downloads', False)}/{asset_panel.get('action_photo_research_return_import_review_headshot_writes', False)}/{asset_panel.get('action_photo_research_return_import_review_approved_marker_writes', False)}",
         f"- Action-photo research return import review generated: {asset_panel.get('action_photo_research_return_import_review_generated_at') or 'missing'}",
+        f"- Action-photo external research return review rows: {asset_panel.get('action_photo_external_research_return_review_rows', 0)}",
+        f"- Action-photo external research return returned/missing rows: {asset_panel.get('action_photo_external_research_return_review_returned_rows', 0)}/{asset_panel.get('action_photo_external_research_return_review_missing_rows', 0)}",
+        f"- Action-photo external research return direct-image/identity holds: {asset_panel.get('action_photo_external_research_return_review_direct_image_hold_rows', 0)}/{asset_panel.get('action_photo_external_research_return_review_identity_vocab_mismatch_rows', 0)}",
+        f"- Action-photo external research return ready/download approvals: {asset_panel.get('action_photo_external_research_return_review_ready_rows', 0)}/{asset_panel.get('action_photo_external_research_return_review_generated_download_approval_rows', 0)}",
+        f"- Action-photo external research return fetch/auto-enable: {asset_panel.get('action_photo_external_research_return_review_source_fetching', False)}/{asset_panel.get('action_photo_external_research_return_review_auto_source_enablement', False)}",
+        f"- Action-photo external research return asset/headshot/marker writes: {asset_panel.get('action_photo_external_research_return_review_asset_downloads', False)}/{asset_panel.get('action_photo_external_research_return_review_headshot_writes', False)}/{asset_panel.get('action_photo_external_research_return_review_approved_marker_writes', False)}",
+        f"- Action-photo external research return generated: {asset_panel.get('action_photo_external_research_return_review_generated_at') or 'missing'}",
         f"- Action-photo manual research bridge lanes: {asset_panel.get('action_photo_manual_research_bridge_rows', 0)}",
         f"- Action-photo manual research bridge source rows: {asset_panel.get('action_photo_manual_research_bridge_source_rows', 0)}",
         f"- Action-photo manual research bridge women's soccer rows: {asset_panel.get('action_photo_manual_research_bridge_womens_soccer_source_rows', 0)}",
@@ -12619,6 +12669,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("action_photo_research_return_import_review_refresh_command"),
             },
             "Action-photo research return import review",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("action_photo_external_research_return_review_freshness_status"),
+                "detail": asset_panel.get("action_photo_external_research_return_review_freshness_detail"),
+                "run_command": asset_panel.get("action_photo_external_research_return_review_refresh_command"),
+            },
+            "Action-photo external research return review",
         ),
         packet_freshness_markdown(
             {
