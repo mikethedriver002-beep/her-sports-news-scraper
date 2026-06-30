@@ -503,6 +503,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/hockey_softball_action_photo_research_handoff.md",
     "data/asset_registry/hockey_softball_action_photo_research_handoff.csv",
     "data/asset_registry/hockey_softball_action_photo_research_handoff.json",
+    "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md",
+    "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv",
+    "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json",
     "data/asset_registry/hockey_softball_source_research_return_intake.md",
     "data/asset_registry/hockey_softball_source_research_return_intake.csv",
     "data/asset_registry/hockey_softball_source_research_return_intake.json",
@@ -951,6 +954,9 @@ ARTIFACTS = [
     ("Graphics", "Hockey/softball action-photo research handoff", "data/asset_registry/hockey_softball_action_photo_research_handoff.md"),
     ("Graphics", "Hockey/softball action-photo research handoff data", "data/asset_registry/hockey_softball_action_photo_research_handoff.csv"),
     ("Graphics", "Hockey/softball action-photo research handoff manifest", "data/asset_registry/hockey_softball_action_photo_research_handoff.json"),
+    ("Graphics", "Hockey/softball action-photo first paste guide", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md"),
+    ("Graphics", "Hockey/softball action-photo first paste guide data", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv"),
+    ("Graphics", "Hockey/softball action-photo first paste guide manifest", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json"),
     ("Graphics", "Hockey/softball source research return intake", "data/asset_registry/hockey_softball_source_research_return_intake.md"),
     ("Graphics", "Hockey/softball source research return data", "data/asset_registry/hockey_softball_source_research_return_intake.csv"),
     ("Graphics", "Hockey/softball source research return manifest", "data/asset_registry/hockey_softball_source_research_return_intake.json"),
@@ -1254,6 +1260,9 @@ RUN_COMMANDS = {
     "data/asset_registry/hockey_softball_action_photo_research_handoff.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_action_photo_research_handoff.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_action_photo_research_handoff.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_research_return_intake.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_research_return_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_research_return_intake.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
@@ -2196,6 +2205,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     hockey_softball_intake_readiness_manifest = read_json("data/asset_registry/hockey_softball_intake_readiness_summary.json")
     hockey_softball_source_map_manifest = read_json("data/asset_registry/hockey_softball_source_map_board.json")
     hockey_softball_action_photo_handoff_manifest = read_json("data/asset_registry/hockey_softball_action_photo_research_handoff.json")
+    hockey_softball_action_photo_first_paste_manifest = read_json("data/asset_registry/hockey_softball_action_photo_first_paste_guide.json")
     hockey_softball_source_research_return_manifest = read_json("data/asset_registry/hockey_softball_source_research_return_intake.json")
     hockey_softball_review_triage_manifest = read_json("data/asset_registry/hockey_softball_asset_review_triage.json")
     hockey_softball_asset_readiness_manifest = read_json("data/asset_registry/hockey_softball_asset_review_readiness_board.json")
@@ -2469,6 +2479,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         hockey_softball_action_photo_handoff_rows,
         RUN_COMMANDS["data/asset_registry/hockey_softball_action_photo_research_handoff.md"],
         context="hockey/softball action-photo research handoff",
+    )
+    hockey_softball_action_photo_first_paste_rows = as_int(hockey_softball_action_photo_first_paste_manifest.get("rows")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else 0
+    hockey_softball_action_photo_first_paste_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md",
+        hockey_softball_action_photo_first_paste_rows,
+        RUN_COMMANDS["data/asset_registry/hockey_softball_action_photo_first_paste_guide.md"],
+        context="hockey/softball action-photo first paste guide",
     )
     hockey_softball_source_research_return_rows = as_int(hockey_softball_source_research_return_manifest.get("rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0
     hockey_softball_source_research_return_cue = packet_freshness_cue(
@@ -3004,6 +3021,17 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_action_photo_handoff_asset_downloads": bool(hockey_softball_action_photo_handoff_manifest.get("asset_downloads")) if isinstance(hockey_softball_action_photo_handoff_manifest, dict) else False,
         "hockey_softball_action_photo_handoff_headshot_writes": bool(hockey_softball_action_photo_handoff_manifest.get("headshot_writes")) if isinstance(hockey_softball_action_photo_handoff_manifest, dict) else False,
         "hockey_softball_action_photo_handoff_approved_marker_writes": bool(hockey_softball_action_photo_handoff_manifest.get("approved_marker_writes")) if isinstance(hockey_softball_action_photo_handoff_manifest, dict) else False,
+        "hockey_softball_action_photo_first_paste_status": clean(hockey_softball_action_photo_first_paste_manifest.get("status")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else "",
+        "hockey_softball_action_photo_first_paste_generated_at": clean(hockey_softball_action_photo_first_paste_manifest.get("generated_at_utc")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else "",
+        "hockey_softball_action_photo_first_paste_rows": hockey_softball_action_photo_first_paste_rows,
+        "hockey_softball_action_photo_first_paste_womens_hockey_rows": as_int(hockey_softball_action_photo_first_paste_manifest.get("womens_hockey_rows")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else 0,
+        "hockey_softball_action_photo_first_paste_softball_rows": as_int(hockey_softball_action_photo_first_paste_manifest.get("softball_rows")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else 0,
+        "hockey_softball_action_photo_first_paste_generated_download_approval_rows": as_int(hockey_softball_action_photo_first_paste_manifest.get("generated_download_approval_rows")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else 0,
+        "hockey_softball_action_photo_first_paste_generated_ready_rows": as_int(hockey_softball_action_photo_first_paste_manifest.get("generated_ready_rows")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else 0,
+        "hockey_softball_action_photo_first_paste_blank_source_url_rows": as_int(hockey_softball_action_photo_first_paste_manifest.get("blank_source_url_rows")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else 0,
+        "hockey_softball_action_photo_first_paste_asset_downloads": bool(hockey_softball_action_photo_first_paste_manifest.get("asset_downloads")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else False,
+        "hockey_softball_action_photo_first_paste_headshot_writes": bool(hockey_softball_action_photo_first_paste_manifest.get("headshot_writes")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else False,
+        "hockey_softball_action_photo_first_paste_approved_marker_writes": bool(hockey_softball_action_photo_first_paste_manifest.get("approved_marker_writes")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else False,
         "hockey_softball_source_research_return_status": clean(hockey_softball_source_research_return_manifest.get("status")) if isinstance(hockey_softball_source_research_return_manifest, dict) else "",
         "hockey_softball_source_research_return_generated_at": clean(hockey_softball_source_research_return_manifest.get("generated_at_utc")) if isinstance(hockey_softball_source_research_return_manifest, dict) else "",
         "hockey_softball_source_research_return_rows": hockey_softball_source_research_return_rows,
@@ -3103,6 +3131,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_action_photo_handoff_freshness_status": hockey_softball_action_photo_handoff_cue["status"],
         "hockey_softball_action_photo_handoff_freshness_detail": hockey_softball_action_photo_handoff_cue["detail"],
         "hockey_softball_action_photo_handoff_refresh_command": hockey_softball_action_photo_handoff_cue["run_command"],
+        "hockey_softball_action_photo_first_paste_freshness_status": hockey_softball_action_photo_first_paste_cue["status"],
+        "hockey_softball_action_photo_first_paste_freshness_detail": hockey_softball_action_photo_first_paste_cue["detail"],
+        "hockey_softball_action_photo_first_paste_refresh_command": hockey_softball_action_photo_first_paste_cue["run_command"],
         "hockey_softball_source_research_return_freshness_status": hockey_softball_source_research_return_cue["status"],
         "hockey_softball_source_research_return_freshness_detail": hockey_softball_source_research_return_cue["detail"],
         "hockey_softball_source_research_return_refresh_command": hockey_softball_source_research_return_cue["run_command"],
@@ -3255,6 +3286,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Hockey/softball action-photo research handoff", "data/asset_registry/hockey_softball_action_photo_research_handoff.md", "Bridge from H/S source-return rows to the shared action-photo research return intake; candidate-ready still means later human download-decision review only."),
             file_shortcut("Hockey/softball action-photo research handoff data", "data/asset_registry/hockey_softball_action_photo_research_handoff.csv", "Machine-readable handoff rows with candidate-page/evidence/identity-anchor needs; generated download-law fields stay blank/no."),
             file_shortcut("Hockey/softball action-photo research handoff manifest", "data/asset_registry/hockey_softball_action_photo_research_handoff.json", "Freshness, missing-field, and guardrail counts for the H/S action-photo research handoff."),
+            file_shortcut("Hockey/softball action-photo first paste guide", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md", "Top H/S action-photo handoff rows to work first with exact evidence fields and no-download guardrails."),
+            file_shortcut("Hockey/softball action-photo first paste guide data", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv", "Machine-readable first-paste rows with blank/no generated defaults and shared return-intake target."),
+            file_shortcut("Hockey/softball action-photo first paste guide manifest", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json", "Counts and guardrails for the H/S action-photo first-paste guide."),
             file_shortcut("Hockey/softball source research return intake", "data/asset_registry/hockey_softball_source_research_return_intake.md", "Human-edited paste-back target for action-photo source leads from the H/S source map; no downloads or approvals."),
             file_shortcut("Hockey/softball source research return data", "data/asset_registry/hockey_softball_source_research_return_intake.csv", "Machine-readable H/S action-photo source return rows; generated download-law fields stay blank/no."),
             file_shortcut("Hockey/softball source research return manifest", "data/asset_registry/hockey_softball_source_research_return_intake.json", "Freshness, blank-return counts, and guardrail metadata for the H/S source research return intake."),
@@ -10326,6 +10360,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S AP handoff</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_handoff_rows', 0)))}</strong></div>
             <div><span>H/S AP ready</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_handoff_ready_rows', 0)))}</strong></div>
             <div><span>H/S AP dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_handoff_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>H/S first paste</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_rows', 0)))}</strong></div>
+            <div><span>H/S paste ready/dl</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_generated_ready_rows', 0)))}/{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_generated_download_approval_rows', 0)))}</strong></div>
+            <div><span>H/S paste writes</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_asset_downloads', False)).lower())}/{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_headshot_writes', False)).lower())}/{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_approved_marker_writes', False)).lower())}</strong></div>
             <div><span>H/S research return</span><strong>{html.escape(str(panel.get('hockey_softball_source_research_return_rows', 0)))}</strong></div>
             <div><span>H/S return dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_source_research_return_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>H/S triage rows</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_triage_rows', 0)))}</strong></div>
@@ -10386,6 +10423,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'hockey_softball_intake_readiness', "Hockey/softball intake readiness summary")}
           {packet_freshness_html(panel, 'hockey_softball_source_map', "Hockey/softball source map board")}
           {packet_freshness_html(panel, 'hockey_softball_action_photo_handoff', "Hockey/softball action-photo research handoff")}
+          {packet_freshness_html(panel, 'hockey_softball_action_photo_first_paste', "Hockey/softball action-photo first paste guide")}
           {packet_freshness_html(panel, 'hockey_softball_source_research_return', "Hockey/softball source research return intake")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_triage', "Hockey/softball asset review triage")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_readiness', "Hockey/softball asset review readiness board")}
@@ -12230,6 +12268,11 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball action-photo handoff later human download-decision rows: {asset_panel.get('hockey_softball_action_photo_handoff_ready_rows', 0)}",
         f"- Hockey/softball action-photo handoff asset/headshot/marker writes: {asset_panel.get('hockey_softball_action_photo_handoff_asset_downloads', False)}/{asset_panel.get('hockey_softball_action_photo_handoff_headshot_writes', False)}/{asset_panel.get('hockey_softball_action_photo_handoff_approved_marker_writes', False)}",
         f"- Hockey/softball action-photo handoff generated: {asset_panel.get('hockey_softball_action_photo_handoff_generated_at') or 'missing'}",
+        f"- Hockey/softball action-photo first-paste rows: {asset_panel.get('hockey_softball_action_photo_first_paste_rows', 0)}",
+        f"- Hockey/softball action-photo first-paste generated ready/download approvals: {asset_panel.get('hockey_softball_action_photo_first_paste_generated_ready_rows', 0)}/{asset_panel.get('hockey_softball_action_photo_first_paste_generated_download_approval_rows', 0)}",
+        f"- Hockey/softball action-photo first-paste blank source_url rows: {asset_panel.get('hockey_softball_action_photo_first_paste_blank_source_url_rows', 0)}",
+        f"- Hockey/softball action-photo first-paste asset/headshot/marker writes: {asset_panel.get('hockey_softball_action_photo_first_paste_asset_downloads', False)}/{asset_panel.get('hockey_softball_action_photo_first_paste_headshot_writes', False)}/{asset_panel.get('hockey_softball_action_photo_first_paste_approved_marker_writes', False)}",
+        f"- Hockey/softball action-photo first-paste generated: {asset_panel.get('hockey_softball_action_photo_first_paste_generated_at') or 'missing'}",
         f"- Hockey/softball source research return rows: {asset_panel.get('hockey_softball_source_research_return_rows', 0)}",
         f"- Hockey/softball source research return blank operator rows: {asset_panel.get('hockey_softball_source_research_return_blank_operator_rows', 0)}",
         f"- Hockey/softball source research return download-approved yes rows: {asset_panel.get('hockey_softball_source_research_return_download_approved_yes_rows', 0)}",
@@ -12603,6 +12646,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_action_photo_handoff_refresh_command"),
             },
             "Hockey/softball action-photo research handoff",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_action_photo_first_paste_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_action_photo_first_paste_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_action_photo_first_paste_refresh_command"),
+            },
+            "Hockey/softball action-photo first paste guide",
         ),
         packet_freshness_markdown(
             {
