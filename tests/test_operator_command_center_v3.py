@@ -117,6 +117,21 @@ def test_command_center_links_adobe_visual_qa_artifacts() -> None:
         assert command_center.RUN_COMMANDS[path] == plan_command
 
 
+def test_command_center_links_apq001_manual_review_result_artifacts() -> None:
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    importer_command = ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py"
+
+    result_artifacts = [
+        "apq001_manual_review_result_report.md",
+        "apq001_manual_review_result_manifest.json",
+        "apq001_manual_review_result_findings.csv",
+    ]
+
+    for path in result_artifacts:
+        assert path in artifact_paths
+        assert command_center.RUN_COMMANDS[path] == importer_command
+
+
 def test_visual_qa_cues_warn_on_action_photo_risk_after_display_truncation() -> None:
     padding = " ".join(["editorial-context"] * 30)
     qa = {
@@ -8379,6 +8394,131 @@ def test_asset_cockpit_surfaces_apq001_quarantine_preflight_next_action(tmp_path
     assert "human_quarantine_consideration_only" in html
     assert "manual asset review -&gt; renderer handoff review -&gt; visual QA/re-render" in html
     assert "data/assets/quarantine/review_only_candidates" in html
+
+
+def test_apq001_manual_review_result_counts_surface_in_asset_panel(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    latest = tmp_path / "outputs" / "local" / "latest" / "files"
+    latest.mkdir(parents=True)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(latest))
+    write_json(
+        "apq001_manual_review_result_manifest.json",
+        {
+            "status": "apq001_manual_review_result_artifacts_ready",
+            "review_only": True,
+            "artifact_only": True,
+            "finding_rows": 3,
+            "manual_asset_review_rows": 1,
+            "renderer_handoff_rows": 5,
+            "validation_issue_count": 0,
+            "manual_operator_decision_counts": {"suitable_for_renderer_handoff_review": 1},
+            "renderer_handoff_recommendation_counts": {
+                "needs_crop_or_layout_notes": 1,
+                "operator_fill_required": 3,
+                "suitable_for_renderer_recheck": 1,
+            },
+            "image_edits": False,
+            "new_downloads": False,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "approved_marker_writes": False,
+            "headshot_writes": False,
+            "renderer_behavior_change": False,
+            "publish_ready": False,
+            "publishing": False,
+            "move_files": False,
+        },
+    )
+    write_csv_with_fields(
+        "apq001_manual_review_result_findings.csv",
+        [
+            {
+                "finding_id": "APQMR001",
+                "candidate_queue_id": "APQ001",
+                "operator_decision": "suitable_for_renderer_handoff_review",
+                "renderer_handoff_recommendation": "",
+                "review_only": "true",
+                "artifact_only": "true",
+                "image_edits": "false",
+                "new_downloads": "false",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            },
+            {
+                "finding_id": "APQMR002",
+                "candidate_queue_id": "APQ001",
+                "operator_decision": "",
+                "renderer_handoff_recommendation": "needs_crop_or_layout_notes",
+                "review_only": "true",
+                "artifact_only": "true",
+                "image_edits": "false",
+                "new_downloads": "false",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            },
+            {
+                "finding_id": "APQMR003",
+                "candidate_queue_id": "APQ001",
+                "operator_decision": "",
+                "renderer_handoff_recommendation": "suitable_for_renderer_recheck",
+                "review_only": "true",
+                "artifact_only": "true",
+                "image_edits": "false",
+                "new_downloads": "false",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            },
+        ],
+        [
+            "finding_id",
+            "candidate_queue_id",
+            "operator_decision",
+            "renderer_handoff_recommendation",
+            "review_only",
+            "artifact_only",
+            "image_edits",
+            "new_downloads",
+            "asset_downloads",
+            "approval_state_change",
+            "approved_marker_writes",
+            "renderer_behavior_change",
+            "publish_ready",
+            "publishing",
+            "move_files",
+        ],
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["apq001_manual_review_status"] == "apq001_manual_review_result_artifacts_ready"
+    assert panel["apq001_manual_review_findings"] == 3
+    assert panel["apq001_manual_review_validation_issues"] == 0
+    assert panel["apq001_manual_review_crop_layout_notes"] == 1
+    assert panel["apq001_manual_review_renderer_recheck"] == 1
+    assert panel["apq001_manual_review_operator_fill_required"] == 3
+    assert panel["apq001_manual_review_asset_downloads"] is False
+    assert panel["apq001_manual_review_approval_state_change"] is False
+    assert panel["apq001_manual_review_renderer_behavior_change"] is False
+    assert "APQ001 review status" in html
+    assert "apq001_manual_review_result_artifacts_ready" in html
+    assert "needs_crop_or_layout_notes=1" in html
+    assert "suitable_for_renderer_recheck=1" in html
 
 
 def test_local_runner_collects_daily_command_center_artifacts() -> None:
