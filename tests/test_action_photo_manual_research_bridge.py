@@ -147,10 +147,13 @@ def test_manual_research_bridge_summarizes_existing_lanes_without_side_effects(t
     root = tmp_path / "data/asset_registry/action_photo_candidates"
     rows = read_csv(root / "review_only_action_photo_manual_research_bridge_v1.csv")
     card_rows = read_csv(root / "review_only_action_photo_manual_first_action_cards_v1.csv")
+    checklist_rows = read_csv(root / "review_only_action_photo_manual_return_evidence_checklist_v1.csv")
     manifest = json.loads((root / "review_only_action_photo_manual_research_bridge_v1.json").read_text(encoding="utf-8"))
     cards_manifest = json.loads((root / "review_only_action_photo_manual_first_action_cards_v1.json").read_text(encoding="utf-8"))
+    checklist_manifest = json.loads((root / "review_only_action_photo_manual_return_evidence_checklist_v1.json").read_text(encoding="utf-8"))
     markdown = (root / "review_only_action_photo_manual_research_bridge_v1.md").read_text(encoding="utf-8")
     cards_markdown = (root / "review_only_action_photo_manual_first_action_cards_v1.md").read_text(encoding="utf-8")
+    checklist_markdown = (root / "review_only_action_photo_manual_return_evidence_checklist_v1.md").read_text(encoding="utf-8")
 
     assert manifest["status"] == "action_photo_manual_research_bridge_ready"
     assert manifest["bridge_rows"] == 2
@@ -161,6 +164,7 @@ def test_manual_research_bridge_summarizes_existing_lanes_without_side_effects(t
     assert manifest["shared_import_rows_with_data"] == 0
     assert manifest["generated_download_approval_rows"] == 0
     assert manifest["first_action_cards_md"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.md"
+    assert manifest["return_evidence_checklist_md"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.md"
     assert manifest["source_fetching"] is False
     assert manifest["auto_source_enablement"] is False
     assert manifest["asset_downloads"] is False
@@ -195,6 +199,24 @@ def test_manual_research_bridge_summarizes_existing_lanes_without_side_effects(t
     assert "does not fetch sources, download images" in markdown
     assert "Run after paste" in cards_markdown
     assert "does not fetch sources, download images" in cards_markdown
+    assert checklist_manifest["status"] == "action_photo_manual_return_evidence_checklist_ready"
+    assert checklist_manifest["checklist_rows"] == 2
+    assert checklist_manifest["generated_ready_rows"] == 0
+    assert checklist_manifest["generated_download_approval_rows"] == 0
+    assert checklist_manifest["source_fetching"] is False
+    assert checklist_manifest["auto_source_enablement"] is False
+    assert checklist_manifest["asset_downloads"] is False
+    assert checklist_manifest["headshot_writes"] is False
+    assert checklist_manifest["approved_marker_writes"] is False
+    assert checklist_manifest["publish_ready"] is False
+    assert [row["checklist_id"] for row in checklist_rows] == ["APFEC01", "APFEC02"]
+    assert [row["card_id"] for row in checklist_rows] == ["APFAC01", "APFAC02"]
+    assert checklist_rows[0]["candidate_ready_for_later_human_download_decision_review"] == "no"
+    assert checklist_rows[0]["download_approved"] == "no"
+    assert checklist_rows[0]["source_fetching"] == "false"
+    assert checklist_rows[0]["asset_downloads"] == "false"
+    assert "does not fetch sources, inspect URLs, download images" in checklist_markdown
+    assert "Missing until human paste" in checklist_markdown
 
 
 def test_manual_research_bridge_validator_blocks_guardrail_drift() -> None:
@@ -261,3 +283,39 @@ def test_manual_research_bridge_validator_blocks_guardrail_drift() -> None:
     assert ("headshot_writes", "guardrail_field_invalid") in card_issue_pairs
     assert ("approved_marker_writes", "guardrail_field_invalid") in card_issue_pairs
     assert ("publish_ready", "guardrail_field_invalid") in card_issue_pairs
+
+    checklist_rows = [
+        {
+            field: "false"
+            for field in module.RETURN_EVIDENCE_CHECKLIST_FIELDS
+        }
+    ]
+    checklist_rows[0].update(
+        {
+            "checklist_id": "APFEC01",
+            "card_id": "APFAC01",
+            "candidate_ready_for_later_human_download_decision_review": "yes",
+            "download_approved": "approve",
+            "review_only": "false",
+            "source_fetching": "true",
+            "auto_source_enablement": "true",
+            "asset_downloads": "true",
+            "headshot_writes": "true",
+            "approved_marker_writes": "true",
+            "publish_ready": "true",
+        }
+    )
+    checklist_issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_return_evidence_checklist(checklist_rows)}
+
+    assert (
+        "candidate_ready_for_later_human_download_decision_review",
+        "generated_checklist_must_not_mark_ready",
+    ) in checklist_issue_pairs
+    assert ("download_approved", "generated_checklist_must_not_approve_downloads") in checklist_issue_pairs
+    assert ("review_only", "guardrail_field_invalid") in checklist_issue_pairs
+    assert ("source_fetching", "guardrail_field_invalid") in checklist_issue_pairs
+    assert ("auto_source_enablement", "guardrail_field_invalid") in checklist_issue_pairs
+    assert ("asset_downloads", "guardrail_field_invalid") in checklist_issue_pairs
+    assert ("headshot_writes", "guardrail_field_invalid") in checklist_issue_pairs
+    assert ("approved_marker_writes", "guardrail_field_invalid") in checklist_issue_pairs
+    assert ("publish_ready", "guardrail_field_invalid") in checklist_issue_pairs

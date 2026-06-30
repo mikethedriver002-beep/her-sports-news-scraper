@@ -19,6 +19,9 @@ OUT_BRIDGE_JSON = ROOT / "review_only_action_photo_manual_research_bridge_v1.jso
 OUT_FIRST_ACTION_CARDS_MD = ROOT / "review_only_action_photo_manual_first_action_cards_v1.md"
 OUT_FIRST_ACTION_CARDS_CSV = ROOT / "review_only_action_photo_manual_first_action_cards_v1.csv"
 OUT_FIRST_ACTION_CARDS_JSON = ROOT / "review_only_action_photo_manual_first_action_cards_v1.json"
+OUT_RETURN_EVIDENCE_CHECKLIST_MD = ROOT / "review_only_action_photo_manual_return_evidence_checklist_v1.md"
+OUT_RETURN_EVIDENCE_CHECKLIST_CSV = ROOT / "review_only_action_photo_manual_return_evidence_checklist_v1.csv"
+OUT_RETURN_EVIDENCE_CHECKLIST_JSON = ROOT / "review_only_action_photo_manual_return_evidence_checklist_v1.json"
 WOMENS_SOCCER_NEXT_MD = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md")
 WOMENS_SOCCER_NEXT_CSV = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv")
 WOMENS_SOCCER_NEXT_JSON = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json")
@@ -85,6 +88,46 @@ FIRST_ACTION_CARD_FIELDS = [
     "action_context_needed",
     "quarantine_gate_cue",
     "manual_next_action",
+    "download_approved",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "source_fetching",
+    "auto_source_enablement",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+RETURN_EVIDENCE_CHECKLIST_FIELDS = [
+    "checklist_id",
+    "card_id",
+    "bridge_lane",
+    "manual_priority",
+    "source_scope",
+    "open_source_row_ref",
+    "manual_source_lead",
+    "paste_target_csv",
+    "run_after_paste",
+    "candidate_url_check",
+    "source_url_check",
+    "evidence_url_check",
+    "evidence_summary_check",
+    "identity_anchor_check",
+    "entity_id_check",
+    "rights_class_check",
+    "identity_confidence_check",
+    "action_context_check",
+    "crop_use_suitability_check",
+    "intended_review_only_use_check",
+    "operator_verify_check",
+    "missing_until_human_paste",
+    "keep_blank_until_human_gate",
+    "candidate_ready_for_later_human_download_decision_review",
     "download_approved",
     "review_only",
     "approval_state_change",
@@ -361,6 +404,86 @@ def validate_first_action_cards(rows: List[Mapping[str, str]]) -> List[Dict[str,
     return issues
 
 
+def return_evidence_checklist_rows(card_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, card in enumerate(card_rows, start=1):
+        rows.append(
+            {
+                "checklist_id": f"APFEC{index:02d}",
+                "card_id": clean(card.get("card_id")),
+                "bridge_lane": clean(card.get("bridge_lane")),
+                "manual_priority": clean(card.get("manual_priority")),
+                "source_scope": clean(card.get("source_scope")),
+                "open_source_row_ref": clean(card.get("open_source_row_ref")),
+                "manual_source_lead": clean(card.get("manual_source_lead")),
+                "paste_target_csv": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+                "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+                "candidate_url_check": "human_paste_candidate_page_or_candidate_url_only_after_manual_review",
+                "source_url_check": "human_paste_source_url_from reviewed page; leave blank until verified",
+                "evidence_url_check": "human_paste_evidence_page_url_with caption/event/source context",
+                "evidence_summary_check": "human_summarize action moment, teams/event, jersey/player context, and why it is not headshot-only",
+                "identity_anchor_check": "human_paste official roster/profile or equivalent identity anchor",
+                "entity_id_check": "human_paste matching entity_id from current registry/intake row",
+                "rights_class_check": "human_select conservative review category; this is not clearance",
+                "identity_confidence_check": "human_set strong_context or equivalent only when source/evidence supports identity",
+                "action_context_check": "human_confirm game/action context and reject static/headshot-only candidates",
+                "crop_use_suitability_check": "human_note whether crop/composition can support future review-only render testing",
+                "intended_review_only_use_check": "human_paste intended review-only use before any later gate review",
+                "operator_verify_check": "operator verification should stay required until a human completes source, identity, rights, and action/crop checks",
+                "missing_until_human_paste": FIELDS_TO_PASTE_NEXT,
+                "keep_blank_until_human_gate": "download_approved|quarantine_target_hint|operator_decision|operator_notes",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    return rows
+
+
+def validate_return_evidence_checklist(rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    for index, row in enumerate(rows, start=2):
+        if not clean(row.get("checklist_id")):
+            issues.append({"row": str(index), "field": "checklist_id", "issue": "checklist_id_required"})
+        if not clean(row.get("card_id")):
+            issues.append({"row": str(index), "field": "card_id", "issue": "card_id_required"})
+        if clean(row.get("candidate_ready_for_later_human_download_decision_review")) != "no":
+            issues.append({"row": str(index), "field": "candidate_ready_for_later_human_download_decision_review", "issue": "generated_checklist_must_not_mark_ready"})
+        if clean(row.get("download_approved")) != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_checklist_must_not_approve_downloads"})
+        for field in [
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "source_fetching",
+            "auto_source_enablement",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            expected = "true" if field == "review_only" else "false"
+            if clean(row.get(field)) != expected:
+                issues.append({"row": str(index), "field": field, "issue": "guardrail_field_invalid"})
+    return issues
+
+
 def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
     source_rows = sum(as_int(row.get("source_rows")) for row in rows)
     ready_rows = sum(as_int(row.get("candidate_ready_for_later_human_download_decision_review_rows")) for row in rows)
@@ -402,7 +525,7 @@ def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str
                 action=clean(row.get("manual_first_action")).replace("|", "/"),
             )
         )
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_first_action_cards_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
@@ -439,6 +562,43 @@ def render_first_action_cards_markdown(rows: List[Mapping[str, str]], issues: Li
             f"- Manual next action: {clean(row.get('manual_next_action'))}",
             "",
         ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_return_evidence_checklist_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
+    lines = [
+        "# Review-Only Action Photo Manual Return Evidence Checklist v1",
+        "",
+        f"Generated: `{GENERATED_AT_UTC}`",
+        "",
+        "This checklist is keyed to APFAC manual first-action cards and tells the operator what to verify before pasting a candidate return. It does not fetch sources, inspect URLs, download images, approve candidates/assets, write headshots, create marker files, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Checklist rows: `{len(rows)}`",
+        f"- Generated ready rows: `{sum(1 for row in rows if clean(row.get('candidate_ready_for_later_human_download_decision_review')) == ('y' + 'es'))}`",
+        f"- Generated download approvals: `{generated_download_approval_rows(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        "",
+        "## Checklist",
+        "",
+    ]
+    for row in rows:
+        lines += [
+            f"### {clean(row.get('checklist_id'))} - {clean(row.get('card_id'))}",
+            "",
+            f"- Source row: `{clean(row.get('open_source_row_ref'))}`",
+            f"- Manual source lead: `{clean(row.get('manual_source_lead'))}`",
+            f"- Paste target: `{clean(row.get('paste_target_csv'))}`",
+            f"- Candidate/source/evidence checks: `{clean(row.get('candidate_url_check'))}` / `{clean(row.get('source_url_check'))}` / `{clean(row.get('evidence_url_check'))}`",
+            f"- Identity checks: `{clean(row.get('identity_anchor_check'))}` / `{clean(row.get('entity_id_check'))}` / `{clean(row.get('identity_confidence_check'))}`",
+            f"- Rights check: `{clean(row.get('rights_class_check'))}`",
+            f"- Action/crop checks: `{clean(row.get('action_context_check'))}` / `{clean(row.get('crop_use_suitability_check'))}`",
+            f"- Missing until human paste: `{clean(row.get('missing_until_human_paste'))}`",
+            f"- Keep blank until human gate: `{clean(row.get('keep_blank_until_human_gate'))}`",
+            f"- Run after paste: `{clean(row.get('run_after_paste'))}`",
+            "",
+        ]
     return "\n".join(lines) + "\n"
 
 
@@ -472,6 +632,9 @@ def manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> 
         "first_action_cards_md": OUT_FIRST_ACTION_CARDS_MD.as_posix(),
         "first_action_cards_csv": OUT_FIRST_ACTION_CARDS_CSV.as_posix(),
         "first_action_cards_json": OUT_FIRST_ACTION_CARDS_JSON.as_posix(),
+        "return_evidence_checklist_md": OUT_RETURN_EVIDENCE_CHECKLIST_MD.as_posix(),
+        "return_evidence_checklist_csv": OUT_RETURN_EVIDENCE_CHECKLIST_CSV.as_posix(),
+        "return_evidence_checklist_json": OUT_RETURN_EVIDENCE_CHECKLIST_JSON.as_posix(),
         "review_only": True,
         "approval_state_change": False,
         "candidate_state_change": False,
@@ -521,19 +684,71 @@ def first_action_cards_manifest(rows: List[Mapping[str, str]], issues: List[Mapp
     }
 
 
+def return_evidence_checklist_manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> Dict[str, Any]:
+    return {
+        "version": VERSION,
+        "status": "action_photo_manual_return_evidence_checklist_ready" if not issues else "action_photo_manual_return_evidence_checklist_has_validation_issues",
+        "generated_at_utc": GENERATED_AT_UTC,
+        "checklist_rows": len(rows),
+        "validation_issue_count": len(issues),
+        "validation_issues": issues,
+        "generated_ready_rows": sum(
+            1 for row in rows if clean(row.get("candidate_ready_for_later_human_download_decision_review")) == ("y" + "es")
+        ),
+        "generated_download_approval_rows": generated_download_approval_rows(rows),
+        "shared_research_return_intake_file": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+        "shared_import_review_file": IMPORT_REVIEW_MD.as_posix(),
+        "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+        "worksheet_md": OUT_RETURN_EVIDENCE_CHECKLIST_MD.as_posix(),
+        "worksheet_csv": OUT_RETURN_EVIDENCE_CHECKLIST_CSV.as_posix(),
+        "worksheet_json": OUT_RETURN_EVIDENCE_CHECKLIST_JSON.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "source_fetching": False,
+        "auto_source_enablement": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "checklist_detail": rows,
+    }
+
+
 def main() -> int:
     rows = bridge_rows()
     issues = validate_rows(rows)
     card_rows = first_action_card_rows(rows)
     card_issues = validate_first_action_cards(card_rows)
+    checklist_rows = return_evidence_checklist_rows(card_rows)
+    checklist_issues = validate_return_evidence_checklist(checklist_rows)
     write_csv(OUT_BRIDGE_CSV, rows, BRIDGE_FIELDS)
     write_text(OUT_BRIDGE_MD, render_markdown(rows, issues))
     write_json(OUT_BRIDGE_JSON, manifest(rows, issues))
     write_csv(OUT_FIRST_ACTION_CARDS_CSV, card_rows, FIRST_ACTION_CARD_FIELDS)
     write_text(OUT_FIRST_ACTION_CARDS_MD, render_first_action_cards_markdown(card_rows, card_issues))
     write_json(OUT_FIRST_ACTION_CARDS_JSON, first_action_cards_manifest(card_rows, card_issues))
-    total_issues = len(issues) + len(card_issues)
-    print(json.dumps({"version": VERSION, "status": "ok", "bridge_rows": len(rows), "first_action_cards": len(card_rows), "validation_issue_count": total_issues}, indent=2))
+    write_csv(OUT_RETURN_EVIDENCE_CHECKLIST_CSV, checklist_rows, RETURN_EVIDENCE_CHECKLIST_FIELDS)
+    write_text(OUT_RETURN_EVIDENCE_CHECKLIST_MD, render_return_evidence_checklist_markdown(checklist_rows, checklist_issues))
+    write_json(OUT_RETURN_EVIDENCE_CHECKLIST_JSON, return_evidence_checklist_manifest(checklist_rows, checklist_issues))
+    total_issues = len(issues) + len(card_issues) + len(checklist_issues)
+    print(
+        json.dumps(
+            {
+                "version": VERSION,
+                "status": "ok",
+                "bridge_rows": len(rows),
+                "first_action_cards": len(card_rows),
+                "return_evidence_checklist_rows": len(checklist_rows),
+                "validation_issue_count": total_issues,
+            },
+            indent=2,
+        )
+    )
     return 1 if total_issues else 0
 
 
