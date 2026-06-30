@@ -132,6 +132,23 @@ def test_command_center_links_apq001_manual_review_result_artifacts() -> None:
         assert command_center.RUN_COMMANDS[path] == importer_command
 
 
+def test_command_center_links_apq001_renderer_recheck_packet_artifacts() -> None:
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    packet_command = ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_apq001_renderer_recheck_packet_v1.py"
+
+    packet_artifacts = [
+        "apq001_renderer_recheck_packet/README.md",
+        "apq001_renderer_recheck_packet/manifest.json",
+        "apq001_renderer_recheck_packet/renderer_recheck_plan.csv",
+        "apq001_renderer_recheck_packet/renderer_recheck_checklist.csv",
+        "apq001_renderer_recheck_packet/renderer_recheck_handoff.md",
+    ]
+
+    for path in packet_artifacts:
+        assert path in artifact_paths
+        assert command_center.RUN_COMMANDS[path] == packet_command
+
+
 def test_visual_qa_cues_warn_on_action_photo_risk_after_display_truncation() -> None:
     padding = " ".join(["editorial-context"] * 30)
     qa = {
@@ -8519,6 +8536,168 @@ def test_apq001_manual_review_result_counts_surface_in_asset_panel(tmp_path, mon
     assert "apq001_manual_review_result_artifacts_ready" in html
     assert "needs_crop_or_layout_notes=1" in html
     assert "suitable_for_renderer_recheck=1" in html
+
+
+def test_apq001_renderer_recheck_packet_counts_surface_in_asset_panel(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    latest = tmp_path / "outputs" / "local" / "latest" / "files"
+    latest.mkdir(parents=True)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(latest))
+    Path("apq001_renderer_recheck_packet").mkdir(parents=True)
+    write_json(
+        "apq001_renderer_recheck_packet/manifest.json",
+        {
+            "status": "apq001_renderer_recheck_packet_ready",
+            "review_only": True,
+            "artifact_only": True,
+            "source_finding_rows": 3,
+            "plan_rows": 3,
+            "checklist_rows": 4,
+            "validation_issue_count": 0,
+            "priority_counts": {"P0": 1, "P1": 2},
+            "renderer_recheck_area_counts": {
+                "action_photo_crop_layout_notes": 1,
+                "action_photo_renderer_recheck": 1,
+                "manual_asset_review_gate": 1,
+            },
+            "pending_operator_fill_required_rows": 3,
+            "candidate_quarantine_path": "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/apq001_review_only_candidate.jpg",
+            "image_edits": False,
+            "new_downloads": False,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "approved_marker_writes": False,
+            "headshot_writes": False,
+            "renderer_behavior_change": False,
+            "publish_ready": False,
+            "publishing": False,
+            "move_files": False,
+        },
+    )
+    write_csv_with_fields(
+        "apq001_renderer_recheck_packet/renderer_recheck_plan.csv",
+        [
+            {
+                "plan_id": "APQRR001",
+                "candidate_queue_id": "APQ001",
+                "priority": "P1",
+                "renderer_recheck_area": "manual_asset_review_gate",
+                "review_only": "true",
+                "artifact_only": "true",
+                "image_edits": "false",
+                "new_downloads": "false",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            },
+            {
+                "plan_id": "APQRR002",
+                "candidate_queue_id": "APQ001",
+                "priority": "P0",
+                "renderer_recheck_area": "action_photo_crop_layout_notes",
+                "review_only": "true",
+                "artifact_only": "true",
+                "image_edits": "false",
+                "new_downloads": "false",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            },
+            {
+                "plan_id": "APQRR003",
+                "candidate_queue_id": "APQ001",
+                "priority": "P1",
+                "renderer_recheck_area": "action_photo_renderer_recheck",
+                "review_only": "true",
+                "artifact_only": "true",
+                "image_edits": "false",
+                "new_downloads": "false",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            },
+        ],
+        [
+            "plan_id",
+            "candidate_queue_id",
+            "priority",
+            "renderer_recheck_area",
+            "review_only",
+            "artifact_only",
+            "image_edits",
+            "new_downloads",
+            "asset_downloads",
+            "approval_state_change",
+            "approved_marker_writes",
+            "renderer_behavior_change",
+            "publish_ready",
+            "publishing",
+            "move_files",
+        ],
+    )
+    write_csv_with_fields(
+        "apq001_renderer_recheck_packet/renderer_recheck_checklist.csv",
+        [
+            {
+                "check_id": "APQRC001",
+                "candidate_queue_id": "APQ001",
+                "priority": "P0",
+                "check_type": "quarantine_boundary",
+                "review_only": "true",
+                "artifact_only": "true",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "renderer_behavior_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            }
+        ],
+        [
+            "check_id",
+            "candidate_queue_id",
+            "priority",
+            "check_type",
+            "review_only",
+            "artifact_only",
+            "asset_downloads",
+            "approval_state_change",
+            "renderer_behavior_change",
+            "publish_ready",
+            "publishing",
+            "move_files",
+        ],
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["apq001_renderer_recheck_status"] == "apq001_renderer_recheck_packet_ready"
+    assert panel["apq001_renderer_recheck_source_findings"] == 3
+    assert panel["apq001_renderer_recheck_plan_rows"] == 3
+    assert panel["apq001_renderer_recheck_checklist_rows"] == 4
+    assert panel["apq001_renderer_recheck_validation_issues"] == 0
+    assert panel["apq001_renderer_recheck_priority_summary"] == "P0=1, P1=2"
+    assert "action_photo_crop_layout_notes=1" in panel["apq001_renderer_recheck_area_summary"]
+    assert panel["apq001_renderer_recheck_asset_downloads"] is False
+    assert panel["apq001_renderer_recheck_approval_state_change"] is False
+    assert panel["apq001_renderer_recheck_renderer_behavior_change"] is False
+    assert "APQ001 recheck packet" in html
+    assert "apq001_renderer_recheck_packet_ready" in html
+    assert "P0=1, P1=2" in html
+    assert "false/false/false" in html
 
 
 def test_local_runner_collects_daily_command_center_artifacts() -> None:
