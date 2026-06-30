@@ -1,0 +1,357 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Mapping
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from hsd_run_io import read_csv, read_json, write_csv, write_json, write_text
+
+
+VERSION = "hsd-action-photo-manual-research-bridge-v1-review-only"
+GENERATED_AT_UTC = "2026-06-29T00:00:00+00:00"
+ROOT = Path("data/asset_registry/action_photo_candidates")
+OUT_BRIDGE_MD = ROOT / "review_only_action_photo_manual_research_bridge_v1.md"
+OUT_BRIDGE_CSV = ROOT / "review_only_action_photo_manual_research_bridge_v1.csv"
+OUT_BRIDGE_JSON = ROOT / "review_only_action_photo_manual_research_bridge_v1.json"
+WOMENS_SOCCER_NEXT_MD = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md")
+WOMENS_SOCCER_NEXT_CSV = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv")
+WOMENS_SOCCER_NEXT_JSON = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json")
+HOCKEY_SOFTBALL_HANDOFF_MD = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.md")
+HOCKEY_SOFTBALL_HANDOFF_CSV = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.csv")
+HOCKEY_SOFTBALL_HANDOFF_JSON = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.json")
+ACTION_PHOTO_RETURN_INTAKE_CSV = ROOT / "review_only_action_photo_research_return_intake_v1.csv"
+IMPORT_REVIEW_MD = ROOT / "review_only_action_photo_research_return_import_review_v1.md"
+IMPORT_REVIEW_JSON = ROOT / "review_only_action_photo_research_return_import_review_v1.json"
+FIELDS_TO_PASTE_NEXT = (
+    "candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|"
+    "entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required"
+)
+BRIDGE_FIELDS = [
+    "bridge_rank",
+    "bridge_lane",
+    "source_scope",
+    "source_board_md",
+    "source_board_csv",
+    "source_rows",
+    "blank_source_url_rows",
+    "blank_rights_class_rows",
+    "blank_identity_confidence_rows",
+    "candidate_ready_for_later_human_download_decision_review_rows",
+    "shared_import_review_rows",
+    "shared_import_rows_with_data",
+    "shared_import_ready_rows",
+    "shared_research_return_intake_file",
+    "shared_import_review_file",
+    "first_row_ref",
+    "first_manual_source_lead",
+    "fields_to_paste_next",
+    "manual_first_action",
+    "guardrail_note",
+    "download_approved",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "source_fetching",
+    "auto_source_enablement",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+
+def clean(value: object) -> str:
+    return str(value or "").strip()
+
+
+def as_int(value: object) -> int:
+    try:
+        return int(str(value).strip() or "0")
+    except (TypeError, ValueError):
+        return 0
+
+
+def is_yes(value: object) -> bool:
+    return clean(value).lower() == ("y" + "es")
+
+
+def first_nonblank(*values: object) -> str:
+    for value in values:
+        text = clean(value)
+        if text:
+            return text
+    return ""
+
+
+def row_ref(path: Path, row_number: int) -> str:
+    return f"{path.as_posix()}#row={row_number}"
+
+
+def shared_import_counts() -> Dict[str, int]:
+    manifest = read_json(IMPORT_REVIEW_JSON, {})
+    if not isinstance(manifest, dict):
+        return {"rows": 0, "rows_with_data": 0, "ready_rows": 0}
+    return {
+        "rows": as_int(manifest.get("import_review_rows")),
+        "rows_with_data": as_int(manifest.get("rows_with_research_return_data")),
+        "ready_rows": as_int(manifest.get("ready_for_later_human_download_decision_review_rows")),
+    }
+
+
+def women_soccer_bridge_row(import_counts: Mapping[str, int]) -> Dict[str, str]:
+    manifest = read_json(WOMENS_SOCCER_NEXT_JSON, {})
+    rows = read_csv(WOMENS_SOCCER_NEXT_CSV)
+    sample = rows[0] if rows else {}
+    source_rows = as_int(manifest.get("research_next_rows")) if isinstance(manifest, dict) else len(rows)
+    return bridge_row(
+        bridge_rank="01",
+        bridge_lane="women_soccer_action_photo",
+        source_scope="NWSL/USWNT/europe_top_flight athlete action-photo leads",
+        source_board_md=WOMENS_SOCCER_NEXT_MD,
+        source_board_csv=WOMENS_SOCCER_NEXT_CSV,
+        source_rows=source_rows,
+        blank_source_url_rows=as_int(manifest.get("blank_source_url_rows")) if isinstance(manifest, dict) else count_blank(rows, "source_url"),
+        blank_rights_class_rows=as_int(manifest.get("blank_rights_class_rows")) if isinstance(manifest, dict) else count_blank(rows, "rights_class"),
+        blank_identity_confidence_rows=as_int(manifest.get("blank_identity_confidence_rows")) if isinstance(manifest, dict) else count_blank(rows, "identity_confidence"),
+        ready_rows=as_int(manifest.get("candidate_ready_for_later_human_download_decision_review_rows")) if isinstance(manifest, dict) else count_ready(rows),
+        first_row_ref=row_ref(WOMENS_SOCCER_NEXT_CSV, 2) if rows else "",
+        first_manual_source_lead=first_nonblank(sample.get("source_candidate_url"), sample.get("source_domain")),
+        manual_first_action=(
+            "Open the women's soccer action-photo research-next board, choose the first row with a usable manual source lead, "
+            "then paste human-reviewed candidate/evidence/source/identity metadata into the shared action-photo return intake."
+        ),
+        import_counts=import_counts,
+    )
+
+
+def hockey_softball_bridge_row(import_counts: Mapping[str, int]) -> Dict[str, str]:
+    manifest = read_json(HOCKEY_SOFTBALL_HANDOFF_JSON, {})
+    rows = read_csv(HOCKEY_SOFTBALL_HANDOFF_CSV)
+    sample = rows[0] if rows else {}
+    source_rows = as_int(manifest.get("rows")) if isinstance(manifest, dict) else len(rows)
+    return bridge_row(
+        bridge_rank="02",
+        bridge_lane="hockey_softball_action_photo",
+        source_scope="PWHL/AUSL manual action-photo source handoff",
+        source_board_md=HOCKEY_SOFTBALL_HANDOFF_MD,
+        source_board_csv=HOCKEY_SOFTBALL_HANDOFF_CSV,
+        source_rows=source_rows,
+        blank_source_url_rows=as_int(manifest.get("blank_source_url_rows")) if isinstance(manifest, dict) else count_blank(rows, "source_url"),
+        blank_rights_class_rows=as_int(manifest.get("blank_rights_class_rows")) if isinstance(manifest, dict) else count_blank(rows, "rights_class"),
+        blank_identity_confidence_rows=as_int(manifest.get("blank_identity_confidence_rows")) if isinstance(manifest, dict) else count_blank(rows, "identity_confidence"),
+        ready_rows=as_int(manifest.get("later_human_download_decision_review_eligible_rows")) if isinstance(manifest, dict) else count_ready(rows),
+        first_row_ref=row_ref(HOCKEY_SOFTBALL_HANDOFF_CSV, 2) if rows else "",
+        first_manual_source_lead=first_nonblank(sample.get("source_search_macro"), sample.get("source_lane")),
+        manual_first_action=(
+            "Open the hockey/softball action-photo handoff row and its source-map ref, collect candidate/evidence/source/identity metadata manually, "
+            "then paste the completed human-reviewed return into the shared action-photo return intake."
+        ),
+        import_counts=import_counts,
+    )
+
+
+def count_blank(rows: List[Mapping[str, str]], field: str) -> int:
+    return sum(1 for row in rows if not clean(row.get(field)))
+
+
+def count_ready(rows: List[Mapping[str, str]]) -> int:
+    return sum(1 for row in rows if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == "yes")
+
+
+def bridge_row(
+    *,
+    bridge_rank: str,
+    bridge_lane: str,
+    source_scope: str,
+    source_board_md: Path,
+    source_board_csv: Path,
+    source_rows: int,
+    blank_source_url_rows: int,
+    blank_rights_class_rows: int,
+    blank_identity_confidence_rows: int,
+    ready_rows: int,
+    first_row_ref: str,
+    first_manual_source_lead: str,
+    manual_first_action: str,
+    import_counts: Mapping[str, int],
+) -> Dict[str, str]:
+    return {
+        "bridge_rank": bridge_rank,
+        "bridge_lane": bridge_lane,
+        "source_scope": source_scope,
+        "source_board_md": source_board_md.as_posix(),
+        "source_board_csv": source_board_csv.as_posix(),
+        "source_rows": str(source_rows),
+        "blank_source_url_rows": str(blank_source_url_rows),
+        "blank_rights_class_rows": str(blank_rights_class_rows),
+        "blank_identity_confidence_rows": str(blank_identity_confidence_rows),
+        "candidate_ready_for_later_human_download_decision_review_rows": str(ready_rows),
+        "shared_import_review_rows": str(as_int(import_counts.get("rows"))),
+        "shared_import_rows_with_data": str(as_int(import_counts.get("rows_with_data"))),
+        "shared_import_ready_rows": str(as_int(import_counts.get("ready_rows"))),
+        "shared_research_return_intake_file": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+        "shared_import_review_file": IMPORT_REVIEW_MD.as_posix(),
+        "first_row_ref": first_row_ref,
+        "first_manual_source_lead": first_manual_source_lead,
+        "fields_to_paste_next": FIELDS_TO_PASTE_NEXT,
+        "manual_first_action": manual_first_action,
+        "guardrail_note": "Review-only manual bridge; no source fetching, downloads, approvals, asset writes, marker writes, file movement, or publishing.",
+        "download_approved": "no",
+        "review_only": "true",
+        "approval_state_change": "false",
+        "candidate_state_change": "false",
+        "source_fetching": "false",
+        "auto_source_enablement": "false",
+        "asset_downloads": "false",
+        "headshot_writes": "false",
+        "approved_marker_writes": "false",
+        "publish_ready": "false",
+        "auto_approval": "false",
+        "auto_publish": "false",
+        "move_files": "false",
+        "paid_apis": "false",
+    }
+
+
+def bridge_rows() -> List[Dict[str, str]]:
+    import_counts = shared_import_counts()
+    return [women_soccer_bridge_row(import_counts), hockey_softball_bridge_row(import_counts)]
+
+
+def validate_rows(rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    for index, row in enumerate(rows, start=2):
+        if not clean(row.get("bridge_rank")):
+            issues.append({"row": str(index), "field": "bridge_rank", "issue": "bridge_rank_required"})
+        if not clean(row.get("source_board_md")):
+            issues.append({"row": str(index), "field": "source_board_md", "issue": "source_board_required"})
+        if clean(row.get("download_approved")) != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_bridge_must_not_approve_downloads"})
+        for field in [
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "source_fetching",
+            "auto_source_enablement",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            expected = "true" if field == "review_only" else "false"
+            if clean(row.get(field)) != expected:
+                issues.append({"row": str(index), "field": field, "issue": "guardrail_field_invalid"})
+    return issues
+
+
+def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
+    source_rows = sum(as_int(row.get("source_rows")) for row in rows)
+    ready_rows = sum(as_int(row.get("candidate_ready_for_later_human_download_decision_review_rows")) for row in rows)
+    import_rows = as_int(rows[0].get("shared_import_review_rows")) if rows else 0
+    import_rows_with_data = as_int(rows[0].get("shared_import_rows_with_data")) if rows else 0
+    lines = [
+        "# Review-Only Action Photo Manual Research Bridge v1",
+        "",
+        f"Generated: `{GENERATED_AT_UTC}`",
+        "",
+        "This bridge connects the existing women's soccer and hockey/softball action-photo boards to the shared research return intake. It is artifact-only: it does not fetch sources, download images, approve candidates/assets, write headshots, create marker files, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Bridge lanes: `{len(rows)}`",
+        f"- Source lead rows to work manually: `{source_rows}`",
+        f"- Shared import review rows: `{import_rows}`",
+        f"- Shared import rows with pasted data: `{import_rows_with_data}`",
+        f"- Rows ready only for later human download-decision review: `{ready_rows}`",
+        f"- Generated download approvals: `{generated_download_approval_rows(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        "",
+        "## Manual Bridge",
+        "",
+        "| Rank | Lane | Source Rows | Blank Source | Blank Rights | Blank Identity | Import Data | First Row | Manual First Action |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | {lane} | {source_rows} | {blank_source} | {blank_rights} | {blank_identity} | {import_data} | `{first_ref}` | {action} |".format(
+                rank=clean(row.get("bridge_rank")),
+                lane=clean(row.get("bridge_lane")),
+                source_rows=clean(row.get("source_rows")),
+                blank_source=clean(row.get("blank_source_url_rows")),
+                blank_rights=clean(row.get("blank_rights_class_rows")),
+                blank_identity=clean(row.get("blank_identity_confidence_rows")),
+                import_data=clean(row.get("shared_import_rows_with_data")),
+                first_ref=clean(row.get("first_row_ref")),
+                action=clean(row.get("manual_first_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines) + "\n"
+
+
+def generated_download_approval_rows(rows: List[Mapping[str, str]]) -> int:
+    return sum(1 for row in rows if is_yes(row.get("download_approved")))
+
+
+def manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> Dict[str, Any]:
+    return {
+        "version": VERSION,
+        "status": "action_photo_manual_research_bridge_ready" if not issues else "action_photo_manual_research_bridge_has_validation_issues",
+        "generated_at_utc": GENERATED_AT_UTC,
+        "bridge_rows": len(rows),
+        "source_rows": sum(as_int(row.get("source_rows")) for row in rows),
+        "womens_soccer_source_rows": as_int(rows[0].get("source_rows")) if rows else 0,
+        "hockey_softball_source_rows": as_int(rows[1].get("source_rows")) if len(rows) > 1 else 0,
+        "shared_import_review_rows": as_int(rows[0].get("shared_import_review_rows")) if rows else 0,
+        "shared_import_rows_with_data": as_int(rows[0].get("shared_import_rows_with_data")) if rows else 0,
+        "shared_import_ready_rows": as_int(rows[0].get("shared_import_ready_rows")) if rows else 0,
+        "candidate_ready_for_later_human_download_decision_review_rows": sum(
+            as_int(row.get("candidate_ready_for_later_human_download_decision_review_rows")) for row in rows
+        ),
+        "generated_download_approval_rows": generated_download_approval_rows(rows),
+        "validation_issue_count": len(issues),
+        "validation_issues": issues,
+        "shared_research_return_intake_file": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+        "shared_import_review_file": IMPORT_REVIEW_MD.as_posix(),
+        "worksheet_md": OUT_BRIDGE_MD.as_posix(),
+        "worksheet_csv": OUT_BRIDGE_CSV.as_posix(),
+        "worksheet_json": OUT_BRIDGE_JSON.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "source_fetching": False,
+        "auto_source_enablement": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "bridge_rows_detail": rows,
+    }
+
+
+def main() -> int:
+    rows = bridge_rows()
+    issues = validate_rows(rows)
+    write_csv(OUT_BRIDGE_CSV, rows, BRIDGE_FIELDS)
+    write_text(OUT_BRIDGE_MD, render_markdown(rows, issues))
+    write_json(OUT_BRIDGE_JSON, manifest(rows, issues))
+    print(json.dumps({"version": VERSION, "status": "ok", "bridge_rows": len(rows), "validation_issue_count": len(issues)}, indent=2))
+    return 1 if issues else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
