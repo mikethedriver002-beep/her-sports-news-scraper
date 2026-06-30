@@ -150,6 +150,15 @@ def test_local_runner_collects_game_source_confirmation_bridge_for_latest() -> N
     assert '"game_source_confirmation_bridge_v1.json"' in collector
 
 
+def test_local_runner_collects_adobe_renderer_revision_spec_for_latest() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    collector = runner[runner.index("function Collect-HsdArtifacts") : runner.index("function Invoke-HsdRun")]
+
+    assert '"adobe_visual_qa_renderer_revision_spec.md"' in collector
+    assert '"adobe_visual_qa_renderer_revision_spec.csv"' in collector
+    assert '"adobe_visual_qa_renderer_revision_spec.json"' in collector
+
+
 def test_local_runner_collects_game_fact_confirmation_status_for_latest() -> None:
     runner = RUNNER.read_text(encoding="utf-8")
     collector = runner[runner.index("function Collect-HsdArtifacts") : runner.index("function Invoke-HsdRun")]
