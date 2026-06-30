@@ -1,6 +1,6 @@
 # Women's Soccer Action-Photo Research Next Board
 
-Generated: `2026-06-29T22:39:18.754226+00:00`
+Generated: `2026-06-30T04:43:06.576785+00:00`
 
 Review-only bridge from women's soccer athlete verification/operator-focus rows to the action-photo research return intake. It tells Mike which team/player/source rows need manual candidate-page, evidence, and identity anchors next. It does not fetch sources, download images, approve assets, write headshots, create `.approved` markers, mark render-ready, move files, or publish.
 

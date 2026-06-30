@@ -2120,6 +2120,145 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
             "paid_apis": False,
         },
     )
+    Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.md").write_text(
+        "# Women's Soccer Action-Photo First Paste Guide\n",
+        encoding="utf-8",
+    )
+    write_csv_with_fields(
+        "data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.csv",
+        [
+            {
+                "first_paste_rank": "1",
+                "research_next_rank": "1",
+                "focus_bucket": "2_p0_roster_or_source_verify",
+                "league_id": "nwsl",
+                "team_id": "angel_city_fc",
+                "team_name": "Angel City FC",
+                "player_name": "Angel Player",
+                "source_candidate_url": "https://www.angelcity.com/club/roster",
+                "source_row_ref": "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv#row=2",
+                "candidate_action_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv#row=1",
+                "operator_focus_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv#row=1",
+                "paste_target_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+                "evidence_package_to_paste": "candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            },
+            {
+                "first_paste_rank": "2",
+                "research_next_rank": "2",
+                "focus_bucket": "4_gray_area_or_reputable_lead",
+                "league_id": "wsl_england",
+                "team_id": "all_teams",
+                "team_name": "WSL England",
+                "player_name": "",
+                "source_candidate_url": "https://example.org/wsl",
+                "source_row_ref": "data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv#row=3",
+                "candidate_action_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_candidate_next_action_board.csv#row=2",
+                "operator_focus_row_ref": "data/asset_registry/womens_soccer/womens_soccer_athlete_operator_focus.csv#row=2",
+                "paste_target_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
+                "evidence_package_to_paste": "candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            },
+        ],
+        [
+            "first_paste_rank",
+            "research_next_rank",
+            "focus_bucket",
+            "league_id",
+            "team_id",
+            "team_name",
+            "player_name",
+            "source_candidate_url",
+            "source_row_ref",
+            "candidate_action_row_ref",
+            "operator_focus_row_ref",
+            "paste_target_csv",
+            "evidence_package_to_paste",
+            "candidate_ready_for_later_human_download_decision_review",
+            "download_approved",
+            "source_url",
+            "entity_id",
+            "rights_class",
+            "identity_confidence",
+            "intended_review_only_use",
+            "operator_decision",
+            "operator_notes",
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ],
+    )
+    write_json(
+        "data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.json",
+        {
+            "status": "womens_soccer_action_photo_first_paste_guide_ready",
+            "generated_at_utc": "2026-06-27T22:06:00+00:00",
+            "first_paste_rows": 2,
+            "validation_issue_count": 0,
+            "generated_ready_rows": 0,
+            "generated_download_approval_rows": 0,
+            "blank_source_url_rows": 2,
+            "blank_rights_class_rows": 2,
+            "blank_identity_confidence_rows": 2,
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
     Path("data/asset_registry/womens_soccer/womens_soccer_athlete_expansion_closure_summary.md").write_text(
         "# Closure summary\n",
         encoding="utf-8",
@@ -2309,6 +2448,16 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert panel["womens_soccer_action_photo_research_next_approved_marker_writes"] is False
     assert panel["womens_soccer_action_photo_research_next_generated_at"] == "2026-06-27T22:05:00+00:00"
     assert panel["womens_soccer_action_photo_research_next_freshness_status"] == "packet_ready"
+    assert panel["womens_soccer_action_photo_first_paste_status"] == "womens_soccer_action_photo_first_paste_guide_ready"
+    assert panel["womens_soccer_action_photo_first_paste_rows"] == 2
+    assert panel["womens_soccer_action_photo_first_paste_generated_ready_rows"] == 0
+    assert panel["womens_soccer_action_photo_first_paste_generated_download_approval_rows"] == 0
+    assert panel["womens_soccer_action_photo_first_paste_blank_source_url_rows"] == 2
+    assert panel["womens_soccer_action_photo_first_paste_asset_downloads"] is False
+    assert panel["womens_soccer_action_photo_first_paste_headshot_writes"] is False
+    assert panel["womens_soccer_action_photo_first_paste_approved_marker_writes"] is False
+    assert panel["womens_soccer_action_photo_first_paste_generated_at"] == "2026-06-27T22:06:00+00:00"
+    assert panel["womens_soccer_action_photo_first_paste_freshness_status"] == "packet_ready"
     assert panel["womens_soccer_athlete_closure_status"] == "athlete_expansion_closure_summary_ready"
     assert panel["womens_soccer_athlete_closure_rows"] == 1
     assert panel["womens_soccer_athlete_closure_total_referenced_rows"] == 2
@@ -2362,6 +2511,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert any(item["label"] == "Women's soccer action-photo research next" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer action-photo research next data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer action-photo research next manifest" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer action-photo first paste guide" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer action-photo first paste guide data" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Women's soccer action-photo first paste guide manifest" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete expansion closure summary" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete expansion closure summary data" for item in panel["file_shortcuts"])
     assert any(item["label"] == "Women's soccer athlete expansion closure summary manifest" for item in panel["file_shortcuts"])
@@ -2404,6 +2556,9 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Soccer focus rows" in html
     assert "Soccer focus P0" in html
     assert "Soccer focus identity" in html
+    assert "Soccer first paste" in html
+    assert "Soccer paste ready/dl" in html
+    assert "Soccer paste writes" in html
     assert "Soccer closure rows" in html
     assert "Soccer closure refs" in html
     assert "Soccer closure dl yes" in html
@@ -2424,6 +2579,7 @@ def test_asset_readiness_panel_surfaces_womens_soccer_logo_contact_sheet(tmp_pat
     assert "Women&#x27;s soccer athlete candidate next-action board packet freshness" in html
     assert "Women&#x27;s soccer athlete photo review readiness board packet freshness" in html
     assert "Women&#x27;s soccer athlete operator focus packet freshness" in html
+    assert "Women&#x27;s soccer action-photo first paste guide packet freshness" in html
     assert "Women&#x27;s soccer athlete expansion closure summary packet freshness" in html
     assert "Women&#x27;s soccer external research intake packet freshness" in html
 
@@ -6240,6 +6396,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/hockey_softball_quarantine_download_intake.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/hockey_softball_quarantine_download_intake.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py"
     assert artifact_by_path["data/asset_registry/logo_asset_catalog.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_logo_asset_catalog_v1.py"
+    womens_soccer_command = ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_womens_soccer_athlete_verification_queue_v1.py"
+    assert artifact_by_path["data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.md"]["run_command"] == womens_soccer_command
+    assert artifact_by_path["data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.csv"]["run_command"] == womens_soccer_command
+    assert artifact_by_path["data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.json"]["run_command"] == womens_soccer_command
     assert artifact_by_path["breaking_public_signal_return_summary_v1.md"]["run_command"] == ".\\hsd.cmd run -Mode news"
     assert artifact_by_path["breaking_public_signal_return_summary_v1.csv"]["run_command"] == ".\\hsd.cmd run -Mode news"
     assert artifact_by_path["breaking_public_signal_return_summary_v1.json"]["run_command"] == ".\\hsd.cmd run -Mode news"
