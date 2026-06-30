@@ -16,6 +16,9 @@ ROOT = Path("data/asset_registry/action_photo_candidates")
 OUT_BRIDGE_MD = ROOT / "review_only_action_photo_manual_research_bridge_v1.md"
 OUT_BRIDGE_CSV = ROOT / "review_only_action_photo_manual_research_bridge_v1.csv"
 OUT_BRIDGE_JSON = ROOT / "review_only_action_photo_manual_research_bridge_v1.json"
+OUT_FIRST_ACTION_CARDS_MD = ROOT / "review_only_action_photo_manual_first_action_cards_v1.md"
+OUT_FIRST_ACTION_CARDS_CSV = ROOT / "review_only_action_photo_manual_first_action_cards_v1.csv"
+OUT_FIRST_ACTION_CARDS_JSON = ROOT / "review_only_action_photo_manual_first_action_cards_v1.json"
 WOMENS_SOCCER_NEXT_MD = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md")
 WOMENS_SOCCER_NEXT_CSV = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv")
 WOMENS_SOCCER_NEXT_JSON = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json")
@@ -50,6 +53,38 @@ BRIDGE_FIELDS = [
     "fields_to_paste_next",
     "manual_first_action",
     "guardrail_note",
+    "download_approved",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "source_fetching",
+    "auto_source_enablement",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+FIRST_ACTION_CARD_FIELDS = [
+    "card_id",
+    "bridge_lane",
+    "manual_priority",
+    "source_scope",
+    "open_source_board_md",
+    "open_source_row_ref",
+    "manual_source_lead",
+    "paste_target_csv",
+    "run_after_paste",
+    "fields_to_fill",
+    "fields_to_keep_blank_until_human_gate",
+    "identity_evidence_needed",
+    "rights_evidence_needed",
+    "action_context_needed",
+    "quarantine_gate_cue",
+    "manual_next_action",
     "download_approved",
     "review_only",
     "approval_state_change",
@@ -255,6 +290,77 @@ def validate_rows(rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
     return issues
 
 
+def first_action_card_rows(rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    cards: List[Dict[str, str]] = []
+    for index, row in enumerate(rows, start=1):
+        lane = clean(row.get("bridge_lane"))
+        cards.append(
+            {
+                "card_id": f"APFAC{index:02d}",
+                "bridge_lane": lane,
+                "manual_priority": "P0_first_manual_return",
+                "source_scope": clean(row.get("source_scope")),
+                "open_source_board_md": clean(row.get("source_board_md")),
+                "open_source_row_ref": clean(row.get("first_row_ref")),
+                "manual_source_lead": clean(row.get("first_manual_source_lead")),
+                "paste_target_csv": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+                "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+                "fields_to_fill": FIELDS_TO_PASTE_NEXT,
+                "fields_to_keep_blank_until_human_gate": "download_approved|quarantine_target_hint|operator_decision|operator_notes",
+                "identity_evidence_needed": "identity anchor page or official roster/profile plus source caption/event context",
+                "rights_evidence_needed": "rights_class must be a conservative review category from human source review, not clearance",
+                "action_context_needed": "candidate page or evidence page must show game/action context, not headshot/roster-only use",
+                "quarantine_gate_cue": "Only a later human-edited intake row with all required metadata can reach quarantine-only download decision review; this card does not download or approve.",
+                "manual_next_action": clean(row.get("manual_first_action")),
+                "download_approved": "no",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    return cards
+
+
+def validate_first_action_cards(rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    for index, row in enumerate(rows, start=2):
+        if not clean(row.get("card_id")):
+            issues.append({"row": str(index), "field": "card_id", "issue": "card_id_required"})
+        if not clean(row.get("open_source_row_ref")):
+            issues.append({"row": str(index), "field": "open_source_row_ref", "issue": "source_row_ref_required"})
+        if clean(row.get("download_approved")) != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_card_must_not_approve_downloads"})
+        for field in [
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "source_fetching",
+            "auto_source_enablement",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            expected = "true" if field == "review_only" else "false"
+            if clean(row.get(field)) != expected:
+                issues.append({"row": str(index), "field": field, "issue": "guardrail_field_invalid"})
+    return issues
+
+
 def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
     source_rows = sum(as_int(row.get("source_rows")) for row in rows)
     ready_rows = sum(as_int(row.get("candidate_ready_for_later_human_download_decision_review_rows")) for row in rows)
@@ -299,6 +405,43 @@ def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str
     return "\n".join(lines) + "\n"
 
 
+def render_first_action_cards_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
+    lines = [
+        "# Review-Only Action Photo Manual First-Action Cards v1",
+        "",
+        f"Generated: `{GENERATED_AT_UTC}`",
+        "",
+        "These cards turn the bridge rows into the next two manual actions. This artifact does not fetch sources, download images, approve candidates/assets, write headshots, create marker files, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- First-action cards: `{len(rows)}`",
+        f"- Generated download approvals: `{generated_download_approval_rows(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        "",
+        "## Cards",
+        "",
+    ]
+    for row in rows:
+        lines += [
+            f"### {clean(row.get('card_id'))} - {clean(row.get('bridge_lane'))}",
+            "",
+            f"- Open source row: `{clean(row.get('open_source_row_ref'))}`",
+            f"- Manual source lead: `{clean(row.get('manual_source_lead'))}`",
+            f"- Paste target: `{clean(row.get('paste_target_csv'))}`",
+            f"- Fields to fill: `{clean(row.get('fields_to_fill'))}`",
+            f"- Keep blank until human gate: `{clean(row.get('fields_to_keep_blank_until_human_gate'))}`",
+            f"- Run after paste: `{clean(row.get('run_after_paste'))}`",
+            f"- Identity evidence needed: {clean(row.get('identity_evidence_needed'))}",
+            f"- Rights evidence needed: {clean(row.get('rights_evidence_needed'))}",
+            f"- Action context needed: {clean(row.get('action_context_needed'))}",
+            f"- Quarantine gate cue: {clean(row.get('quarantine_gate_cue'))}",
+            f"- Manual next action: {clean(row.get('manual_next_action'))}",
+            "",
+        ]
+    return "\n".join(lines) + "\n"
+
+
 def generated_download_approval_rows(rows: List[Mapping[str, str]]) -> int:
     return sum(1 for row in rows if is_yes(row.get("download_approved")))
 
@@ -326,6 +469,9 @@ def manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> 
         "worksheet_md": OUT_BRIDGE_MD.as_posix(),
         "worksheet_csv": OUT_BRIDGE_CSV.as_posix(),
         "worksheet_json": OUT_BRIDGE_JSON.as_posix(),
+        "first_action_cards_md": OUT_FIRST_ACTION_CARDS_MD.as_posix(),
+        "first_action_cards_csv": OUT_FIRST_ACTION_CARDS_CSV.as_posix(),
+        "first_action_cards_json": OUT_FIRST_ACTION_CARDS_JSON.as_posix(),
         "review_only": True,
         "approval_state_change": False,
         "candidate_state_change": False,
@@ -343,14 +489,52 @@ def manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> 
     }
 
 
+def first_action_cards_manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> Dict[str, Any]:
+    return {
+        "version": VERSION,
+        "status": "action_photo_manual_first_action_cards_ready" if not issues else "action_photo_manual_first_action_cards_have_validation_issues",
+        "generated_at_utc": GENERATED_AT_UTC,
+        "first_action_cards": len(rows),
+        "validation_issue_count": len(issues),
+        "validation_issues": issues,
+        "generated_download_approval_rows": generated_download_approval_rows(rows),
+        "shared_research_return_intake_file": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+        "shared_import_review_file": IMPORT_REVIEW_MD.as_posix(),
+        "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+        "worksheet_md": OUT_FIRST_ACTION_CARDS_MD.as_posix(),
+        "worksheet_csv": OUT_FIRST_ACTION_CARDS_CSV.as_posix(),
+        "worksheet_json": OUT_FIRST_ACTION_CARDS_JSON.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "source_fetching": False,
+        "auto_source_enablement": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "first_action_cards_detail": rows,
+    }
+
+
 def main() -> int:
     rows = bridge_rows()
     issues = validate_rows(rows)
+    card_rows = first_action_card_rows(rows)
+    card_issues = validate_first_action_cards(card_rows)
     write_csv(OUT_BRIDGE_CSV, rows, BRIDGE_FIELDS)
     write_text(OUT_BRIDGE_MD, render_markdown(rows, issues))
     write_json(OUT_BRIDGE_JSON, manifest(rows, issues))
-    print(json.dumps({"version": VERSION, "status": "ok", "bridge_rows": len(rows), "validation_issue_count": len(issues)}, indent=2))
-    return 1 if issues else 0
+    write_csv(OUT_FIRST_ACTION_CARDS_CSV, card_rows, FIRST_ACTION_CARD_FIELDS)
+    write_text(OUT_FIRST_ACTION_CARDS_MD, render_first_action_cards_markdown(card_rows, card_issues))
+    write_json(OUT_FIRST_ACTION_CARDS_JSON, first_action_cards_manifest(card_rows, card_issues))
+    total_issues = len(issues) + len(card_issues)
+    print(json.dumps({"version": VERSION, "status": "ok", "bridge_rows": len(rows), "first_action_cards": len(card_rows), "validation_issue_count": total_issues}, indent=2))
+    return 1 if total_issues else 0
 
 
 if __name__ == "__main__":

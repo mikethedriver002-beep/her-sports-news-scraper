@@ -1,0 +1,42 @@
+# Review-Only Action Photo Manual First-Action Cards v1
+
+Generated: `2026-06-29T00:00:00+00:00`
+
+These cards turn the bridge rows into the next two manual actions. This artifact does not fetch sources, download images, approve candidates/assets, write headshots, create marker files, move files, or publish.
+
+## Summary
+
+- First-action cards: `2`
+- Generated download approvals: `0`
+- Validation issues: `0`
+
+## Cards
+
+### APFAC01 - women_soccer_action_photo
+
+- Open source row: `data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv#row=2`
+- Manual source lead: `https://bayfc.com/press-releases/bay-fc-acquire-midfielder-kennedy-fuller-from-angel-city-fc-20260612/`
+- Paste target: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv`
+- Fields to fill: `candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required`
+- Keep blank until human gate: `download_approved|quarantine_target_hint|operator_decision|operator_notes`
+- Run after paste: `.\.venv\Scripts\python.exe scripts\report_hsd_action_photo_research_return_import_stub_v1.py`
+- Identity evidence needed: identity anchor page or official roster/profile plus source caption/event context
+- Rights evidence needed: rights_class must be a conservative review category from human source review, not clearance
+- Action context needed: candidate page or evidence page must show game/action context, not headshot/roster-only use
+- Quarantine gate cue: Only a later human-edited intake row with all required metadata can reach quarantine-only download decision review; this card does not download or approve.
+- Manual next action: Open the women's soccer action-photo research-next board, choose the first row with a usable manual source lead, then paste human-reviewed candidate/evidence/source/identity metadata into the shared action-photo return intake.
+
+### APFAC02 - hockey_softball_action_photo
+
+- Open source row: `data/asset_registry/hockey_softball_action_photo_research_handoff.csv#row=2`
+- Manual source lead: `"[athlete]" PWHL "[team]" gallery OR recap site:thepwhl.com`
+- Paste target: `data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv`
+- Fields to fill: `candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required`
+- Keep blank until human gate: `download_approved|quarantine_target_hint|operator_decision|operator_notes`
+- Run after paste: `.\.venv\Scripts\python.exe scripts\report_hsd_action_photo_research_return_import_stub_v1.py`
+- Identity evidence needed: identity anchor page or official roster/profile plus source caption/event context
+- Rights evidence needed: rights_class must be a conservative review category from human source review, not clearance
+- Action context needed: candidate page or evidence page must show game/action context, not headshot/roster-only use
+- Quarantine gate cue: Only a later human-edited intake row with all required metadata can reach quarantine-only download decision review; this card does not download or approve.
+- Manual next action: Open the hockey/softball action-photo handoff row and its source-map ref, collect candidate/evidence/source/identity metadata manually, then paste the completed human-reviewed return into the shared action-photo return intake.
+
