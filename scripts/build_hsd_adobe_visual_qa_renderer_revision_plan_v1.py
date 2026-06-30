@@ -20,6 +20,9 @@ IN_REVISION_REQUESTS_REL = Path("adobe_visual_qa_revision_requests.csv")
 OUT_PLAN_CSV_REL = Path("adobe_visual_qa_renderer_revision_plan.csv")
 OUT_PLAN_MD_REL = Path("adobe_visual_qa_renderer_revision_plan.md")
 OUT_PLAN_JSON_REL = Path("adobe_visual_qa_renderer_revision_plan.json")
+OUT_SPEC_CSV_REL = Path("adobe_visual_qa_renderer_revision_spec.csv")
+OUT_SPEC_MD_REL = Path("adobe_visual_qa_renderer_revision_spec.md")
+OUT_SPEC_JSON_REL = Path("adobe_visual_qa_renderer_revision_spec.json")
 GENERATED_BY = "scripts/build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py"
 
 INPUT_REQUIRED_FIELDS = [
@@ -60,6 +63,31 @@ PLAN_FIELDS = [
     "revision_request",
     "operator_notes",
     "renderer_planning_note",
+    "next_manual_action",
+    "review_only",
+    "artifact_only",
+    "asset_downloads",
+    "image_edits",
+    "renderer_behavior_changed",
+    "approval_state_change",
+    "approved_marker_writes",
+    "publish_ready",
+    "publishing",
+    "move_files",
+]
+
+SPEC_FIELDS = [
+    "spec_id",
+    "source_plan_id",
+    "source_revision_id",
+    "priority",
+    "format",
+    "renderer_area",
+    "source_issue_bucket",
+    "implementation_task",
+    "revision_spec",
+    "acceptance_check",
+    "verification_artifact",
     "next_manual_action",
     "review_only",
     "artifact_only",
@@ -245,6 +273,77 @@ def build_plan_rows(revision_rows: Iterable[Mapping[str, str]]) -> list[dict[str
     return rows
 
 
+def spec_task(row: Mapping[str, str]) -> tuple[str, str, str, str]:
+    area = clean(row.get("renderer_area"))
+    if area == "story_title_safe_zone":
+        return (
+            "Story safe-zone offset",
+            "Draft a renderer implementation checklist item to move story title, subtitle, score, and brand-safe text clusters below mobile interface danger zones without changing this packet's renderer code.",
+            "A future rerender shows 9x16 text clear of top/bottom interface overlays while preserving source-backed copy and current asset approvals.",
+            "adobe_visual_qa_packet/drafts/draft_preview_story.png",
+        )
+    if area == "square_score_grid":
+        return (
+            "Square score-grid deboxing",
+            "Draft a renderer implementation checklist item to simplify 1x1 score-grid framing into open typography and spacing, reducing boxed dashboard weight without editing images in this packet.",
+            "A future 1x1 rerender keeps team names, scores, and proof text readable without cramped widget boxes.",
+            "adobe_visual_qa_packet/drafts/draft_preview_square.png",
+        )
+    if area == "score_rail_typography":
+        return (
+            "Score rail typography pass",
+            "Draft a renderer implementation checklist item for lighter score rail typography, softer texture integration, and less dashboard-like enclosure while keeping final-score facts unchanged.",
+            "A future 4x5/feed rerender reads as editorial sports design, not an enclosed dashboard, with score facts unchanged.",
+            "adobe_visual_qa_packet/drafts/draft_preview_ig_feed.png",
+        )
+    if area == "contact_sheet_rerender":
+        return (
+            "Contact-sheet rerender verification",
+            "After future format-specific renderer revisions are manually reviewed, regenerate the contact sheet and rerun Adobe visual QA import as verification only.",
+            "A future contact sheet shows each revised format and the imported Adobe QA rows remain review-only.",
+            "adobe_visual_qa_packet/drafts/draft_preview_visual_contact_sheet.png",
+        )
+    return (
+        "Renderer revision checklist",
+        "Carry the manual Adobe visual QA finding into a future renderer implementation checklist without changing renderer behavior in this packet.",
+        "A future rerender addresses the source QA finding and keeps all approval and publish guardrails unchanged.",
+        "adobe_visual_qa_renderer_revision_plan.md",
+    )
+
+
+def build_spec_rows(plan_rows: Iterable[Mapping[str, str]]) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    for index, row in enumerate(plan_rows, start=1):
+        task, revision_spec, acceptance_check, verification_artifact = spec_task(row)
+        rows.append(
+            {
+                "spec_id": f"AVQRS{index:03d}",
+                "source_plan_id": clean(row.get("plan_id")),
+                "source_revision_id": clean(row.get("source_revision_id")),
+                "priority": clean(row.get("priority")),
+                "format": clean(row.get("format")),
+                "renderer_area": clean(row.get("renderer_area")),
+                "source_issue_bucket": clean(row.get("issue_bucket")),
+                "implementation_task": task,
+                "revision_spec": revision_spec,
+                "acceptance_check": acceptance_check,
+                "verification_artifact": verification_artifact,
+                "next_manual_action": "Use this checklist in a separate renderer implementation lane only after human review; this artifact does not change code, images, assets, approvals, or publishing state.",
+                "review_only": "true",
+                "artifact_only": "true",
+                "asset_downloads": "false",
+                "image_edits": "false",
+                "renderer_behavior_changed": "false",
+                "approval_state_change": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "move_files": "false",
+            }
+        )
+    return rows
+
+
 def validate_inputs(revision_rows: list[Mapping[str, str]], fields: list[str], source_path: Path) -> list[dict[str, str]]:
     issues: list[dict[str, str]] = []
     if not source_path.exists():
@@ -292,6 +391,26 @@ def validate_plan_rows(plan_rows: Iterable[Mapping[str, str]]) -> list[dict[str,
     return issues
 
 
+def validate_spec_rows(spec_rows: Iterable[Mapping[str, str]]) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    for index, row in enumerate(spec_rows, start=2):
+        for field in [
+            "asset_downloads",
+            "image_edits",
+            "renderer_behavior_changed",
+            "approval_state_change",
+            "approved_marker_writes",
+            "publish_ready",
+            "publishing",
+            "move_files",
+        ]:
+            if normalized(row.get(field)) != "false":
+                issues.append({"row": str(index), "field": field, "issue": "spec_rows_must_keep_guardrail_false"})
+        if normalized(row.get("review_only")) != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "spec_rows_must_remain_review_only"})
+    return issues
+
+
 def render_report(payload: Mapping[str, Any], plan_rows: list[Mapping[str, str]]) -> str:
     lines = [
         "# HSD Adobe Visual QA Renderer Revision Plan",
@@ -306,6 +425,7 @@ def render_report(payload: Mapping[str, Any], plan_rows: list[Mapping[str, str]]
         "",
         f"- Revision request rows: `{payload['revision_request_rows']}`",
         f"- Plan rows: `{payload['plan_rows']}`",
+        f"- Spec/checklist rows: `{payload['spec_rows']}`",
         f"- Validation issues: `{payload['validation_issue_count']}`",
         "",
         "## Priority Counts",
@@ -350,16 +470,72 @@ def render_report(payload: Mapping[str, Any], plan_rows: list[Mapping[str, str]]
     return "\n".join(lines)
 
 
+def render_spec_markdown(payload: Mapping[str, Any], spec_rows: list[Mapping[str, str]]) -> str:
+    lines = [
+        "# HSD Adobe Visual QA Renderer Revision Spec",
+        "",
+        f"Status: `{payload['spec_status']}`",
+        f"Generated: `{payload['generated_at_utc']}`",
+        f"Source plan CSV: `{payload['plan_csv']}`",
+        "",
+        "Review-only implementation checklist derived from the Adobe visual QA renderer revision plan. This artifact is for a future renderer lane and does not edit renderer behavior, images, assets, approvals, `.approved` markers, publish-ready state, or publishing.",
+        "",
+        "## Checklist Rows",
+        "",
+    ]
+    if spec_rows:
+        for row in spec_rows:
+            lines.extend(
+                [
+                    f"### {row['spec_id']} - {row['implementation_task']}",
+                    "",
+                    f"- Priority: `{row['priority']}`",
+                    f"- Format: `{row['format']}`",
+                    f"- Renderer area: `{row['renderer_area']}`",
+                    f"- Source plan row: `{row['source_plan_id']}` / `{row['source_revision_id']}`",
+                    f"- Source issue bucket: `{row['source_issue_bucket']}`",
+                    f"- Revision spec: {row['revision_spec']}",
+                    f"- Acceptance check: {row['acceptance_check']}",
+                    f"- Verification artifact: `{row['verification_artifact']}`",
+                    f"- Next manual action: {row['next_manual_action']}",
+                    "",
+                ]
+            )
+    else:
+        lines.append("- None yet. Generate revision request rows, then rerun this builder.")
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- review_only=true",
+            "- artifact_only=true",
+            "- asset_downloads=false",
+            "- image_edits=false",
+            "- renderer_behavior_changed=false",
+            "- approval_state_change=false",
+            "- approved_marker_writes=false",
+            "- publish_ready=false",
+            "- publishing=false",
+            "- move_files=false",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     generated_at = now_iso()
     source_path = input_csv_path(Path(args.input_csv) if args.input_csv else IN_REVISION_REQUESTS_REL)
     revision_rows, fields = read_revision_rows(source_path)
     input_issues = validate_inputs(revision_rows, fields, source_path)
     plan_rows = build_plan_rows(revision_rows) if not input_issues else []
+    spec_rows = build_spec_rows(plan_rows)
     plan_issues = validate_plan_rows(plan_rows)
-    issues = [*input_issues, *plan_issues]
+    spec_issues = validate_spec_rows(spec_rows)
+    issues = [*input_issues, *plan_issues, *spec_issues]
     priority_counts = dict(sorted(Counter(row["priority"] for row in plan_rows).items()))
     area_counts = dict(sorted(Counter(row["renderer_area"] for row in plan_rows).items()))
+    spec_task_counts = dict(sorted(Counter(row["implementation_task"] for row in spec_rows).items()))
     status = "adobe_visual_qa_renderer_revision_plan_ready"
     if not source_path.exists():
         status = "adobe_visual_qa_revision_requests_missing"
@@ -367,10 +543,14 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         status = "adobe_visual_qa_renderer_revision_plan_has_validation_issues"
     elif not plan_rows:
         status = "adobe_visual_qa_renderer_revision_plan_waiting_for_revision_requests"
+    spec_status = status.replace("renderer_revision_plan", "renderer_revision_spec")
 
     out_csv = output_rel(OUT_PLAN_CSV_REL)
     out_md = output_rel(OUT_PLAN_MD_REL)
     out_json = output_rel(OUT_PLAN_JSON_REL)
+    out_spec_csv = output_rel(OUT_SPEC_CSV_REL)
+    out_spec_md = output_rel(OUT_SPEC_MD_REL)
+    out_spec_json = output_rel(OUT_SPEC_JSON_REL)
     payload: dict[str, Any] = {
         "version": VERSION,
         "status": status,
@@ -380,10 +560,16 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "plan_csv": str(out_csv),
         "plan_md": str(out_md),
         "plan_json": str(out_json),
+        "spec_status": spec_status,
+        "spec_csv": str(out_spec_csv),
+        "spec_md": str(out_spec_md),
+        "spec_json": str(out_spec_json),
         "revision_request_rows": len(revision_rows),
         "plan_rows": len(plan_rows),
+        "spec_rows": len(spec_rows),
         "priority_counts": priority_counts,
         "renderer_area_counts": area_counts,
+        "spec_task_counts": spec_task_counts,
         "validation_issue_count": len(issues),
         "validation_issues": issues,
         "review_only": True,
@@ -406,6 +592,9 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     write_csv(out_csv, plan_rows, PLAN_FIELDS)
     write_text(out_md, render_report(payload, plan_rows))
     write_json(out_json, payload)
+    write_csv(out_spec_csv, spec_rows, SPEC_FIELDS)
+    write_text(out_spec_md, render_spec_markdown(payload, spec_rows))
+    write_json(out_spec_json, {**payload, "status": spec_status, "spec_rows_detail": spec_rows})
     return payload
 
 
@@ -424,6 +613,7 @@ def main(argv: list[str] | None = None) -> int:
                 "status": payload["status"],
                 "revision_request_rows": payload["revision_request_rows"],
                 "plan_rows": payload["plan_rows"],
+                "spec_rows": payload["spec_rows"],
                 "validation_issue_count": payload["validation_issue_count"],
                 "review_only": True,
                 "asset_downloads": False,

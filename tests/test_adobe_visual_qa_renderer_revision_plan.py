@@ -100,11 +100,16 @@ def test_renderer_revision_plan_builds_review_only_plan_rows(tmp_path: Path, mon
     manifest = json.loads((run_dir / "adobe_visual_qa_renderer_revision_plan.json").read_text(encoding="utf-8"))
     plan_rows = read_csv(run_dir / "adobe_visual_qa_renderer_revision_plan.csv")
     report = (run_dir / "adobe_visual_qa_renderer_revision_plan.md").read_text(encoding="utf-8")
+    spec_manifest = json.loads((run_dir / "adobe_visual_qa_renderer_revision_spec.json").read_text(encoding="utf-8"))
+    spec_rows = read_csv(run_dir / "adobe_visual_qa_renderer_revision_spec.csv")
+    spec_report = (run_dir / "adobe_visual_qa_renderer_revision_spec.md").read_text(encoding="utf-8")
 
     assert manifest["version"] == "hsd-adobe-visual-qa-renderer-revision-plan-v1-review-only"
     assert manifest["status"] == "adobe_visual_qa_renderer_revision_plan_ready"
     assert manifest["revision_request_rows"] == 4
     assert manifest["plan_rows"] == 4
+    assert manifest["spec_rows"] == 4
+    assert manifest["spec_status"] == "adobe_visual_qa_renderer_revision_spec_ready"
     assert manifest["validation_issue_count"] == 0
     assert manifest["review_only"] is True
     assert manifest["artifact_only"] is True
@@ -122,10 +127,34 @@ def test_renderer_revision_plan_builds_review_only_plan_rows(tmp_path: Path, mon
         "contact_sheet_rerender",
     ]
     assert [row["priority"] for row in plan_rows] == ["P1", "P0", "P0", "P2"]
+    assert [row["implementation_task"] for row in spec_rows] == [
+        "Score rail typography pass",
+        "Story safe-zone offset",
+        "Square score-grid deboxing",
+        "Contact-sheet rerender verification",
+    ]
     assert all(row["review_only"] == "true" for row in plan_rows)
     assert all(row["renderer_behavior_changed"] == "false" for row in plan_rows)
     assert all(row["publish_ready"] == "false" for row in plan_rows)
+    assert all(row["review_only"] == "true" for row in spec_rows)
+    assert all(row["asset_downloads"] == "false" for row in spec_rows)
+    assert all(row["image_edits"] == "false" for row in spec_rows)
+    assert all(row["renderer_behavior_changed"] == "false" for row in spec_rows)
+    assert all(row["approval_state_change"] == "false" for row in spec_rows)
+    assert all(row["approved_marker_writes"] == "false" for row in spec_rows)
+    assert all(row["publish_ready"] == "false" for row in spec_rows)
+    assert all(row["publishing"] == "false" for row in spec_rows)
+    assert spec_manifest["status"] == "adobe_visual_qa_renderer_revision_spec_ready"
+    assert spec_manifest["asset_downloads"] is False
+    assert spec_manifest["image_edits"] is False
+    assert spec_manifest["renderer_behavior_changed"] is False
+    assert spec_manifest["approval_state_change"] is False
+    assert spec_manifest["approved_marker_writes"] is False
+    assert spec_manifest["publish_ready"] is False
+    assert spec_manifest["publishing"] is False
     assert "No renderer behavior changes." in report
+    assert "Review-only implementation checklist" in spec_report
+    assert "renderer_behavior_changed=false" in spec_report
 
 
 def test_renderer_revision_plan_waits_when_revision_csv_has_no_rows(tmp_path: Path, monkeypatch) -> None:
@@ -139,12 +168,16 @@ def test_renderer_revision_plan_waits_when_revision_csv_has_no_rows(tmp_path: Pa
 
     manifest = json.loads((run_dir / "adobe_visual_qa_renderer_revision_plan.json").read_text(encoding="utf-8"))
     plan_rows = read_csv(run_dir / "adobe_visual_qa_renderer_revision_plan.csv")
+    spec_rows = read_csv(run_dir / "adobe_visual_qa_renderer_revision_spec.csv")
 
     assert manifest["status"] == "adobe_visual_qa_renderer_revision_plan_waiting_for_revision_requests"
+    assert manifest["spec_status"] == "adobe_visual_qa_renderer_revision_spec_waiting_for_revision_requests"
     assert manifest["revision_request_rows"] == 0
     assert manifest["plan_rows"] == 0
+    assert manifest["spec_rows"] == 0
     assert manifest["validation_issue_count"] == 0
     assert plan_rows == []
+    assert spec_rows == []
     assert manifest["renderer_behavior_changed"] is False
     assert manifest["publish_ready"] is False
 
@@ -187,5 +220,9 @@ def test_renderer_revision_plan_blocks_invalid_or_unsafe_revision_rows(tmp_path:
     assert ("asset_downloads", "upstream_revision_request_guardrail_truthy") in issue_pairs
     assert ("publish_ready", "upstream_revision_request_guardrail_truthy") in issue_pairs
     assert manifest["asset_downloads"] is False
+    assert manifest["image_edits"] is False
     assert manifest["renderer_behavior_changed"] is False
+    assert manifest["approval_state_change"] is False
+    assert manifest["approved_marker_writes"] is False
     assert manifest["publish_ready"] is False
+    assert manifest["publishing"] is False

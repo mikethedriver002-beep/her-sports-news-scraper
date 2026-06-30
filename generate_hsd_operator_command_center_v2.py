@@ -59,6 +59,9 @@ VOLATILE_RENDER_ARTIFACTS = {
     "adobe_visual_qa_renderer_revision_plan.md",
     "adobe_visual_qa_renderer_revision_plan.csv",
     "adobe_visual_qa_renderer_revision_plan.json",
+    "adobe_visual_qa_renderer_revision_spec.md",
+    "adobe_visual_qa_renderer_revision_spec.csv",
+    "adobe_visual_qa_renderer_revision_spec.json",
 }
 
 RENDER_PREP_FIELDS = [
@@ -622,6 +625,9 @@ ARTIFACTS = [
     ("Decision", "Adobe renderer revision plan", "adobe_visual_qa_renderer_revision_plan.md"),
     ("Decision", "Adobe renderer revision plan data", "adobe_visual_qa_renderer_revision_plan.csv"),
     ("Decision", "Adobe renderer revision plan manifest", "adobe_visual_qa_renderer_revision_plan.json"),
+    ("Decision", "Adobe renderer revision spec", "adobe_visual_qa_renderer_revision_spec.md"),
+    ("Decision", "Adobe renderer revision spec data", "adobe_visual_qa_renderer_revision_spec.csv"),
+    ("Decision", "Adobe renderer revision spec manifest", "adobe_visual_qa_renderer_revision_spec.json"),
     ("Decision", "Manual visual QA approval intake", "manual_visual_qa_approval_intake.md"),
     ("Decision", "Manual visual QA approval intake data", "manual_visual_qa_approval_intake.csv"),
     ("Decision", "Manual visual QA approval intake manifest", "manual_visual_qa_approval_intake.json"),
@@ -1394,6 +1400,9 @@ RUN_COMMANDS = {
     "adobe_visual_qa_renderer_revision_plan.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "adobe_visual_qa_renderer_revision_plan.csv": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "adobe_visual_qa_renderer_revision_plan.json": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
+    "adobe_visual_qa_renderer_revision_spec.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
+    "adobe_visual_qa_renderer_revision_spec.csv": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
+    "adobe_visual_qa_renderer_revision_spec.json": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "manual_visual_qa_approval_intake.md": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.csv": ".\\hsd.cmd run -Mode render",
     "manual_visual_qa_approval_intake.json": ".\\hsd.cmd run -Mode render",
@@ -4272,6 +4281,8 @@ def adobe_visual_qa_summary() -> Dict[str, Any]:
     revision_rows = read_csv("adobe_visual_qa_revision_requests.csv")
     renderer_plan = read_json("adobe_visual_qa_renderer_revision_plan.json")
     renderer_plan_rows = read_csv("adobe_visual_qa_renderer_revision_plan.csv")
+    renderer_spec = read_json("adobe_visual_qa_renderer_revision_spec.json")
+    renderer_spec_rows = read_csv("adobe_visual_qa_renderer_revision_spec.csv")
     operator_decision_counts = result_manifest.get("operator_decision_counts", {})
     if not isinstance(operator_decision_counts, dict) or not operator_decision_counts:
         operator_decision_counts = count_field_values(revision_rows, "operator_decision")
@@ -4283,28 +4294,38 @@ def adobe_visual_qa_summary() -> Dict[str, Any]:
         renderer_area_counts = count_field_values(renderer_plan_rows, "renderer_area")
     result_status = clean(result_manifest.get("status")) or "not_generated"
     plan_status = clean(renderer_plan.get("status")) or "not_generated"
+    spec_status = clean(first_present(renderer_spec.get("status"), renderer_plan.get("spec_status"))) or "not_generated"
     revision_request_rows = as_int(first_present(result_manifest.get("revision_request_rows"), len(revision_rows)))
     plan_rows = as_int(first_present(renderer_plan.get("plan_rows"), len(renderer_plan_rows)))
+    spec_rows = as_int(first_present(renderer_spec.get("spec_rows"), renderer_plan.get("spec_rows"), len(renderer_spec_rows)))
     validation_issue_count = as_int(result_manifest.get("validation_issue_count")) + as_int(
         renderer_plan.get("validation_issue_count")
     )
-    if result_status == "adobe_visual_qa_revision_requests_ready" and plan_status == "adobe_visual_qa_renderer_revision_plan_ready":
-        next_step = "Open the Adobe renderer revision plan, then hand off a separate renderer or cockpit lane."
+    if (
+        result_status == "adobe_visual_qa_revision_requests_ready"
+        and plan_status == "adobe_visual_qa_renderer_revision_plan_ready"
+        and spec_status == "adobe_visual_qa_renderer_revision_spec_ready"
+    ):
+        next_step = "Open the Adobe renderer revision spec/checklist, then hand off a separate renderer implementation lane."
     elif result_status == "not_generated":
         next_step = "Run the Adobe visual QA intake importer after the worksheet is filled."
     elif plan_status == "not_generated":
         next_step = "Run the Adobe renderer revision plan builder after revision requests are ready."
+    elif spec_status == "not_generated":
+        next_step = "Rerun the Adobe renderer revision plan builder to create the spec/checklist artifacts."
     else:
         next_step = "Review Adobe visual QA validation issues before another renderer step."
     return {
         "result_status": result_status,
         "plan_status": plan_status,
+        "spec_status": spec_status,
         "filled_manual_review_rows": as_int(result_manifest.get("filled_manual_review_rows")),
         "pending_operator_fill_rows": as_int(result_manifest.get("pending_operator_fill_rows")),
         "revision_request_rows": revision_request_rows,
         "operator_decision_counts": operator_decision_counts,
         "operator_decision_summary": compact_counts(operator_decision_counts, ["hold", "revise", "approve_for_manual_next_step"]),
         "plan_rows": plan_rows,
+        "spec_rows": spec_rows,
         "priority_counts": priority_counts,
         "priority_summary": compact_counts(priority_counts, ["P0", "P1", "P2", "P3"]),
         "renderer_area_counts": renderer_area_counts,
@@ -4314,6 +4335,8 @@ def adobe_visual_qa_summary() -> Dict[str, Any]:
         "revision_requests_artifact": "adobe_visual_qa_revision_requests.csv",
         "renderer_plan_artifact": "adobe_visual_qa_renderer_revision_plan.md",
         "renderer_plan_csv_artifact": "adobe_visual_qa_renderer_revision_plan.csv",
+        "renderer_spec_artifact": "adobe_visual_qa_renderer_revision_spec.md",
+        "renderer_spec_csv_artifact": "adobe_visual_qa_renderer_revision_spec.csv",
         "next_step": next_step,
         "review_only": result_manifest.get("review_only") is True or renderer_plan.get("review_only") is True,
         "asset_downloads": yes(result_manifest.get("asset_downloads")) or yes(renderer_plan.get("asset_downloads")),
@@ -4399,6 +4422,7 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
             file_shortcut("Adobe QA result report", "adobe_visual_qa_result_report.md", "Review imported operator notes without approving or publishing assets."),
             file_shortcut("Adobe QA revision requests", "adobe_visual_qa_revision_requests.csv", "Use returned rows for renderer revision planning only."),
             file_shortcut("Adobe renderer revision plan", "adobe_visual_qa_renderer_revision_plan.md", "Review the priority renderer adjustments from manual Adobe QA."),
+            file_shortcut("Adobe renderer revision spec", "adobe_visual_qa_renderer_revision_spec.md", "Use the review-only checklist to brief a future renderer implementation lane without changing behavior here."),
             file_shortcut("Copy sheet", "render_handoff_top_packet/copy_sheet.md", "Confirm the visible copy and source-safe summary."),
             file_shortcut("Source proof", "render_handoff_top_packet/source_proof.md", "Confirm the source artifact used for the draft."),
             file_shortcut("Decision draft CSV", "manual_visual_qa_operator_decision_draft.csv", "Use this as the generated row contract."),
@@ -8973,6 +8997,11 @@ def build_payload() -> Dict[str, Any]:
             operator_decision_panel["adobe_visual_qa_summary"]["priority_summary"],
             f"rows={operator_decision_panel['adobe_visual_qa_summary']['plan_rows']}",
         ),
+        metric(
+            "Adobe revision spec",
+            operator_decision_panel["adobe_visual_qa_summary"]["spec_rows"],
+            operator_decision_panel["adobe_visual_qa_summary"]["spec_status"],
+        ),
         metric("Release readiness", release_readiness_panel["status"], release_readiness_panel["next_step"]),
         metric("Release blockers", release_readiness_panel["blocker_count"]),
         metric("Rollup artifact scan", release_readiness_panel["latest_scan_status"], f"files={release_readiness_panel['latest_scan_files_checked']}; violations={release_readiness_panel['latest_scan_violations']}"),
@@ -10339,6 +10368,7 @@ def render_visual_delta_cues(rows: Iterable[Dict[str, Any]]) -> str:
 def render_adobe_visual_qa_summary(summary: Dict[str, Any]) -> str:
     result_tone = "good" if clean(summary.get("result_status")) == "adobe_visual_qa_revision_requests_ready" else "warn"
     plan_tone = "good" if clean(summary.get("plan_status")) == "adobe_visual_qa_renderer_revision_plan_ready" else "warn"
+    spec_tone = "good" if clean(summary.get("spec_status")) == "adobe_visual_qa_renderer_revision_spec_ready" else "warn"
     guardrail_tone = (
         "good"
         if not any(
@@ -10357,18 +10387,21 @@ def render_adobe_visual_qa_summary(summary: Dict[str, Any]) -> str:
           Adobe visual QA cockpit
           {pill(clean(summary.get('result_status')) or 'not_generated', result_tone)}
           {pill(clean(summary.get('plan_status')) or 'not_generated', plan_tone)}
+          {pill(clean(summary.get('spec_status')) or 'not_generated', spec_tone)}
         </div>
         <div class="decision-status-grid">
           <div><span>Manual rows</span><strong>{html.escape(str(summary.get('filled_manual_review_rows', 0)))}</strong><small>{html.escape(str(summary.get('pending_operator_fill_rows', 0)))} pending fill</small></div>
           <div><span>Revision requests</span><strong>{html.escape(str(summary.get('revision_request_rows', 0)))}</strong><small>{html.escape(clean(summary.get('operator_decision_summary')) or 'none')}</small></div>
           <div><span>Renderer plan rows</span><strong>{html.escape(str(summary.get('plan_rows', 0)))}</strong><small>{html.escape(clean(summary.get('priority_summary')) or 'none')}</small></div>
-          <div><span>Validation issues</span><strong>{html.escape(str(summary.get('validation_issue_count', 0)))}</strong><small>{html.escape(clean(summary.get('renderer_area_summary')) or 'none')}</small></div>
+          <div><span>Revision spec rows</span><strong>{html.escape(str(summary.get('spec_rows', 0)))}</strong><small>{html.escape(clean(summary.get('renderer_area_summary')) or 'none')}</small></div>
+          <div><span>Validation issues</span><strong>{html.escape(str(summary.get('validation_issue_count', 0)))}</strong><small>review-only guardrails</small></div>
         </div>
         <p>{html.escape(clean(summary.get('next_step')))}</p>
         <div class="decision-button-row">
           {open_link(clean(summary.get('result_manifest_artifact')) or 'adobe_visual_qa_result_manifest.json', 'Result manifest')}
           {open_link(clean(summary.get('revision_requests_artifact')) or 'adobe_visual_qa_revision_requests.csv', 'Revision requests')}
           {open_link(clean(summary.get('renderer_plan_artifact')) or 'adobe_visual_qa_renderer_revision_plan.md', 'Renderer plan')}
+          {open_link(clean(summary.get('renderer_spec_artifact')) or 'adobe_visual_qa_renderer_revision_spec.md', 'Revision spec')}
         </div>
         <div class="safety-strip">
           {pill('review-only', 'good' if summary.get('review_only') else 'warn')}
@@ -13400,10 +13433,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Revision requests: {adobe_summary.get('revision_request_rows', 0)} ({adobe_summary.get('operator_decision_summary') or 'none'})",
         f"- Renderer plan status: {adobe_summary.get('plan_status') or 'not_generated'}",
         f"- Renderer plan rows: {adobe_summary.get('plan_rows', 0)} ({adobe_summary.get('priority_summary') or 'none'})",
+        f"- Renderer spec status: {adobe_summary.get('spec_status') or 'not_generated'}",
+        f"- Renderer spec rows: {adobe_summary.get('spec_rows', 0)}",
         f"- Renderer areas: {adobe_summary.get('renderer_area_summary') or 'none'}",
         f"- Validation issues: {adobe_summary.get('validation_issue_count', 0)}",
         f"- Next safe action: {adobe_summary.get('next_step') or 'Open the Adobe QA artifacts before any renderer lane.'}",
-        f"- Artifacts: `{adobe_summary.get('result_manifest_artifact') or 'adobe_visual_qa_result_manifest.json'}`, `{adobe_summary.get('revision_requests_artifact') or 'adobe_visual_qa_revision_requests.csv'}`, `{adobe_summary.get('renderer_plan_artifact') or 'adobe_visual_qa_renderer_revision_plan.md'}`",
+        f"- Artifacts: `{adobe_summary.get('result_manifest_artifact') or 'adobe_visual_qa_result_manifest.json'}`, `{adobe_summary.get('revision_requests_artifact') or 'adobe_visual_qa_revision_requests.csv'}`, `{adobe_summary.get('renderer_plan_artifact') or 'adobe_visual_qa_renderer_revision_plan.md'}`, `{adobe_summary.get('renderer_spec_artifact') or 'adobe_visual_qa_renderer_revision_spec.md'}`",
         "- Guardrails: review-only, no downloads, no approval-state changes, no publish-ready lane, no publishing.",
     ]
     lines.extend(
