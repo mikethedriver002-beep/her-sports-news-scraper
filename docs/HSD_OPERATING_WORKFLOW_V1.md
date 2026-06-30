@@ -129,6 +129,8 @@ Optional human-maintained intake can live at `operator/inbox/workflow_lane_statu
 
 Use `operator/inbox/workflow_lane_status_intake.example.csv` as a copyable review-only starter for conductor-visible completion rows. It is an example/template only; it does not become status truth unless a human copies reviewed rows into `operator/inbox/workflow_lane_status_intake.csv`.
 
+Use `config/hsd_durable_lane_thread_roster.json` for reviewed durable lane thread refs that should travel with the repo after conductor recovery. The dashboard reads this roster before marking expected durable lanes as missing, while preserving human intake precedence. The roster is visibility-only and does not create, close, archive, rebase, approve, download, enable sources, move publish-ready files, or publish.
+
 Use `pending_thread` for a delegated Codex thread id or URL that has active or waiting work but no PR yet. A pending thread is a visibility cue only; the conductor still checks the thread, branch, guardrails, and next action before nudging another lane.
 
 Use `lane_owner_thread`, `last_pr_merged`, `restart_needed`, and `next_packet` after a merge wave when a durable lane should be restarted from current `origin/main`. These are conductor restart cues only; they do not create threads, branches, PRs, assets, sources, approvals, publish-ready movement, or publishing.

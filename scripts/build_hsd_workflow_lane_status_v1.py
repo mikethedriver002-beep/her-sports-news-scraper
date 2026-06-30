@@ -16,6 +16,7 @@ from hsd_run_io import output_path, read_csv, write_csv, write_json, write_text
 
 VERSION = "hsd-workflow-lane-status-v1-review-only"
 DEFAULT_INTAKE = "operator/inbox/workflow_lane_status_intake.csv"
+DEFAULT_DURABLE_THREAD_ROSTER = "config/hsd_durable_lane_thread_roster.json"
 DEFAULT_OUTPUT_STEM = "workflow_lane_status_dashboard"
 DEFAULT_NUDGE_STEM = "workflow_lane_nudge_synthesis"
 DEFAULT_RECOVERY_STEM = "workflow_durable_lane_recovery_packet"
@@ -456,6 +457,35 @@ def normalize_intake(rows: list[dict[str, str]]) -> dict[str, dict[str, str]]:
     return by_lane
 
 
+def load_durable_thread_roster(path: str) -> dict[str, dict[str, str]]:
+    roster_path = Path(path)
+    if not roster_path.exists():
+        return {}
+    try:
+        payload = json.loads(roster_path.read_text(encoding="utf-8", errors="replace"))
+    except json.JSONDecodeError:
+        return {}
+    raw_rows = payload.get("lanes", []) if isinstance(payload, dict) else []
+    if not isinstance(raw_rows, list):
+        return {}
+    rows: list[dict[str, str]] = []
+    for row in raw_rows:
+        if not isinstance(row, dict):
+            continue
+        rows.append({field: str(row.get(field, "") or "").strip() for field in INTAKE_FIELDS})
+    return normalize_intake(rows)
+
+
+def merge_intake_with_roster(manual: dict[str, str], roster: dict[str, str]) -> dict[str, str]:
+    if not manual and not roster:
+        return {}
+    merged = {field: roster.get(field, "") for field in INTAKE_FIELDS}
+    for field in INTAKE_FIELDS:
+        if manual.get(field, ""):
+            merged[field] = manual[field]
+    return merged
+
+
 def normalized_guardrails(intake: dict[str, str]) -> tuple[dict[str, str], list[str]]:
     values: dict[str, str] = {}
     warnings: list[str] = []
@@ -723,10 +753,12 @@ def lane_rows(
     open_prs: list[dict[str, str]],
     git_state: dict[str, Any],
     worktrees: list[dict[str, str]] | None = None,
+    durable_thread_roster: dict[str, dict[str, str]] | None = None,
     as_of_utc: datetime | None = None,
     stale_after_hours: int = STALE_LANE_AFTER_HOURS,
 ) -> list[dict[str, str]]:
     intake_by_lane = normalize_intake(intake_rows)
+    durable_thread_roster = durable_thread_roster or {}
     pr_by_branch = {pr["branch"]: pr for pr in open_prs if pr.get("branch")}
     hints_by_lane = worktree_hints_by_lane(worktrees or [])
     rows: list[dict[str, str]] = []
@@ -734,7 +766,9 @@ def lane_rows(
     stale_as_of = as_of_utc or datetime.now(timezone.utc)
     for lane in LANE_ROSTER:
         lane_id = lane["lane_id"]
-        intake = intake_by_lane.get(lane_id, {})
+        manual_intake = intake_by_lane.get(lane_id, {})
+        roster_intake = durable_thread_roster.get(lane_id, {})
+        intake = merge_intake_with_roster(manual_intake, roster_intake)
         lane_hints = hints_by_lane.get(lane_id, [])
         first_hint = lane_hints[0] if lane_hints else {}
         branch = intake.get("branch", "")
@@ -821,7 +855,9 @@ def lane_rows(
             ),
             "notes": notes,
             "status_source": "manual_intake"
-            if intake
+            if manual_intake
+            else "durable_thread_roster"
+            if roster_intake
             else "current_branch"
             if status == "active_current_lane"
             else "workflow_heartbeat"
@@ -863,6 +899,7 @@ def render_markdown(payload: dict[str, Any]) -> str:
         f"- HEAD: `{git_state['head_commit']}` - {git_state['head_subject']}",
         f"- Dirty state: `{git_state['dirty_count']}` changed/untracked paths",
         f"- Open PRs detected: `{len(payload['open_prs'])}`",
+        f"- Durable thread roster: `{payload['durable_thread_roster_path']}` ({payload['durable_thread_roster_lane_count']} lane refs)",
         f"- Stale lane brakes: `{payload['stale_lane_count']}`",
         f"- Missing durable lane thread refs: `{payload['missing_durable_lane_count']}`",
         f"- Restart-needed lanes: `{payload['restart_needed_lane_count']}`",
@@ -1107,7 +1144,16 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     git_state = collect_git_state()
     open_prs = collect_open_prs() if not args.skip_pr_lookup else []
     worktrees = collect_worktree_branches() if not args.skip_worktree_lookup else []
-    rows = lane_rows(intake_rows, open_prs, git_state, worktrees, as_of, args.stale_after_hours)
+    durable_thread_roster = load_durable_thread_roster(args.durable_thread_roster)
+    rows = lane_rows(
+        intake_rows,
+        open_prs,
+        git_state,
+        worktrees,
+        durable_thread_roster,
+        as_of,
+        args.stale_after_hours,
+    )
     nudge_rows = build_nudge_rows(rows)
     recovery_rows = build_recovery_rows(rows)
     workflow_row = next((row for row in rows if row["lane_id"] == "workflow_overhaul"), {})
@@ -1151,6 +1197,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "publishing": False,
         "publish_ready": False,
         "intake_path": args.intake,
+        "durable_thread_roster_path": args.durable_thread_roster,
+        "durable_thread_roster_lane_count": len(durable_thread_roster),
         "git_state": git_state,
         "open_prs": open_prs,
         "worktrees": worktrees,
@@ -1307,6 +1355,7 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build the review-only HSD workflow lane status dashboard.")
     parser.add_argument("--intake", default=DEFAULT_INTAKE)
+    parser.add_argument("--durable-thread-roster", default=DEFAULT_DURABLE_THREAD_ROSTER)
     parser.add_argument("--output-stem", default=DEFAULT_OUTPUT_STEM)
     parser.add_argument("--skip-pr-lookup", action="store_true")
     parser.add_argument("--skip-worktree-lookup", action="store_true")
@@ -1329,6 +1378,7 @@ def main(argv: list[str] | None = None) -> int:
                 "completed_lane_count": payload["completed_lane_count"],
                 "worktree_hint_lane_count": payload["worktree_hint_lane_count"],
                 "heartbeat_lane_count": payload["heartbeat_lane_count"],
+                "durable_thread_roster_lane_count": payload["durable_thread_roster_lane_count"],
                 "missing_durable_lane_count": payload["missing_durable_lane_count"],
                 "restart_needed_lane_count": payload["restart_needed_lane_count"],
                 "lifecycle_action_lane_count": payload["lifecycle_action_lane_count"],

@@ -83,6 +83,7 @@ LANE_INCLUDE: dict[str, list[str]] = {
         "outputs/local/latest/files/workflow_lane_status_dashboard.json",
         "docs/HSD_LANE_PACKET_CONTRACT.md",
         "docs/HSD_COMMAND_CENTER_DECISION_AUDIT.md",
+        "config/hsd_durable_lane_thread_roster.json",
         "config/workflow_policy.json",
         "config/hsd_manual_workflow_policy_v1.json",
         "config/hsd_daily_cadence_v2.json",
