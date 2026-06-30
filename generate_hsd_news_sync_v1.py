@@ -4199,14 +4199,16 @@ def breaking_signal_return_summary_rows(rows: List[Dict[str, Any]]) -> List[Dict
             missing_fields.append("manual_return_operator_checked_url")
         if not confirmation_result_present:
             missing_fields.append("manual_return_operator_confirmation_result")
+        if not confirmed_at_present:
+            missing_fields.append("manual_return_operator_confirmed_at_utc")
         if not source_confidence_present:
             missing_fields.append("source_confidence_tier")
-        if checked_url_present and confirmation_result_present and source_confidence_present:
+        if checked_url_present and confirmation_result_present and confirmed_at_present and source_confidence_present:
             manual_return_status = "operator_return_ready_for_review"
-            manual_next_step = "Open the listed confirmation intake row and review the human-entered checked URL, confirmation result, and source-confidence cue; do not approve, enable, render, or publish from this summary."
+            manual_next_step = "Open the listed confirmation intake row and review the human-entered checked URL, confirmation result, confirmation timestamp, and source-confidence cue; do not approve, enable, render, or publish from this summary."
         else:
             manual_return_status = "operator_return_missing_required_fields"
-            manual_next_step = "Open breaking_public_signal_next_action_v1.csv and the listed confirmation intake row; fill only human-confirmed checked URL plus confirmation result before any source-trust review."
+            manual_next_step = "Open breaking_public_signal_next_action_v1.csv and the listed confirmation intake row; fill only human-confirmed checked URL, confirmation result, and confirmation timestamp before any source-trust review."
         summary_rows.append(
             {
                 "summary_rank": clean(item.get("action_rank")),
@@ -4264,6 +4266,7 @@ def breaking_signal_return_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]
         "operator_return_missing_required_fields": status_counts.get("operator_return_missing_required_fields", 0),
         "missing_operator_checked_url": sum(1 for row in rows if row.get("operator_checked_url_present") != "Yes"),
         "missing_operator_confirmation_result": sum(1 for row in rows if row.get("operator_confirmation_result_present") != "Yes"),
+        "missing_operator_confirmed_at_utc": sum(1 for row in rows if row.get("operator_confirmed_at_utc_present") != "Yes"),
         "missing_source_confidence_tier": sum(1 for row in rows if row.get("source_confidence_tier_present") != "Yes"),
         "missing_source_domain_lead": sum(1 for row in rows if row.get("source_domain_lead_present") != "Yes"),
         "rows_with_operator_notes": sum(1 for row in rows if row.get("operator_notes_present") == "Yes"),
@@ -4293,6 +4296,7 @@ def markdown_breaking_signal_return_summary(summary: Dict[str, Any], rows: List[
         "operator_return_missing_required_fields",
         "missing_operator_checked_url",
         "missing_operator_confirmation_result",
+        "missing_operator_confirmed_at_utc",
         "missing_source_confidence_tier",
         "missing_source_domain_lead",
         "rows_with_operator_notes",
@@ -4312,7 +4316,7 @@ def markdown_breaking_signal_return_summary(summary: Dict[str, Any], rows: List[
     lines.extend(["", "## Ready For Operator Review", ""])
     ready = [row for row in rows if row.get("manual_return_status") == "operator_return_ready_for_review"]
     if not ready:
-        lines.append("No rows currently have checked URL, confirmation result, and source confidence present.")
+        lines.append("No rows currently have checked URL, confirmation result, confirmation timestamp, and source confidence present.")
     for row in ready[:80]:
         lines.append(f"- **{row.get('cluster_headline')}** | status={row.get('manual_return_status')} | intake={row.get('manual_confirmation_artifact')} {row.get('manual_confirmation_row_ref')}".rstrip())
     return "\n".join(lines) + "\n"
@@ -4896,6 +4900,7 @@ def main() -> None:
                 "breaking_return_summary_rows": len(breaking_return_summary_rows),
                 "breaking_return_summary_missing_operator_checked_url": breaking_return_summary.get("missing_operator_checked_url", 0),
                 "breaking_return_summary_missing_operator_confirmation_result": breaking_return_summary.get("missing_operator_confirmation_result", 0),
+                "breaking_return_summary_missing_operator_confirmed_at_utc": breaking_return_summary.get("missing_operator_confirmed_at_utc", 0),
                 "breaking_return_summary_missing_source_confidence_tier": breaking_return_summary.get("missing_source_confidence_tier", 0),
                 "game_source_confirmation_bridge_rows": len(game_source_bridge_rows),
                 "clusters_with_matching_current_artifact_evidence": len([
@@ -5036,6 +5041,7 @@ def main() -> None:
             "breaking_signal_return_summary_rows": len(breaking_return_summary_rows),
             "breaking_signal_return_summary_missing_operator_checked_url": breaking_return_summary.get("missing_operator_checked_url", 0),
             "breaking_signal_return_summary_missing_operator_confirmation_result": breaking_return_summary.get("missing_operator_confirmation_result", 0),
+            "breaking_signal_return_summary_missing_operator_confirmed_at_utc": breaking_return_summary.get("missing_operator_confirmed_at_utc", 0),
             "breaking_signal_return_summary_missing_source_confidence_tier": breaking_return_summary.get("missing_source_confidence_tier", 0),
             "breaking_signal_clusters_with_score_stat_proof": len([
                 row for row in cluster_rows

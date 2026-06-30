@@ -463,6 +463,7 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert return_by_cluster_id[cluster["cluster_id"]]["manual_return_status"] == "operator_return_missing_required_fields"
     assert "manual_return_operator_checked_url" in return_by_cluster_id[cluster["cluster_id"]]["missing_return_fields"]
     assert "manual_return_operator_confirmation_result" in return_by_cluster_id[cluster["cluster_id"]]["missing_return_fields"]
+    assert "manual_return_operator_confirmed_at_utc" in return_by_cluster_id[cluster["cluster_id"]]["missing_return_fields"]
     assert return_by_cluster_id[cluster["cluster_id"]]["source_confidence_tier_present"] == "Yes"
     assert return_by_cluster_id[cluster["cluster_id"]]["source_domain_lead_present"] == "Yes"
     assert return_by_cluster_id[cluster["cluster_id"]]["review_only"] == "Yes"
@@ -477,6 +478,10 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
             "manual_return_operator_notes": "Official URL still confirms the update.",
         }
     )
+    missing_timestamp_rows = module.breaking_signal_return_summary_rows([ready_seed])
+    assert missing_timestamp_rows[0]["manual_return_status"] == "operator_return_missing_required_fields"
+    assert "manual_return_operator_confirmed_at_utc" in missing_timestamp_rows[0]["missing_return_fields"]
+    ready_seed["manual_return_operator_confirmed_at_utc"] = "2026-06-30T02:15:00+00:00"
     ready_rows = module.breaking_signal_return_summary_rows([ready_seed])
     assert ready_rows[0]["manual_return_status"] == "operator_return_ready_for_review"
     assert ready_rows[0]["missing_return_fields"] == "none"
@@ -485,11 +490,12 @@ def test_breaking_public_signal_rows_are_review_only_and_source_backed() -> None
     assert return_summary["operator_return_missing_required_fields"] == len(return_rows)
     assert return_summary["missing_operator_checked_url"] == len(return_rows)
     assert return_summary["missing_operator_confirmation_result"] == len(return_rows)
+    assert return_summary["missing_operator_confirmed_at_utc"] == len(return_rows)
     assert return_summary["missing_source_confidence_tier"] == 0
     return_report = module.markdown_breaking_signal_return_summary(return_summary, return_rows)
     assert "ready-for-review row is not source approval" in return_report
     assert "No fetching, paid APIs" in return_report
-    assert "missing=manual_return_operator_checked_url; manual_return_operator_confirmation_result" in return_report
+    assert "missing=manual_return_operator_checked_url; manual_return_operator_confirmation_result; manual_return_operator_confirmed_at_utc" in return_report
 
     missing_proof_cluster = module.breaking_signal_cluster_rows([row], packets=[packet], game_rows=[], proof_rows=[], proof_confirmation_rows=[], intake_rows=intake)[0]
     assert missing_proof_cluster["score_stat_proof_status"] == "no_matching_score_stat_proof_operator_confirmation_required"
@@ -777,6 +783,7 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert all(row["manual_return_status"] == "operator_return_missing_required_fields" for row in return_summary_rows)
     assert all("manual_return_operator_checked_url" in row["missing_return_fields"] for row in return_summary_rows)
     assert all("manual_return_operator_confirmation_result" in row["missing_return_fields"] for row in return_summary_rows)
+    assert all("manual_return_operator_confirmed_at_utc" in row["missing_return_fields"] for row in return_summary_rows)
     assert all(row["source_confidence_tier_present"] == "Yes" for row in return_summary_rows)
     assert all(row["review_only"] == "Yes" for row in return_summary_rows)
     assert all(row["approval_state_change"] == "none" for row in return_summary_rows)
@@ -798,6 +805,7 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert return_summary_payload["summary"]["operator_return_missing_required_fields"] == len(return_summary_rows)
     assert return_summary_payload["summary"]["missing_operator_checked_url"] == len(return_summary_rows)
     assert return_summary_payload["summary"]["missing_operator_confirmation_result"] == len(return_summary_rows)
+    assert return_summary_payload["summary"]["missing_operator_confirmed_at_utc"] == len(return_summary_rows)
     assert return_summary_payload["summary"]["missing_source_confidence_tier"] == 0
     assert signal_payload["publish_ready"] is False
     assert signal_payload["counts"]["rows"] == len(rows)
@@ -807,6 +815,8 @@ def test_news_sync_writes_run_scoped_breaking_public_signal_artifacts(tmp_path, 
     assert signal_payload["counts"]["breaking_return_summary_rows"] == len(return_summary_rows)
     assert signal_payload["counts"]["breaking_return_summary_missing_operator_checked_url"] == len(return_summary_rows)
     assert signal_payload["counts"]["breaking_return_summary_missing_operator_confirmation_result"] == len(return_summary_rows)
+    assert signal_payload["counts"]["breaking_return_summary_missing_operator_confirmed_at_utc"] == len(return_summary_rows)
+    assert news_payload["counts"]["breaking_signal_return_summary_missing_operator_confirmed_at_utc"] == len(return_summary_rows)
     assert "breaking_public_signal_queue.csv" in news_payload["outputs"]
     assert "breaking_public_signal_confirmation_intake.csv" in news_payload["outputs"]
     assert "breaking_public_signal_clusters.csv" in news_payload["outputs"]
