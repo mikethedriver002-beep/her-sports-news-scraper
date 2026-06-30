@@ -154,7 +154,12 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
                     "missing_confirmation_status": 1,
                     "operator_return_ready_for_review": 1,
                 },
-                "rows": [],
+                "rows": [
+                    {
+                        "manual_return_status": "operator_return_missing_required_fields",
+                        "manual_next_step": "After the game window, open game_source_research_worksheet_v1.csv, rerun Results, and fill only human-confirmed final-score/box-score URL plus confirmation status if visible; do not treat the row as recap-ready or render-ready from this summary.",
+                    }
+                ],
             }
         ),
         encoding="utf-8",
@@ -195,6 +200,8 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert "Unified manual checklist" in html
     assert "Resolved local path" in html
     assert "missing_official_url" in html
+    assert "rerun Results" in html
+    assert "do not treat the row as recap-ready or render-ready" in html
     assert "operator_decision, operator_notes" in html
     assert "operator_found_official_url" in html
     assert "operator_confirmed_at_utc" in html
@@ -208,6 +215,8 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     manifest = json.loads(Path("operator_next_action_synthesis.json").read_text(encoding="utf-8"))
     synthesis_md = Path("operator_next_action_synthesis.md").read_text(encoding="utf-8")
     assert len(csv_rows) == 6
+    game_source_row = next(row for row in csv_rows if row["lane"] == "Game-source confirmation returns")
+    assert "rerun Results" in game_source_row["lane_detail"]
     breaking_row = next(row for row in csv_rows if row["lane"] == "Breaking/public-signal returns")
     assert breaking_row["operator_return_fields"] == "operator_checked_url, operator_confirmation_result, operator_confirmed_at_utc, operator_notes"
     assert breaking_row["lane_detail"] == "rows=4; missing_checked_url=3; missing_confirmation_result=2; missing_confirmed_at_utc=2; ready_for_operator_review=1"

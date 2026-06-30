@@ -8366,12 +8366,22 @@ def game_source_confirmation_return_lane_detail() -> str:
     summary = payload.get("summary") if isinstance(payload, dict) else {}
     if not isinstance(summary, dict) or not summary:
         return "Return summary not generated yet; run Results to create missing official URL/status counts."
-    return (
+    rows = payload.get("rows") if isinstance(payload, dict) else []
+    first_missing_next = ""
+    if isinstance(rows, list):
+        for row in rows:
+            if isinstance(row, dict) and clean(row.get("manual_return_status")) == "operator_return_missing_required_fields":
+                first_missing_next = clean(row.get("manual_next_step"))
+                break
+    detail = (
         f"rows={summary.get('rows', 0)}; "
         f"missing_official_url={summary.get('missing_official_url', 0)}; "
         f"missing_confirmation_status={summary.get('missing_confirmation_status', 0)}; "
         f"ready_for_operator_review={summary.get('operator_return_ready_for_review', 0)}"
     )
+    if first_missing_next:
+        detail += f"; first_missing_next={first_missing_next}"
+    return detail
 
 
 def breaking_public_signal_return_lane_detail() -> str:
