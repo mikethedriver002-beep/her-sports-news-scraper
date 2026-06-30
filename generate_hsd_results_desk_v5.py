@@ -2024,7 +2024,7 @@ def game_source_research_prompt(row: Dict[str, Any], need: str) -> str:
     if need == "confirm_final_score_and_named_stat_source_before_recap":
         return f"Open the listed free/public scoreboard or box-score source for {league} {matchup}; verify the final score and named player stat line, check a second free/public source when available, and record only human-confirmed URLs/status in blank operator fields before recap or render use."
     if need == "monitor_public_scoreboard_until_final":
-        return f"After the game window, open {source_url or 'the public scoreboard'} for {league} {matchup} and record final-score/box-score confirmation only if visible."
+        return f"After the game window, open {source_url or 'the public scoreboard'} for {league} {matchup}, rerun Results, and record final-score/box-score confirmation only if visible; do not treat the row as recap-ready or render-ready until final source proof is recorded in the blank operator fields."
     return f"Optional audit: open the listed source row for {league} {matchup} only if it becomes a recap/render candidate."
 
 
