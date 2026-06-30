@@ -1,0 +1,207 @@
+from __future__ import annotations
+
+import csv
+import importlib.util
+import json
+from pathlib import Path
+
+
+REPO = Path(__file__).resolve().parents[1]
+SCRIPT = REPO / "scripts" / "report_hsd_action_photo_manual_research_bridge_v1.py"
+
+
+def load_module():
+    spec = importlib.util.spec_from_file_location("report_hsd_action_photo_manual_research_bridge_v1", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def read_csv(path: Path):
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def write_csv(path: Path, rows: list[dict[str, str]], fieldnames: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def seed_bridge_inputs(tmp_path: Path) -> None:
+    action_root = tmp_path / "data/asset_registry/action_photo_candidates"
+    soccer_root = tmp_path / "data/asset_registry/womens_soccer"
+    hs_root = tmp_path / "data/asset_registry"
+    action_root.mkdir(parents=True)
+    soccer_root.mkdir(parents=True)
+    hs_root.mkdir(parents=True, exist_ok=True)
+
+    write_csv(
+        soccer_root / "womens_soccer_action_photo_research_next.csv",
+        [
+            {
+                "research_next_rank": "1",
+                "source_candidate_url": "https://club.example/match-recap",
+                "source_url": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+            },
+            {
+                "research_next_rank": "2",
+                "source_candidate_url": "https://league.example/gallery",
+                "source_url": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+            },
+        ],
+        [
+            "research_next_rank",
+            "source_candidate_url",
+            "source_url",
+            "rights_class",
+            "identity_confidence",
+            "candidate_ready_for_later_human_download_decision_review",
+            "download_approved",
+        ],
+    )
+    (soccer_root / "womens_soccer_action_photo_research_next.md").write_text("# Soccer AP next\n", encoding="utf-8")
+    (soccer_root / "womens_soccer_action_photo_research_next.json").write_text(
+        json.dumps(
+            {
+                "status": "womens_soccer_action_photo_research_next_ready",
+                "research_next_rows": 2,
+                "blank_source_url_rows": 2,
+                "blank_rights_class_rows": 2,
+                "blank_identity_confidence_rows": 2,
+                "candidate_ready_for_later_human_download_decision_review_rows": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    write_csv(
+        hs_root / "hockey_softball_action_photo_research_handoff.csv",
+        [
+            {
+                "handoff_rank": "AH01",
+                "source_search_macro": '"[athlete]" PWHL gallery',
+                "source_url": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "later_human_download_decision_review_eligible": "no",
+                "download_approved": "no",
+            }
+        ],
+        [
+            "handoff_rank",
+            "source_search_macro",
+            "source_url",
+            "rights_class",
+            "identity_confidence",
+            "later_human_download_decision_review_eligible",
+            "download_approved",
+        ],
+    )
+    (hs_root / "hockey_softball_action_photo_research_handoff.md").write_text("# H/S AP handoff\n", encoding="utf-8")
+    (hs_root / "hockey_softball_action_photo_research_handoff.json").write_text(
+        json.dumps(
+            {
+                "status": "hockey_softball_action_photo_research_handoff_ready",
+                "rows": 1,
+                "blank_source_url_rows": 1,
+                "blank_rights_class_rows": 1,
+                "blank_identity_confidence_rows": 1,
+                "later_human_download_decision_review_eligible_rows": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+    (action_root / "review_only_action_photo_research_return_import_review_v1.md").write_text("# Import review\n", encoding="utf-8")
+    (action_root / "review_only_action_photo_research_return_import_review_v1.json").write_text(
+        json.dumps(
+            {
+                "status": "action_photo_research_return_import_review_ready",
+                "import_review_rows": 10,
+                "rows_with_research_return_data": 0,
+                "ready_for_later_human_download_decision_review_rows": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_manual_research_bridge_summarizes_existing_lanes_without_side_effects(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path))
+    seed_bridge_inputs(tmp_path)
+    module = load_module()
+
+    assert module.main() == 0
+
+    root = tmp_path / "data/asset_registry/action_photo_candidates"
+    rows = read_csv(root / "review_only_action_photo_manual_research_bridge_v1.csv")
+    manifest = json.loads((root / "review_only_action_photo_manual_research_bridge_v1.json").read_text(encoding="utf-8"))
+    markdown = (root / "review_only_action_photo_manual_research_bridge_v1.md").read_text(encoding="utf-8")
+
+    assert manifest["status"] == "action_photo_manual_research_bridge_ready"
+    assert manifest["bridge_rows"] == 2
+    assert manifest["source_rows"] == 3
+    assert manifest["womens_soccer_source_rows"] == 2
+    assert manifest["hockey_softball_source_rows"] == 1
+    assert manifest["shared_import_review_rows"] == 10
+    assert manifest["shared_import_rows_with_data"] == 0
+    assert manifest["generated_download_approval_rows"] == 0
+    assert manifest["source_fetching"] is False
+    assert manifest["auto_source_enablement"] is False
+    assert manifest["asset_downloads"] is False
+    assert manifest["headshot_writes"] is False
+    assert manifest["approved_marker_writes"] is False
+    assert manifest["publish_ready"] is False
+    assert [row["bridge_lane"] for row in rows] == ["women_soccer_action_photo", "hockey_softball_action_photo"]
+    assert all(row["download_approved"] == "no" for row in rows)
+    assert all(row["review_only"] == "true" for row in rows)
+    assert all(row["source_fetching"] == "false" for row in rows)
+    assert rows[0]["first_manual_source_lead"] == "https://club.example/match-recap"
+    assert "shared research return intake" in markdown
+    assert "does not fetch sources, download images" in markdown
+
+
+def test_manual_research_bridge_validator_blocks_guardrail_drift() -> None:
+    module = load_module()
+    rows = [
+        {
+            field: "false"
+            for field in module.BRIDGE_FIELDS
+        }
+    ]
+    rows[0].update(
+        {
+            "bridge_rank": "01",
+            "source_board_md": "data/asset_registry/example.md",
+            "download_approved": "approve",
+            "review_only": "false",
+            "source_fetching": "true",
+            "auto_source_enablement": "true",
+            "asset_downloads": "true",
+            "headshot_writes": "true",
+            "approved_marker_writes": "true",
+            "publish_ready": "true",
+        }
+    )
+
+    issue_pairs = {(issue["field"], issue["issue"]) for issue in module.validate_rows(rows)}
+
+    assert ("download_approved", "generated_bridge_must_not_approve_downloads") in issue_pairs
+    assert ("review_only", "guardrail_field_invalid") in issue_pairs
+    assert ("source_fetching", "guardrail_field_invalid") in issue_pairs
+    assert ("auto_source_enablement", "guardrail_field_invalid") in issue_pairs
+    assert ("asset_downloads", "guardrail_field_invalid") in issue_pairs
+    assert ("headshot_writes", "guardrail_field_invalid") in issue_pairs
+    assert ("approved_marker_writes", "guardrail_field_invalid") in issue_pairs
+    assert ("publish_ready", "guardrail_field_invalid") in issue_pairs

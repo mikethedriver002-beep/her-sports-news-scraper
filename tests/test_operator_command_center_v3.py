@@ -218,6 +218,16 @@ def test_command_center_links_and_mirrors_action_photo_artifacts(tmp_path, monke
         assert path in artifact_paths
         assert path in mirrored_paths
         assert command_center.RUN_COMMANDS[path] == import_review_command
+    manual_bridge_command = ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    manual_bridge_paths = {
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv",
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json",
+    }
+    for path in manual_bridge_paths:
+        assert path in artifact_paths
+        assert path in mirrored_paths
+        assert command_center.RUN_COMMANDS[path] == manual_bridge_command
     assert (
         run_dir
         / "data"
@@ -3583,6 +3593,64 @@ def seed_asset_availability_audit_files() -> None:
             "publish_ready": False,
         },
     )
+    (action_photo_dir / "review_only_action_photo_manual_research_bridge_v1.md").write_text("# Action Photo Manual Research Bridge\n", encoding="utf-8")
+    write_csv(
+        (action_photo_dir / "review_only_action_photo_manual_research_bridge_v1.csv").as_posix(),
+        [
+            {
+                "bridge_rank": "01",
+                "bridge_lane": "women_soccer_action_photo",
+                "source_rows": "95",
+                "shared_import_rows_with_data": "0",
+                "download_approved": "no",
+                "review_only": "true",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            },
+            {
+                "bridge_rank": "02",
+                "bridge_lane": "hockey_softball_action_photo",
+                "source_rows": "8",
+                "shared_import_rows_with_data": "0",
+                "download_approved": "no",
+                "review_only": "true",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+            },
+        ],
+    )
+    write_json(
+        (action_photo_dir / "review_only_action_photo_manual_research_bridge_v1.json").as_posix(),
+        {
+            "status": "action_photo_manual_research_bridge_ready",
+            "generated_at_utc": "2026-06-29T00:02:40+00:00",
+            "bridge_rows": 2,
+            "source_rows": 103,
+            "womens_soccer_source_rows": 95,
+            "hockey_softball_source_rows": 8,
+            "shared_import_review_rows": 10,
+            "shared_import_rows_with_data": 0,
+            "shared_import_ready_rows": 0,
+            "candidate_ready_for_later_human_download_decision_review_rows": 0,
+            "generated_download_approval_rows": 0,
+            "review_only": True,
+            "source_fetching": False,
+            "auto_source_enablement": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "approval_state_change": False,
+            "publish_ready": False,
+        },
+    )
     write_json(
         (action_photo_dir / "review_only_action_photo_external_research_packet_manifest_v1.json").as_posix(),
         {
@@ -5380,6 +5448,18 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["asset_readiness_panel"]["action_photo_research_return_import_review_asset_downloads"] is False
     assert payload["asset_readiness_panel"]["action_photo_research_return_import_review_headshot_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_research_return_import_review_approved_marker_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_rows"] == 2
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_source_rows"] == 103
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_womens_soccer_source_rows"] == 95
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_hockey_softball_source_rows"] == 8
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_import_rows_with_data"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_ready_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_generated_download_approval_rows"] == 0
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_source_fetching"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_auto_source_enablement"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_asset_downloads"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_headshot_writes"] is False
+    assert payload["asset_readiness_panel"]["action_photo_manual_research_bridge_approved_marker_writes"] is False
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_rows"] == 10
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_source_url_present_rows"] == 0
     assert payload["asset_readiness_panel"]["action_photo_quality_fit_rights_class_present_rows"] == 0
@@ -6040,6 +6120,9 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
+    assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.md"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.csv"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
     assert artifact_by_path["data/asset_registry/action_photo_candidates/review_only_action_photo_download_decision_queue_v1.json"]["run_command"] == ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py"
@@ -7110,6 +7193,9 @@ def test_local_runner_collects_daily_command_center_artifacts() -> None:
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.csv" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_import_review_v1.json" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.md" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.csv" in runner
+    assert "data/asset_registry/action_photo_candidates/review_only_action_photo_manual_research_bridge_v1.json" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md" in runner
     assert "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json" in runner
     assert "render_handoff_top_packet/review_drafts/draft_preview_square.png" in runner
