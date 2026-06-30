@@ -16,6 +16,7 @@
 - Intake readiness summary: `data/asset_registry/hockey_softball_intake_readiness_summary.md`
 - Source map board: `data/asset_registry/hockey_softball_source_map_board.md`
 - Action-photo research handoff: `data/asset_registry/hockey_softball_action_photo_research_handoff.md`
+- Action-photo return completeness checklist: `data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md`
 - Review triage worksheet: `data/asset_registry/hockey_softball_asset_review_triage.md`
 - Asset review readiness board: `data/asset_registry/hockey_softball_asset_review_readiness_board.md`
 - Manual verification focus: `data/asset_registry/hockey_softball_manual_verification_focus.md`
@@ -62,6 +63,9 @@
 - Action-photo research handoff rows: `8`
 - Action-photo handoff download-approved yes rows: `0`
 - Action-photo handoff later human download-decision rows: `0`
+- Action-photo return completeness checklist rows: `4`
+- Action-photo return completeness generated ready/download approvals: `0/0`
+- Action-photo return completeness blank source_url rows: `4`
 - Review triage rows: `38`
 - Review triage operator-verify source rows: `54`
 - Review triage download-approved yes rows: `0`

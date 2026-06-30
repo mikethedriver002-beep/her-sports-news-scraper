@@ -509,6 +509,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md",
     "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv",
     "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json",
+    "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md",
+    "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv",
+    "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json",
     "data/asset_registry/hockey_softball_source_research_return_intake.md",
     "data/asset_registry/hockey_softball_source_research_return_intake.csv",
     "data/asset_registry/hockey_softball_source_research_return_intake.json",
@@ -963,6 +966,9 @@ ARTIFACTS = [
     ("Graphics", "Hockey/softball action-photo first paste guide", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md"),
     ("Graphics", "Hockey/softball action-photo first paste guide data", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv"),
     ("Graphics", "Hockey/softball action-photo first paste guide manifest", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json"),
+    ("Graphics", "Hockey/softball action-photo return completeness checklist", "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md"),
+    ("Graphics", "Hockey/softball action-photo return completeness checklist data", "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv"),
+    ("Graphics", "Hockey/softball action-photo return completeness checklist manifest", "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json"),
     ("Graphics", "Hockey/softball source research return intake", "data/asset_registry/hockey_softball_source_research_return_intake.md"),
     ("Graphics", "Hockey/softball source research return data", "data/asset_registry/hockey_softball_source_research_return_intake.csv"),
     ("Graphics", "Hockey/softball source research return manifest", "data/asset_registry/hockey_softball_source_research_return_intake.json"),
@@ -1272,6 +1278,9 @@ RUN_COMMANDS = {
     "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
+    "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_research_return_intake.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_research_return_intake.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
     "data/asset_registry/hockey_softball_source_research_return_intake.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_hockey_softball_asset_workflow_readiness_v1.py",
@@ -2216,6 +2225,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     hockey_softball_source_map_manifest = read_json("data/asset_registry/hockey_softball_source_map_board.json")
     hockey_softball_action_photo_handoff_manifest = read_json("data/asset_registry/hockey_softball_action_photo_research_handoff.json")
     hockey_softball_action_photo_first_paste_manifest = read_json("data/asset_registry/hockey_softball_action_photo_first_paste_guide.json")
+    hockey_softball_action_photo_return_completeness_manifest = read_json("data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json")
     hockey_softball_source_research_return_manifest = read_json("data/asset_registry/hockey_softball_source_research_return_intake.json")
     hockey_softball_review_triage_manifest = read_json("data/asset_registry/hockey_softball_asset_review_triage.json")
     hockey_softball_asset_readiness_manifest = read_json("data/asset_registry/hockey_softball_asset_review_readiness_board.json")
@@ -2503,6 +2513,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         hockey_softball_action_photo_first_paste_rows,
         RUN_COMMANDS["data/asset_registry/hockey_softball_action_photo_first_paste_guide.md"],
         context="hockey/softball action-photo first paste guide",
+    )
+    hockey_softball_action_photo_return_completeness_rows = as_int(hockey_softball_action_photo_return_completeness_manifest.get("checklist_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0
+    hockey_softball_action_photo_return_completeness_cue = packet_freshness_cue(
+        "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md",
+        hockey_softball_action_photo_return_completeness_rows,
+        RUN_COMMANDS["data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md"],
+        context="hockey/softball action-photo return completeness checklist",
     )
     hockey_softball_source_research_return_rows = as_int(hockey_softball_source_research_return_manifest.get("rows")) if isinstance(hockey_softball_source_research_return_manifest, dict) else 0
     hockey_softball_source_research_return_cue = packet_freshness_cue(
@@ -3062,6 +3079,18 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_action_photo_first_paste_asset_downloads": bool(hockey_softball_action_photo_first_paste_manifest.get("asset_downloads")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else False,
         "hockey_softball_action_photo_first_paste_headshot_writes": bool(hockey_softball_action_photo_first_paste_manifest.get("headshot_writes")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else False,
         "hockey_softball_action_photo_first_paste_approved_marker_writes": bool(hockey_softball_action_photo_first_paste_manifest.get("approved_marker_writes")) if isinstance(hockey_softball_action_photo_first_paste_manifest, dict) else False,
+        "hockey_softball_action_photo_return_completeness_status": clean(hockey_softball_action_photo_return_completeness_manifest.get("status")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else "",
+        "hockey_softball_action_photo_return_completeness_generated_at": clean(hockey_softball_action_photo_return_completeness_manifest.get("generated_at_utc")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else "",
+        "hockey_softball_action_photo_return_completeness_rows": hockey_softball_action_photo_return_completeness_rows,
+        "hockey_softball_action_photo_return_completeness_womens_hockey_rows": as_int(hockey_softball_action_photo_return_completeness_manifest.get("womens_hockey_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0,
+        "hockey_softball_action_photo_return_completeness_softball_rows": as_int(hockey_softball_action_photo_return_completeness_manifest.get("softball_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0,
+        "hockey_softball_action_photo_return_completeness_generated_download_approval_rows": as_int(hockey_softball_action_photo_return_completeness_manifest.get("generated_download_approval_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0,
+        "hockey_softball_action_photo_return_completeness_generated_ready_rows": as_int(hockey_softball_action_photo_return_completeness_manifest.get("generated_ready_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0,
+        "hockey_softball_action_photo_return_completeness_blank_source_url_rows": as_int(hockey_softball_action_photo_return_completeness_manifest.get("blank_source_url_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0,
+        "hockey_softball_action_photo_return_completeness_missing_notes_rows": as_int(hockey_softball_action_photo_return_completeness_manifest.get("missing_notes_rows")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else 0,
+        "hockey_softball_action_photo_return_completeness_asset_downloads": bool(hockey_softball_action_photo_return_completeness_manifest.get("asset_downloads")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else False,
+        "hockey_softball_action_photo_return_completeness_headshot_writes": bool(hockey_softball_action_photo_return_completeness_manifest.get("headshot_writes")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else False,
+        "hockey_softball_action_photo_return_completeness_approved_marker_writes": bool(hockey_softball_action_photo_return_completeness_manifest.get("approved_marker_writes")) if isinstance(hockey_softball_action_photo_return_completeness_manifest, dict) else False,
         "hockey_softball_source_research_return_status": clean(hockey_softball_source_research_return_manifest.get("status")) if isinstance(hockey_softball_source_research_return_manifest, dict) else "",
         "hockey_softball_source_research_return_generated_at": clean(hockey_softball_source_research_return_manifest.get("generated_at_utc")) if isinstance(hockey_softball_source_research_return_manifest, dict) else "",
         "hockey_softball_source_research_return_rows": hockey_softball_source_research_return_rows,
@@ -3164,6 +3193,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "hockey_softball_action_photo_first_paste_freshness_status": hockey_softball_action_photo_first_paste_cue["status"],
         "hockey_softball_action_photo_first_paste_freshness_detail": hockey_softball_action_photo_first_paste_cue["detail"],
         "hockey_softball_action_photo_first_paste_refresh_command": hockey_softball_action_photo_first_paste_cue["run_command"],
+        "hockey_softball_action_photo_return_completeness_freshness_status": hockey_softball_action_photo_return_completeness_cue["status"],
+        "hockey_softball_action_photo_return_completeness_freshness_detail": hockey_softball_action_photo_return_completeness_cue["detail"],
+        "hockey_softball_action_photo_return_completeness_refresh_command": hockey_softball_action_photo_return_completeness_cue["run_command"],
         "hockey_softball_source_research_return_freshness_status": hockey_softball_source_research_return_cue["status"],
         "hockey_softball_source_research_return_freshness_detail": hockey_softball_source_research_return_cue["detail"],
         "hockey_softball_source_research_return_refresh_command": hockey_softball_source_research_return_cue["run_command"],
@@ -3322,6 +3354,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             file_shortcut("Hockey/softball action-photo first paste guide", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md", "Top H/S action-photo handoff rows to work first with exact evidence fields and no-download guardrails."),
             file_shortcut("Hockey/softball action-photo first paste guide data", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv", "Machine-readable first-paste rows with blank/no generated defaults and shared return-intake target."),
             file_shortcut("Hockey/softball action-photo first paste guide manifest", "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json", "Counts and guardrails for the H/S action-photo first-paste guide."),
+            file_shortcut("Hockey/softball action-photo return completeness checklist", "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.md", "Review-only checklist of missing manual source, identity, rights, use, and notes fields before any later quarantine gate review."),
+            file_shortcut("Hockey/softball action-photo return completeness data", "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.csv", "Machine-readable H/S return completeness rows; generated ready/download approval defaults stay no."),
+            file_shortcut("Hockey/softball action-photo return completeness manifest", "data/asset_registry/hockey_softball_action_photo_return_completeness_checklist.json", "Counts and guardrails for the H/S action-photo return completeness checklist."),
             file_shortcut("Hockey/softball source research return intake", "data/asset_registry/hockey_softball_source_research_return_intake.md", "Human-edited paste-back target for action-photo source leads from the H/S source map; no downloads or approvals."),
             file_shortcut("Hockey/softball source research return data", "data/asset_registry/hockey_softball_source_research_return_intake.csv", "Machine-readable H/S action-photo source return rows; generated download-law fields stay blank/no."),
             file_shortcut("Hockey/softball source research return manifest", "data/asset_registry/hockey_softball_source_research_return_intake.json", "Freshness, blank-return counts, and guardrail metadata for the H/S source research return intake."),
@@ -10432,6 +10467,9 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>H/S first paste</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_rows', 0)))}</strong></div>
             <div><span>H/S paste ready/dl</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_generated_ready_rows', 0)))}/{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_generated_download_approval_rows', 0)))}</strong></div>
             <div><span>H/S paste writes</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_asset_downloads', False)).lower())}/{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_headshot_writes', False)).lower())}/{html.escape(str(panel.get('hockey_softball_action_photo_first_paste_approved_marker_writes', False)).lower())}</strong></div>
+            <div><span>H/S return checklist</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_return_completeness_rows', 0)))}</strong></div>
+            <div><span>H/S checklist ready/dl</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_return_completeness_generated_ready_rows', 0)))}/{html.escape(str(panel.get('hockey_softball_action_photo_return_completeness_generated_download_approval_rows', 0)))}</strong></div>
+            <div><span>H/S checklist blanks</span><strong>{html.escape(str(panel.get('hockey_softball_action_photo_return_completeness_blank_source_url_rows', 0)))}/{html.escape(str(panel.get('hockey_softball_action_photo_return_completeness_missing_notes_rows', 0)))}</strong></div>
             <div><span>H/S research return</span><strong>{html.escape(str(panel.get('hockey_softball_source_research_return_rows', 0)))}</strong></div>
             <div><span>H/S return dl yes</span><strong>{html.escape(str(panel.get('hockey_softball_source_research_return_download_approved_yes_rows', 0)))}</strong></div>
             <div><span>H/S triage rows</span><strong>{html.escape(str(panel.get('hockey_softball_asset_review_triage_rows', 0)))}</strong></div>
@@ -10494,6 +10532,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           {packet_freshness_html(panel, 'hockey_softball_source_map', "Hockey/softball source map board")}
           {packet_freshness_html(panel, 'hockey_softball_action_photo_handoff', "Hockey/softball action-photo research handoff")}
           {packet_freshness_html(panel, 'hockey_softball_action_photo_first_paste', "Hockey/softball action-photo first paste guide")}
+          {packet_freshness_html(panel, 'hockey_softball_action_photo_return_completeness', "Hockey/softball action-photo return completeness checklist")}
           {packet_freshness_html(panel, 'hockey_softball_source_research_return', "Hockey/softball source research return intake")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_triage', "Hockey/softball asset review triage")}
           {packet_freshness_html(panel, 'hockey_softball_asset_review_readiness', "Hockey/softball asset review readiness board")}
@@ -12348,6 +12387,12 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Hockey/softball action-photo first-paste blank source_url rows: {asset_panel.get('hockey_softball_action_photo_first_paste_blank_source_url_rows', 0)}",
         f"- Hockey/softball action-photo first-paste asset/headshot/marker writes: {asset_panel.get('hockey_softball_action_photo_first_paste_asset_downloads', False)}/{asset_panel.get('hockey_softball_action_photo_first_paste_headshot_writes', False)}/{asset_panel.get('hockey_softball_action_photo_first_paste_approved_marker_writes', False)}",
         f"- Hockey/softball action-photo first-paste generated: {asset_panel.get('hockey_softball_action_photo_first_paste_generated_at') or 'missing'}",
+        f"- Hockey/softball action-photo return completeness rows: {asset_panel.get('hockey_softball_action_photo_return_completeness_rows', 0)}",
+        f"- Hockey/softball action-photo return completeness generated ready/download approvals: {asset_panel.get('hockey_softball_action_photo_return_completeness_generated_ready_rows', 0)}/{asset_panel.get('hockey_softball_action_photo_return_completeness_generated_download_approval_rows', 0)}",
+        f"- Hockey/softball action-photo return completeness blank source_url rows: {asset_panel.get('hockey_softball_action_photo_return_completeness_blank_source_url_rows', 0)}",
+        f"- Hockey/softball action-photo return completeness missing notes rows: {asset_panel.get('hockey_softball_action_photo_return_completeness_missing_notes_rows', 0)}",
+        f"- Hockey/softball action-photo return completeness asset/headshot/marker writes: {asset_panel.get('hockey_softball_action_photo_return_completeness_asset_downloads', False)}/{asset_panel.get('hockey_softball_action_photo_return_completeness_headshot_writes', False)}/{asset_panel.get('hockey_softball_action_photo_return_completeness_approved_marker_writes', False)}",
+        f"- Hockey/softball action-photo return completeness generated: {asset_panel.get('hockey_softball_action_photo_return_completeness_generated_at') or 'missing'}",
         f"- Hockey/softball source research return rows: {asset_panel.get('hockey_softball_source_research_return_rows', 0)}",
         f"- Hockey/softball source research return blank operator rows: {asset_panel.get('hockey_softball_source_research_return_blank_operator_rows', 0)}",
         f"- Hockey/softball source research return download-approved yes rows: {asset_panel.get('hockey_softball_source_research_return_download_approved_yes_rows', 0)}",
@@ -12737,6 +12782,14 @@ def render_markdown(payload: Dict[str, Any]) -> str:
                 "run_command": asset_panel.get("hockey_softball_action_photo_first_paste_refresh_command"),
             },
             "Hockey/softball action-photo first paste guide",
+        ),
+        packet_freshness_markdown(
+            {
+                "status": asset_panel.get("hockey_softball_action_photo_return_completeness_freshness_status"),
+                "detail": asset_panel.get("hockey_softball_action_photo_return_completeness_freshness_detail"),
+                "run_command": asset_panel.get("hockey_softball_action_photo_return_completeness_refresh_command"),
+            },
+            "Hockey/softball action-photo return completeness checklist",
         ),
         packet_freshness_markdown(
             {
