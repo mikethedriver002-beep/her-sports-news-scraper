@@ -247,6 +247,9 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     action_photo_rows = read_csv(root / "womens_soccer_action_photo_research_next.csv")
     action_photo_manifest = json.loads((root / "womens_soccer_action_photo_research_next.json").read_text(encoding="utf-8"))
     action_photo_markdown = (root / "womens_soccer_action_photo_research_next.md").read_text(encoding="utf-8")
+    first_paste_rows = read_csv(root / "womens_soccer_action_photo_first_paste_guide.csv")
+    first_paste_manifest = json.loads((root / "womens_soccer_action_photo_first_paste_guide.json").read_text(encoding="utf-8"))
+    first_paste_markdown = (root / "womens_soccer_action_photo_first_paste_guide.md").read_text(encoding="utf-8")
     closure_rows = read_csv(root / "womens_soccer_athlete_expansion_closure_summary.csv")
     closure_manifest = json.loads((root / "womens_soccer_athlete_expansion_closure_summary.json").read_text(encoding="utf-8"))
     closure_markdown = (root / "womens_soccer_athlete_expansion_closure_summary.md").read_text(encoding="utf-8")
@@ -320,6 +323,13 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert manifest["action_photo_research_next_md"].endswith("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md")
     assert manifest["action_photo_research_next_csv"].endswith("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv")
     assert manifest["action_photo_research_next_json"].endswith("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json")
+    assert manifest["action_photo_first_paste_guide_rows"] == 4
+    assert manifest["action_photo_first_paste_guide_validation_issue_count"] == 0
+    assert manifest["action_photo_first_paste_guide_generated_ready_rows"] == 0
+    assert manifest["action_photo_first_paste_guide_generated_download_approval_rows"] == 0
+    assert manifest["action_photo_first_paste_guide_md"].endswith("data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.md")
+    assert manifest["action_photo_first_paste_guide_csv"].endswith("data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.csv")
+    assert manifest["action_photo_first_paste_guide_json"].endswith("data/asset_registry/womens_soccer/womens_soccer_action_photo_first_paste_guide.json")
     assert manifest["closure_summary_rows"] == 9
     assert manifest["closure_summary_total_referenced_rows"] == 33
     assert manifest["closure_summary_download_approved_yes_rows"] == 0
@@ -678,6 +688,45 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert "Paste target" in action_photo_markdown
     assert "candidate_photo_url" in action_photo_markdown
     assert "Candidate-ready means later human download-decision review only" in action_photo_markdown
+    assert first_paste_manifest["status"] == "womens_soccer_action_photo_first_paste_guide_ready"
+    assert first_paste_manifest["first_paste_rows"] == 4
+    assert first_paste_manifest["validation_issue_count"] == 0
+    assert first_paste_manifest["generated_ready_rows"] == 0
+    assert first_paste_manifest["generated_download_approval_rows"] == 0
+    assert first_paste_manifest["blank_source_url_rows"] == 4
+    assert first_paste_manifest["blank_rights_class_rows"] == 4
+    assert first_paste_manifest["blank_identity_confidence_rows"] == 4
+    assert first_paste_manifest["review_only"] is True
+    assert first_paste_manifest["asset_downloads"] is False
+    assert first_paste_manifest["headshot_writes"] is False
+    assert first_paste_manifest["approved_marker_writes"] is False
+    assert first_paste_manifest["publish_ready"] is False
+    assert [row["first_paste_rank"] for row in first_paste_rows] == ["1", "2", "3", "4"]
+    assert [row["research_next_rank"] for row in first_paste_rows] == ["1", "2", "3", "4"]
+    for row in first_paste_rows:
+        assert row["paste_target_csv"] == "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
+        assert row["candidate_ready_for_later_human_download_decision_review"] == "no"
+        assert row["download_approved"] == "no"
+        assert row["source_url"] == ""
+        assert row["entity_id"] == ""
+        assert row["rights_class"] == ""
+        assert row["identity_confidence"] == ""
+        assert row["intended_review_only_use"] == ""
+        assert row["operator_decision"] == ""
+        assert row["operator_notes"] == ""
+        assert row["review_only"] == "true"
+        assert row["approval_state_change"] == "false"
+        assert row["candidate_state_change"] == "false"
+        assert row["asset_downloads"] == "false"
+        assert row["headshot_writes"] == "false"
+        assert row["approved_marker_writes"] == "false"
+        assert row["publish_ready"] == "false"
+        assert row["auto_approval"] == "false"
+        assert row["auto_publish"] == "false"
+        assert row["move_files"] == "false"
+        assert row["paid_apis"] == "false"
+    assert "Action-Photo First Paste Guide" in first_paste_markdown
+    assert "does not fetch sources, inspect URLs, download images" in first_paste_markdown
 
     unsafe_rows = [dict(action_photo_rows[0]), dict(action_photo_rows[1])]
     unsafe_rows[1]["operator_focus_row_ref"] = unsafe_rows[0]["operator_focus_row_ref"]
@@ -705,6 +754,29 @@ def test_womens_soccer_athlete_verification_queue_buckets_review_only_rows(tmp_p
     assert "generated_rows_must_not_be_candidate_ready" in issues
     assert "action_photo_research_next_guardrail_field_must_stay_false" in issues
     assert "action_photo_research_next_must_remain_review_only" in issues
+    unsafe_first_paste_rows = [dict(first_paste_rows[0])]
+    unsafe_first_paste_rows[0]["paste_target_csv"] = "wrong.csv"
+    unsafe_first_paste_rows[0]["evidence_package_to_paste"] = "candidate_photo_url"
+    unsafe_first_paste_rows[0]["source_url"] = "https://example.com/source"
+    unsafe_first_paste_rows[0]["entity_id"] = "entity"
+    unsafe_first_paste_rows[0]["rights_class"] = "unknown_hold"
+    unsafe_first_paste_rows[0]["identity_confidence"] = "strong_context"
+    unsafe_first_paste_rows[0]["intended_review_only_use"] = "review"
+    unsafe_first_paste_rows[0]["operator_decision"] = "approve"
+    unsafe_first_paste_rows[0]["operator_notes"] = "unsafe"
+    truthy_yes = "y" + "es"
+    unsafe_first_paste_rows[0]["candidate_ready_for_later_human_download_decision_review"] = truthy_yes
+    unsafe_first_paste_rows[0]["download_approved"] = truthy_yes
+    unsafe_first_paste_rows[0]["asset_downloads"] = "true"
+    unsafe_first_paste_rows[0]["review_only"] = "false"
+    first_paste_issues = {issue["issue"] for issue in module.validate_action_photo_first_paste_guide_rows(unsafe_first_paste_rows)}
+    assert "first_paste_must_target_action_photo_return_intake" in first_paste_issues
+    assert "first_paste_missing_required_paste_fields" in first_paste_issues
+    assert "generated_human_decision_field_must_stay_blank" in first_paste_issues
+    assert "generated_first_paste_must_not_mark_ready" in first_paste_issues
+    assert "first_paste_must_not_approve_downloads" in first_paste_issues
+    assert "first_paste_guardrail_field_must_stay_false" in first_paste_issues
+    assert "first_paste_must_remain_review_only" in first_paste_issues
     assert closure_manifest["status"] == "athlete_expansion_closure_summary_ready"
     assert closure_manifest["closure_summary_rows"] == 9
     assert closure_manifest["total_referenced_rows"] == 33

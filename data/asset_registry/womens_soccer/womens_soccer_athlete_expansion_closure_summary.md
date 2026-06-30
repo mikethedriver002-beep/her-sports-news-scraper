@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Expansion Closure Summary
 
-Generated: `2026-06-29T22:39:18.754226+00:00`
+Generated: `2026-06-30T04:43:06.576785+00:00`
 
 Review-only latest-artifact collection for the women's soccer athlete expansion lane. It collects the current source, intake, readiness, and operator-focus artifacts into one closure board. It does not scrape, download, approve assets, write `headshot.png`, create `.approved` markers, auto-enable sources, move files into publish-ready lanes, publish, or use paid APIs.
 

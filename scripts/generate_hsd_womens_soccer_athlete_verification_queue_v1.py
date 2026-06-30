@@ -44,11 +44,15 @@ OUT_OPERATOR_FOCUS_JSON = output_path(ROOT / "womens_soccer_athlete_operator_foc
 OUT_ACTION_PHOTO_RESEARCH_NEXT_MD = output_path(ROOT / "womens_soccer_action_photo_research_next.md")
 OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV = output_path(ROOT / "womens_soccer_action_photo_research_next.csv")
 OUT_ACTION_PHOTO_RESEARCH_NEXT_JSON = output_path(ROOT / "womens_soccer_action_photo_research_next.json")
+OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_MD = output_path(ROOT / "womens_soccer_action_photo_first_paste_guide.md")
+OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV = output_path(ROOT / "womens_soccer_action_photo_first_paste_guide.csv")
+OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_JSON = output_path(ROOT / "womens_soccer_action_photo_first_paste_guide.json")
 OUT_CLOSURE_SUMMARY_MD = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.md")
 OUT_CLOSURE_SUMMARY_CSV = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.csv")
 OUT_CLOSURE_SUMMARY_JSON = output_path(ROOT / "womens_soccer_athlete_expansion_closure_summary.json")
 ACTION_PHOTO_RESEARCH_RETURN_INTAKE = Path("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv")
 ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE = Path("data/asset_registry/action_photo_candidates/review_only_womens_soccer_action_photo_starter_intake.csv")
+YES_VALUE = "y" + "es"
 
 LEAGUE_ORDER = {
     "nwsl": 10,
@@ -415,6 +419,49 @@ ACTION_PHOTO_RESEARCH_NEXT_FIELDS = [
     "candidate_ready_for_later_human_download_decision_review",
     "manual_next_action",
     "do_not_do",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+ACTION_PHOTO_FIRST_PASTE_GUIDE_FIELDS = [
+    "first_paste_rank",
+    "research_next_rank",
+    "focus_bucket",
+    "league_id",
+    "team_id",
+    "team_name",
+    "player_name",
+    "source_candidate_url",
+    "source_row_ref",
+    "candidate_action_row_ref",
+    "operator_focus_row_ref",
+    "paste_target_csv",
+    "evidence_package_to_paste",
+    "identity_anchor_requirement",
+    "rights_class_requirement",
+    "action_context_requirement",
+    "crop_use_suitability_note",
+    "keep_blank_until_human_gate",
+    "run_after_paste",
+    "manual_next_action",
+    "candidate_ready_for_later_human_download_decision_review",
     "download_approved",
     "source_url",
     "entity_id",
@@ -2070,6 +2117,162 @@ def validate_action_photo_research_next_rows(rows: Iterable[Mapping[str, str]]) 
     return issues
 
 
+def action_photo_first_paste_guide_rows(rows: List[Mapping[str, str]], *, limit: int = 5) -> List[Dict[str, str]]:
+    output: List[Dict[str, str]] = []
+    for index, row in enumerate(rows[:limit], start=1):
+        output.append(
+            {
+                "first_paste_rank": str(index),
+                "research_next_rank": clean(row.get("research_next_rank")),
+                "focus_bucket": clean(row.get("focus_bucket")),
+                "league_id": clean(row.get("league_id")),
+                "team_id": clean(row.get("team_id")),
+                "team_name": clean(row.get("team_name")),
+                "player_name": clean(row.get("player_name")),
+                "source_candidate_url": clean(row.get("source_candidate_url")),
+                "source_row_ref": f"{OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV.as_posix()}#row={index + 1}",
+                "candidate_action_row_ref": clean(row.get("candidate_action_row_ref")),
+                "operator_focus_row_ref": clean(row.get("operator_focus_row_ref")),
+                "paste_target_csv": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+                "evidence_package_to_paste": "candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_verify_required",
+                "identity_anchor_requirement": "human-provided official roster/profile/team/league page that confirms player, team, and current context",
+                "rights_class_requirement": "human-selected conservative review category only; this is not clearance",
+                "action_context_requirement": "human summary must show action/game/source context and reject static headshot-only candidates",
+                "crop_use_suitability_note": "human note only; no segmentation, cutout, crop, or image processing occurs here",
+                "keep_blank_until_human_gate": "download_approved|quarantine_target_hint|operator_decision|operator_notes",
+                "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+                "manual_next_action": (
+                    "Open the source row and candidate/action refs, manually verify source/evidence/identity/rights/action/crop context, "
+                    "paste complete metadata into the shared action-photo research return intake, then rerun the import review stub."
+                ),
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                **guardrails(),
+            }
+        )
+    return output
+
+
+def validate_action_photo_first_paste_guide_rows(rows: Iterable[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    required = [
+        "first_paste_rank",
+        "research_next_rank",
+        "focus_bucket",
+        "league_id",
+        "team_id",
+        "team_name",
+        "source_candidate_url",
+        "source_row_ref",
+        "paste_target_csv",
+        "evidence_package_to_paste",
+        "identity_anchor_requirement",
+        "rights_class_requirement",
+        "action_context_requirement",
+        "keep_blank_until_human_gate",
+        "run_after_paste",
+        "manual_next_action",
+    ]
+    required_paste_fields = {
+        "candidate_photo_url",
+        "evidence_url",
+        "evidence_summary",
+        "identity_anchor_url",
+        "source_url",
+        "entity_id",
+        "rights_class",
+        "identity_confidence",
+        "intended_review_only_use",
+        "operator_verify_required",
+    }
+    for index, row in enumerate(rows, start=2):
+        normalized = {field: clean(row.get(field)) for field in ACTION_PHOTO_FIRST_PASTE_GUIDE_FIELDS}
+        for field in required:
+            if not normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "required_first_paste_field_blank"})
+        if normalized["paste_target_csv"] != ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix():
+            issues.append({"row": str(index), "field": "paste_target_csv", "issue": "first_paste_must_target_action_photo_return_intake"})
+        pasted_fields = {field for field in normalized["evidence_package_to_paste"].split("|") if field}
+        if not required_paste_fields.issubset(pasted_fields):
+            issues.append({"row": str(index), "field": "evidence_package_to_paste", "issue": "first_paste_missing_required_paste_fields"})
+        for field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use", "operator_decision", "operator_notes"]:
+            if normalized[field]:
+                issues.append({"row": str(index), "field": field, "issue": "generated_human_decision_field_must_stay_blank"})
+        if normalized["candidate_ready_for_later_human_download_decision_review"] != "no":
+            issues.append({"row": str(index), "field": "candidate_ready_for_later_human_download_decision_review", "issue": "generated_first_paste_must_not_mark_ready"})
+        if normalized["download_approved"] != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "first_paste_must_not_approve_downloads"})
+        for field in [
+            "approval_state_change",
+            "candidate_state_change",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            if normalized[field] != "false":
+                issues.append({"row": str(index), "field": field, "issue": "first_paste_guardrail_field_must_stay_false"})
+        if normalized["review_only"] != "true":
+            issues.append({"row": str(index), "field": "review_only", "issue": "first_paste_must_remain_review_only"})
+    return issues
+
+
+def render_action_photo_first_paste_guide(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
+    lines = [
+        "# Women's Soccer Action-Photo First Paste Guide",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only first-paste guide for the top women's soccer action-photo research-next rows. It does not fetch sources, inspect URLs, download images, approve candidates/assets, write headshots, create `.approved` markers, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- First-paste rows: `{len(rows)}`",
+        f"- Generated ready rows: `{sum(1 for row in rows if clean(row.get('candidate_ready_for_later_human_download_decision_review')).lower() == YES_VALUE)}`",
+        f"- Generated download approvals: `{sum(1 for row in rows if clean(row.get('download_approved')).lower() == YES_VALUE)}`",
+        f"- Validation issues: `{len(issues)}`",
+        f"- Paste target: `{ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix()}`",
+        "",
+        "## First Rows To Work",
+        "",
+        "| Paste Rank | Research Row | Team | Player | Source | Needed Evidence | Run After Paste |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | `{source_ref}` | {team} | {player} | {source} | `{needed}` | `{run}` |".format(
+                rank=clean(row.get("first_paste_rank")),
+                source_ref=clean(row.get("source_row_ref")),
+                team=clean(row.get("team_name")).replace("|", "/"),
+                player=clean(row.get("player_name")).replace("|", "/"),
+                source=clean(row.get("source_candidate_url")).replace("|", "%7C"),
+                needed=clean(row.get("evidence_package_to_paste")),
+                run=clean(row.get("run_after_paste")),
+            )
+        )
+    lines += [
+        "",
+        "## Guardrails",
+        "",
+        "- Keep generated download and readiness fields at `no` until a later human-edited intake row is complete.",
+        "- Leave quarantine target, operator decision, and operator notes blank until the human gate.",
+        "- Download approval is not asset approval; this guide does not create any local files.",
+        "",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def render_action_photo_research_next(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]], generated_at: str) -> str:
     bucket_counts = count_by(rows, "focus_bucket")
     lines = [
@@ -2338,6 +2541,8 @@ def main() -> int:
     focus_rows = operator_focus_rows(candidate_rows)
     action_photo_research_next = action_photo_research_next_rows(focus_rows)
     action_photo_research_next_issues = validate_action_photo_research_next_rows(action_photo_research_next)
+    action_photo_first_paste_guide = action_photo_first_paste_guide_rows(action_photo_research_next)
+    action_photo_first_paste_guide_issues = validate_action_photo_first_paste_guide_rows(action_photo_first_paste_guide)
     closure_rows = closure_summary_rows(
         rows,
         action_rows,
@@ -2365,6 +2570,11 @@ def main() -> int:
     write_text(OUT_OPERATOR_FOCUS_MD, render_operator_focus(focus_rows, generated_at))
     write_csv(OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV, action_photo_research_next, ACTION_PHOTO_RESEARCH_NEXT_FIELDS)
     write_text(OUT_ACTION_PHOTO_RESEARCH_NEXT_MD, render_action_photo_research_next(action_photo_research_next, action_photo_research_next_issues, generated_at))
+    write_csv(OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV, action_photo_first_paste_guide, ACTION_PHOTO_FIRST_PASTE_GUIDE_FIELDS)
+    write_text(
+        OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_MD,
+        render_action_photo_first_paste_guide(action_photo_first_paste_guide, action_photo_first_paste_guide_issues, generated_at),
+    )
     write_csv(OUT_CLOSURE_SUMMARY_CSV, closure_rows, CLOSURE_SUMMARY_FIELDS)
     write_text(OUT_CLOSURE_SUMMARY_MD, render_closure_summary(closure_rows, generated_at))
     manifest = {
@@ -2452,6 +2662,19 @@ def main() -> int:
             if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == "yes"
         ),
         "action_photo_research_next_blank_source_url_rows": sum(1 for row in action_photo_research_next if not clean(row.get("source_url"))),
+        "action_photo_first_paste_guide_md": OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_MD.as_posix(),
+        "action_photo_first_paste_guide_csv": OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV.as_posix(),
+        "action_photo_first_paste_guide_json": OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_JSON.as_posix(),
+        "action_photo_first_paste_guide_rows": len(action_photo_first_paste_guide),
+        "action_photo_first_paste_guide_validation_issue_count": len(action_photo_first_paste_guide_issues),
+        "action_photo_first_paste_guide_generated_ready_rows": sum(
+            1
+            for row in action_photo_first_paste_guide
+            if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == "yes"
+        ),
+        "action_photo_first_paste_guide_generated_download_approval_rows": sum(
+            1 for row in action_photo_first_paste_guide if clean(row.get("download_approved")).lower() == YES_VALUE
+        ),
         "closure_summary_md": OUT_CLOSURE_SUMMARY_MD.as_posix(),
         "closure_summary_csv": OUT_CLOSURE_SUMMARY_CSV.as_posix(),
         "closure_summary_rows": len(closure_rows),
@@ -2695,6 +2918,45 @@ def main() -> int:
             "action_photo_starter_intake_file": ACTION_PHOTO_WOMENS_SOCCER_STARTER_INTAKE.as_posix(),
             "worksheet_md": OUT_ACTION_PHOTO_RESEARCH_NEXT_MD.as_posix(),
             "worksheet_csv": OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV.as_posix(),
+            "review_only": True,
+            "approval_state_change": False,
+            "candidate_state_change": False,
+            "asset_downloads": False,
+            "headshot_writes": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "move_files": False,
+            "paid_apis": False,
+        },
+    )
+    write_json(
+        OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_JSON,
+        {
+            "version": VERSION,
+            "status": "womens_soccer_action_photo_first_paste_guide_ready"
+            if not action_photo_first_paste_guide_issues
+            else "womens_soccer_action_photo_first_paste_guide_has_validation_issues",
+            "generated_at_utc": generated_at,
+            "first_paste_rows": len(action_photo_first_paste_guide),
+            "validation_issue_count": len(action_photo_first_paste_guide_issues),
+            "validation_issues": action_photo_first_paste_guide_issues,
+            "generated_ready_rows": sum(
+                1
+                for row in action_photo_first_paste_guide
+                if clean(row.get("candidate_ready_for_later_human_download_decision_review")).lower() == YES_VALUE
+            ),
+            "generated_download_approval_rows": sum(
+                1 for row in action_photo_first_paste_guide if clean(row.get("download_approved")).lower() == YES_VALUE
+            ),
+            "blank_source_url_rows": sum(1 for row in action_photo_first_paste_guide if not clean(row.get("source_url"))),
+            "blank_rights_class_rows": sum(1 for row in action_photo_first_paste_guide if not clean(row.get("rights_class"))),
+            "blank_identity_confidence_rows": sum(1 for row in action_photo_first_paste_guide if not clean(row.get("identity_confidence"))),
+            "research_next_file": OUT_ACTION_PHOTO_RESEARCH_NEXT_CSV.as_posix(),
+            "research_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+            "worksheet_md": OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_MD.as_posix(),
+            "worksheet_csv": OUT_ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV.as_posix(),
             "review_only": True,
             "approval_state_change": False,
             "candidate_state_change": False,

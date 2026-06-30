@@ -1,7 +1,7 @@
 {
   "version": "hsd-womens-soccer-athlete-verification-queue-v1-review-only",
   "status": "athlete_expansion_closure_summary_ready",
-  "generated_at_utc": "2026-06-29T22:39:18.754226+00:00",
+  "generated_at_utc": "2026-06-30T04:43:06.576785+00:00",
   "closure_summary_rows": 9,
   "total_referenced_rows": 641,
   "p0_or_verify_rows": 466,

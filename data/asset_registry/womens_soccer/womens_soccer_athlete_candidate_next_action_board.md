@@ -1,6 +1,6 @@
 # Women's Soccer Athlete Candidate Next-Action Board
 
-Generated: `2026-06-29T22:39:18.754226+00:00`
+Generated: `2026-06-30T04:43:06.576785+00:00`
 
 Review-only board for turning source-priority rows into safe manual work. Advisory `source_candidate_url` values stay separate from generated local-download-law fields, which remain `download_approved=no` with blank `source_url`, `entity_id`, `rights_class`, `identity_confidence`, and `intended_review_only_use`.
 `source_candidate_url` remains advisory metadata for operator review only; it is not a download approval or current-roster confirmation.
