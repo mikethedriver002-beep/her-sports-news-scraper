@@ -607,6 +607,29 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
             "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_missing",
             "manual_intake_path": "",
         },
+        {
+            "action_rank": "3",
+            "event_uid": "event_scheduled",
+            "game_date": "2026-06-25",
+            "league": "WNBA",
+            "matchup": "Atlanta Dream at Chicago Sky",
+            "game_status": "scheduled",
+            "recap_candidate": "No",
+            "review_priority": "P3_result_pending_monitor",
+            "source_confirmation_tier": "single_free_public_schedule_source_result_pending",
+            "official_or_public_source_cue": "public_scoreboard_source_operator_verify",
+            "source_confidence": "0.84",
+            "source_freshness_status": "evidence_fresh_under_3h_operator_verify",
+            "schedule_fact_status": "schedule_source_confirmed_free_public_operator_verify",
+            "result_fact_status": "not_final_result_pending",
+            "stats_fact_status": "not_final_stats_optional",
+            "missing_confirmation": "none",
+            "source_url": "https://www.espn.com/wnba/game/_/gameId/403",
+            "source_domain": "www.espn.com",
+            "proof_row_to_open": "",
+            "source_row_to_open": "game_source_confirmation_next_action_v1.csv event_uid=event_scheduled",
+            "manual_intake_path": "",
+        },
     ]
 
     rows = module.game_source_research_worksheet_rows(next_action_rows)
@@ -628,6 +651,11 @@ def test_game_source_research_worksheet_keeps_operator_fields_blank() -> None:
     assert by_id["event_missing"]["second_source_check_cue"] == "find_primary_free_public_source_before_second_source_check"
     assert "Find a free official or reputable public source" in by_id["event_missing"]["operator_research_prompt"]
     assert "Leave operator fields blank until a human verifies" in by_id["event_missing"]["source_proof_next_action"]
+    assert by_id["event_scheduled"]["research_need"] == "monitor_public_scoreboard_until_final"
+    assert by_id["event_scheduled"]["source_type_to_verify"] == "public_schedule_source_result_pending_operator_monitor"
+    assert "rerun Results" in by_id["event_scheduled"]["operator_research_prompt"]
+    assert "do not treat the row as recap-ready or render-ready" in by_id["event_scheduled"]["operator_research_prompt"]
+    assert "rerun Results" in by_id["event_scheduled"]["source_proof_next_action"]
     for row in rows:
         assert row["operator_official_box_score_url"] == ""
         assert row["operator_stat_line_confirmation"] == ""
