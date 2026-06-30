@@ -247,6 +247,8 @@ MANUAL_LOGO_VERIFICATION_INTAKE_FIELDS = [
     "operator_copy_target",
     "required_manual_checks",
     "allowed_manual_outcomes",
+    "operator_next_actions",
+    "refresh_commands",
     "cannot_clear_automatically_because",
     "review_only",
     "approval_state_change",
@@ -281,6 +283,8 @@ MANUAL_LEAGUE_MARK_CONTEXT_INTAKE_FIELDS = [
     "required_manual_checks",
     "allowed_manual_outcomes",
     "template_requirement_rule",
+    "operator_next_actions",
+    "refresh_commands",
     "cannot_clear_automatically_because",
     "review_only",
     "approval_state_change",
@@ -6792,10 +6796,21 @@ def manual_logo_verification_intake_rows(source_board_rows: List[Dict[str, str]]
             "manual_review_packet": clean(row.get("manual_review_packet")) or "data/asset_registry/wnba/logo_review_catalog_report.md",
             "operator_copy_target": clean(row.get("operator_copy_target")) or "operator/assets/brand_logos/README.md",
             "required_manual_checks": (
-                "confirm exact local logo path exists; compare logo to official Liberty/WNBA source; confirm current "
-                "legacy registry source; decide whether manual registry edit is justified"
+                "inspect data/asset_registry/wnba/wnba_team_logo_contact_sheet.md and "
+                "data/asset_registry/wnba/wnba_team_logo_review_intake.csv; confirm exact local logo path exists; "
+                "compare logo to official Liberty/WNBA source; confirm current legacy registry source; decide whether "
+                "manual registry edit is justified"
             ),
             "allowed_manual_outcomes": "hold_logo_slot|revise_logo_source_metadata|human_edit_registry_after_review",
+            "operator_next_actions": (
+                "inspect_wnba_logo_contact_sheet|fill_wnba_team_logo_review_intake_csv|answer_source_and_logo_readiness_questions|"
+                "keep_manual_decisions_review_only"
+            ),
+            "refresh_commands": (
+                "Run in order: .\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py; "
+                ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py; "
+                ".\\.venv\\Scripts\\python.exe generate_hsd_operator_command_center_v2.py"
+            ),
             "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because")),
             "review_only": "true",
             "approval_state_change": "false",
@@ -6845,14 +6860,25 @@ def manual_league_mark_context_intake_rows(source_board_rows: List[Dict[str, str
             "manual_review_packet": clean(row.get("manual_review_packet")) or "data/asset_registry/wnba/logo_review_catalog_report.md",
             "operator_copy_target": clean(row.get("operator_copy_target")) or "operator/assets/brand_logos/README.md",
             "required_manual_checks": (
-                "confirm the selected template actually requires a league mark; if yes, verify an exact local WNBA "
-                "mark path and official/free source evidence before any later registry edit"
+                "inspect data/asset_registry/wnba/logo_review_catalog_report.md and "
+                "data/asset_registry/wnba/wnba_league_mark_review_intake.csv; confirm the selected template actually "
+                "requires a league mark; if yes, verify an exact local WNBA mark path and official/free source evidence "
+                "before any later registry edit"
             ),
             "allowed_manual_outcomes": (
                 "verify_league_mark_for_review_only_renderer_use|hold_league_mark|"
                 "mark_not_required_for_selected_template|revise_league_mark_source_metadata"
             ),
             "template_requirement_rule": "non_blocking_until_selected_template_requires_league_mark",
+            "operator_next_actions": (
+                "inspect_wnba_logo_catalog_report|fill_wnba_league_mark_review_intake_csv|answer_league_mark_template_requirement|"
+                "keep_manual_decisions_review_only"
+            ),
+            "refresh_commands": (
+                "Run in order: .\\.venv\\Scripts\\python.exe scripts\\validate_hsd_wnba_asset_registry_v1.py; "
+                ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_wnba_logo_contact_sheet_v1.py; "
+                ".\\.venv\\Scripts\\python.exe generate_hsd_operator_command_center_v2.py"
+            ),
             "cannot_clear_automatically_because": clean(row.get("cannot_clear_automatically_because"))
             or "The WNBA league mark needs human source/file review before any renderer trust change.",
             "review_only": "true",
@@ -7108,6 +7134,8 @@ def render_manual_logo_verification_intake(packet: Dict[str, str] | None, rows: 
         "",
         f"- Intake bridge rows: {len(rows)}",
         "- Human-edited intake files: `data/asset_registry/wnba/team_logos.csv`; `data/asset_registry/wnba/logo_sources.csv`",
+        "- First operator checks: inspect `data/asset_registry/wnba/wnba_team_logo_contact_sheet.md` and edit `data/asset_registry/wnba/wnba_team_logo_review_intake.csv` by hand.",
+        "- After manual review only, rerun the WNBA asset registry validator, logo contact sheet generator, and Command Center refresh.",
         "- Use this as review guidance only. The operator must make any registry edits manually after source review.",
         "",
         "## Rows",
@@ -7130,6 +7158,8 @@ def render_manual_logo_verification_intake(packet: Dict[str, str] | None, rows: 
             f"- Operator copy target: `{clean(row.get('operator_copy_target'))}`",
             f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
             f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
+            f"- Operator next actions: `{clean(row.get('operator_next_actions'))}`",
+            f"- Refresh commands: `{clean(row.get('refresh_commands'))}`",
             f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
             f"- Guardrails: review_only={clean(row.get('review_only'))}; approval_state_change={clean(row.get('approval_state_change'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}; publishing={clean(row.get('publishing'))}",
             "",
@@ -7168,6 +7198,8 @@ def render_manual_league_mark_context_intake(packet: Dict[str, str] | None, rows
         f"- Intake bridge rows: {len(rows)}",
         "- Human-edited intake file: `data/asset_registry/wnba/wnba_league_mark_review_intake.csv`",
         "- Selected-template rule: keep WNBA league mark optional/non-blocking unless the selected template explicitly requires it.",
+        "- First operator checks: inspect `data/asset_registry/wnba/logo_review_catalog_report.md` and answer league-mark context in `data/asset_registry/wnba/wnba_league_mark_review_intake.csv` by hand.",
+        "- After manual review only, rerun the WNBA asset registry validator, logo contact sheet generator, and Command Center refresh.",
         "- Use this as review guidance only. The operator must make any registry edits manually after source and local-file review.",
         "",
         "## Rows",
@@ -7192,6 +7224,8 @@ def render_manual_league_mark_context_intake(packet: Dict[str, str] | None, rows
             f"- Required manual checks: {clean(row.get('required_manual_checks'))}",
             f"- Allowed manual outcomes: `{clean(row.get('allowed_manual_outcomes'))}`",
             f"- Template requirement rule: `{clean(row.get('template_requirement_rule'))}`",
+            f"- Operator next actions: `{clean(row.get('operator_next_actions'))}`",
+            f"- Refresh commands: `{clean(row.get('refresh_commands'))}`",
             f"- Cannot clear automatically because: {clean(row.get('cannot_clear_automatically_because'))}",
             f"- Guardrails: review_only={clean(row.get('review_only'))}; approval_state_change={clean(row.get('approval_state_change'))}; publish_ready={clean(row.get('publish_ready'))}; auto_approval={clean(row.get('auto_approval'))}; auto_publish={clean(row.get('auto_publish'))}; move_files={clean(row.get('move_files'))}; paid_apis={clean(row.get('paid_apis'))}; asset_downloads={clean(row.get('asset_downloads'))}; publishing={clean(row.get('publishing'))}",
             "",
@@ -9491,10 +9525,14 @@ def render_manual_logo_verification_intake_cards(rows: Iterable[Dict[str, str]])
                 <div><span>Human-edited files</span><strong>{html.escape(short(clean(row.get('manual_intake_files')), 160))}</strong></div>
               </div>
               <p class="muted"><strong>Required manual checks:</strong> {html.escape(short(clean(row.get('required_manual_checks')), 220))}</p>
+              <p class="muted"><strong>Operator next actions:</strong> {html.escape(short(clean(row.get('operator_next_actions')), 220))}</p>
+              <p class="muted"><strong>Refresh commands:</strong> {html.escape(short(clean(row.get('refresh_commands')), 240))}</p>
               <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')), 220))}</p>
               <div class="asset-blocker-actions">
                 {intake_link}
                 {open_link(clean(row.get('manual_review_packet')) or 'data/asset_registry/wnba/logo_review_catalog_report.md', 'Open review packet')}
+                {open_link('data/asset_registry/wnba/wnba_team_logo_contact_sheet.md', 'Open contact sheet')}
+                {open_link('data/asset_registry/wnba/wnba_team_logo_review_intake.csv', 'Open team intake CSV')}
                 {pill('no downloads')}
                 {pill('no auto-approval')}
                 {pill('publish-ready: false')}
@@ -9545,10 +9583,13 @@ def render_manual_league_mark_context_intake_cards(rows: Iterable[Dict[str, str]
               </div>
               <p class="muted"><strong>Selected-template rule:</strong> {html.escape(short(clean(row.get('selected_template_blocking_reason')), 220))}</p>
               <p class="muted"><strong>Required manual checks:</strong> {html.escape(short(clean(row.get('required_manual_checks')), 220))}</p>
+              <p class="muted"><strong>Operator next actions:</strong> {html.escape(short(clean(row.get('operator_next_actions')), 220))}</p>
+              <p class="muted"><strong>Refresh commands:</strong> {html.escape(short(clean(row.get('refresh_commands')), 240))}</p>
               <p class="muted"><strong>Cannot clear automatically because:</strong> {html.escape(short(clean(row.get('cannot_clear_automatically_because')), 220))}</p>
               <div class="asset-blocker-actions">
                 {intake_link}
                 {open_link(clean(row.get('manual_review_packet')) or 'data/asset_registry/wnba/logo_review_catalog_report.md', 'Open logo catalog')}
+                {open_link('data/asset_registry/wnba/wnba_league_mark_review_intake.csv', 'Open league-mark intake CSV')}
                 {pill('no downloads')}
                 {pill('no auto-approval')}
                 {pill('publish-ready: false')}
