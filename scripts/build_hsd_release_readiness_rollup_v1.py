@@ -50,14 +50,14 @@ def repo_relative(path: Path) -> str:
         return path.as_posix()
 
 
-def resolve_scan_path(scan_dir: str) -> tuple[Path, str]:
+def resolve_scan_path(scan_dir: str) -> tuple[Path, str, str]:
     if scan_dir == DEFAULT_SCAN_DIR:
         active_run_dir = run_output_dir()
         if active_run_dir:
-            return active_run_dir, repo_relative(active_run_dir)
+            return active_run_dir, repo_relative(active_run_dir), "active_run_at_rollup_generation"
     path = Path(scan_dir)
     resolved = path if path.is_absolute() else ROOT / path
-    return resolved.resolve(), scan_dir
+    return resolved.resolve(), scan_dir, "explicit_scan_dir"
 
 
 def git_value(args: list[str], default: str = "unknown") -> str:
@@ -113,25 +113,27 @@ def row(
 
 
 def scan_latest_artifacts(scan_dir: str, config: dict[str, Any]) -> dict[str, Any]:
-    path, evidence_path = resolve_scan_path(scan_dir)
+    path, evidence_path, scan_scope = resolve_scan_path(scan_dir)
     if not path.exists():
         return {
             "status": "not_found",
             "scan_dir": evidence_path,
+            "scan_scope": scan_scope,
             "scan_files_checked": 0,
             "violation_count": 0,
             "violations": [],
-            "detail": "latest artifact directory is missing; run the local review workflow before release review",
+            "detail": "rollup-time artifact directory is missing; run the local review workflow before release review",
         }
     scan_files_checked = sum(1 for item in path.rglob("*") if item.is_file())
     violations = guardrail_check.scan_directory(path, config)
     return {
         "status": "blocked" if violations else "passed",
         "scan_dir": evidence_path,
+        "scan_scope": scan_scope,
         "scan_files_checked": scan_files_checked,
         "violation_count": len(violations),
         "violations": [violation.as_dict() for violation in violations],
-        "detail": "generated latest artifacts scanned for publish, approval, download, source-fetch, and paid-API guardrail fields",
+        "detail": "rollup-time artifact directory scanned for publish, approval, download, source-fetch, and paid-API guardrail fields",
     }
 
 
@@ -227,9 +229,9 @@ def build_payload(scan_dir: str = DEFAULT_SCAN_DIR) -> dict[str, Any]:
         row(
             "latest_artifact_guardrail_scan",
             latest_scan["status"],
-            f"scan_files_checked={latest_scan['scan_files_checked']}; violations={latest_scan['violation_count']}",
+            f"scan_files_checked={latest_scan['scan_files_checked']}; violations={latest_scan['violation_count']}; scope={latest_scan.get('scan_scope', 'unknown')}",
             latest_scan["scan_dir"],
-            "Run local review artifacts, then rerun this rollup." if latest_scan["status"] == "not_found" else "Stop on any violation before release review." if latest_scan["violation_count"] else "No generated latest-artifact guardrail violations found.",
+            "Run local review artifacts, then rerun this rollup." if latest_scan["status"] == "not_found" else "Stop on any violation before release review." if latest_scan["violation_count"] else "No rollup-time artifact guardrail violations found.",
         ),
         row(
             "conductor_workspace_audit",

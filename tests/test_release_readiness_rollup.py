@@ -69,6 +69,7 @@ def test_release_readiness_rollup_writes_review_only_false_guardrail_fields(tmp_
     assert manifest["blocker_count"] == 0
     assert manifest["latest_artifact_scan"]["scan_files_checked"] == 1
     assert manifest["latest_artifact_scan"]["violation_count"] == 0
+    assert manifest["latest_artifact_scan"]["scan_scope"] == "explicit_scan_dir"
     assert manifest["workflow_lane_status"]["status"] == "not_found"
     assert manifest["workflow_lane_status"]["stale_lane_count"] == 0
     assert manifest["guardrails"]["paid_apis"] is False
@@ -192,6 +193,7 @@ def test_release_readiness_rollup_defaults_to_active_run_output_dir(tmp_path: Pa
     assert manifest["latest_artifact_scan"]["status"] == "passed"
     assert manifest["latest_artifact_scan"]["scan_files_checked"] >= 2
     assert manifest["latest_artifact_scan"]["scan_dir"] == run_dir.as_posix()
+    assert manifest["latest_artifact_scan"]["scan_scope"] == "active_run_at_rollup_generation"
 
 
 def test_release_readiness_rollup_blocks_truthy_generated_artifact_guardrail_fields(tmp_path: Path, monkeypatch) -> None:
