@@ -61,6 +61,12 @@
     "action_photo_research_handoff_download_approved_yes_rows": 0,
     "action_photo_research_handoff_ready_rows": 0,
     "action_photo_research_handoff_blank_source_url_rows": 8,
+    "action_photo_first_paste_guide_rows": 4,
+    "action_photo_first_paste_guide_womens_hockey_rows": 2,
+    "action_photo_first_paste_guide_softball_rows": 2,
+    "action_photo_first_paste_guide_generated_download_approval_rows": 0,
+    "action_photo_first_paste_guide_generated_ready_rows": 0,
+    "action_photo_first_paste_guide_blank_source_url_rows": 4,
     "source_verification_checklist_rows": 18,
     "source_verification_checklist_womens_hockey_rows": 12,
     "source_verification_checklist_softball_rows": 6,
@@ -257,6 +263,18 @@
     "download_approved_yes_rows": 0,
     "later_human_download_decision_review_eligible_rows": 0,
     "blank_source_url_rows": 8,
+    "action_photo_research_return_intake": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
+  },
+  "action_photo_first_paste_guide": {
+    "md": "data/asset_registry/hockey_softball_action_photo_first_paste_guide.md",
+    "csv": "data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv",
+    "json": "data/asset_registry/hockey_softball_action_photo_first_paste_guide.json",
+    "rows": 4,
+    "womens_hockey_rows": 2,
+    "softball_rows": 2,
+    "generated_download_approval_rows": 0,
+    "generated_ready_rows": 0,
+    "blank_source_url_rows": 4,
     "action_photo_research_return_intake": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv"
   },
   "source_verification_checklist": {

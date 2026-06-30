@@ -44,6 +44,9 @@ SOURCE_RESEARCH_RETURN_INTAKE_JSON = Path("data/asset_registry/hockey_softball_s
 ACTION_PHOTO_RESEARCH_HANDOFF_MD = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.md")
 ACTION_PHOTO_RESEARCH_HANDOFF_CSV = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.csv")
 ACTION_PHOTO_RESEARCH_HANDOFF_JSON = Path("data/asset_registry/hockey_softball_action_photo_research_handoff.json")
+ACTION_PHOTO_FIRST_PASTE_GUIDE_MD = Path("data/asset_registry/hockey_softball_action_photo_first_paste_guide.md")
+ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV = Path("data/asset_registry/hockey_softball_action_photo_first_paste_guide.csv")
+ACTION_PHOTO_FIRST_PASTE_GUIDE_JSON = Path("data/asset_registry/hockey_softball_action_photo_first_paste_guide.json")
 ACTION_PHOTO_RESEARCH_RETURN_INTAKE = Path("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv")
 REVIEW_TRIAGE_MD = Path("data/asset_registry/hockey_softball_asset_review_triage.md")
 REVIEW_TRIAGE_CSV = Path("data/asset_registry/hockey_softball_asset_review_triage.csv")
@@ -410,6 +413,50 @@ ACTION_PHOTO_RESEARCH_HANDOFF_FIELDS = [
     "later_human_download_decision_review_eligible",
     "manual_next_action",
     "do_not_do",
+    "download_approved",
+    "source_url",
+    "entity_id",
+    "rights_class",
+    "identity_confidence",
+    "intended_review_only_use",
+    "operator_decision",
+    "operator_notes",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "asset_downloads",
+    "headshot_writes",
+    "logo_writes",
+    "segmentation_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+
+ACTION_PHOTO_FIRST_PASTE_GUIDE_FIELDS = [
+    "first_paste_rank",
+    "handoff_rank",
+    "source_return_order",
+    "sport_family",
+    "sport_label",
+    "league_name",
+    "source_lane",
+    "source_tier",
+    "source_search_macro",
+    "source_map_row_ref",
+    "source_return_intake_file",
+    "action_photo_return_intake_file",
+    "evidence_package_to_paste",
+    "source_identity_rights_checklist",
+    "action_context_requirement",
+    "crop_use_suitability_note",
+    "run_after_paste",
+    "manual_next_action",
+    "keep_blank_until_human_gate",
+    "later_human_download_decision_review_eligible",
     "download_approved",
     "source_url",
     "entity_id",
@@ -2508,6 +2555,133 @@ def render_action_photo_research_handoff(rows: list[Dict[str, str]], generated_a
     return "\n".join(lines) + "\n"
 
 
+def first_paste_sort_key(row: Mapping[str, str]) -> tuple[int, int, str]:
+    tier_order = {
+        "P0_OFFICIAL_FREE_PUBLIC": 0,
+        "P1_RIGHTS_SENSITIVE_PUBLIC_REVIEW": 1,
+        "P2_DISCOVERY_ONLY": 2,
+        "P5_PARK_ONLY": 5,
+    }
+    sport_order = {"womens_hockey": 0, "softball": 1}
+    return (
+        tier_order.get(clean(row.get("source_tier")), 9),
+        sport_order.get(clean(row.get("sport_family")), 9),
+        clean(row.get("source_lane")),
+    )
+
+
+def action_photo_first_paste_guide_rows(handoff_rows: list[Dict[str, str]], limit: int = 4) -> list[Dict[str, str]]:
+    paste_rows = sorted(handoff_rows, key=first_paste_sort_key)[:limit]
+    rows: list[Dict[str, str]] = []
+    for index, row in enumerate(paste_rows, start=1):
+        sport = clean(row.get("sport_family"))
+        sport_label = "women's hockey" if sport == "womens_hockey" else "softball"
+        rows.append(
+            {
+                "first_paste_rank": str(index),
+                "handoff_rank": clean(row.get("handoff_rank")),
+                "source_return_order": clean(row.get("source_return_order")),
+                "sport_family": sport,
+                "sport_label": clean(row.get("sport_label")),
+                "league_name": clean(row.get("league_name")),
+                "source_lane": clean(row.get("source_lane")),
+                "source_tier": clean(row.get("source_tier")),
+                "source_search_macro": clean(row.get("source_search_macro")),
+                "source_map_row_ref": clean(row.get("source_map_row_ref")),
+                "source_return_intake_file": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+                "action_photo_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+                "evidence_package_to_paste": clean(row.get("required_action_photo_paste_fields")),
+                "source_identity_rights_checklist": (
+                    "candidate/source page URL, caption/title, source owner, event context, identity anchor, "
+                    "conservative rights class, identity confidence, and intended review-only use"
+                ),
+                "action_context_requirement": f"Confirm the {sport_label} source shows game/action context; reject roster-only, static, cropped, or text-overlay-only leads.",
+                "crop_use_suitability_note": "Human note only; do not score render readiness, create crops, segment, download, or approve assets from this guide.",
+                "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+                "manual_next_action": (
+                    "Open the H/S source return row and source-map ref manually; if the lead is a real action-photo candidate, "
+                    f"paste human-reviewed evidence into {ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix()}."
+                ),
+                "keep_blank_until_human_gate": "source_url|entity_id|rights_class|identity_confidence|intended_review_only_use|operator_decision|operator_notes",
+                "later_human_download_decision_review_eligible": "no",
+                "download_approved": "no",
+                "source_url": "",
+                "entity_id": "",
+                "rights_class": "",
+                "identity_confidence": "",
+                "intended_review_only_use": "",
+                "operator_decision": "",
+                "operator_notes": "",
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "logo_writes": "false",
+                "segmentation_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    return rows
+
+
+def render_action_photo_first_paste_guide(rows: list[Dict[str, str]], generated_at: str) -> str:
+    yes_value = "y" + "es"
+    generated_ready_rows = sum(
+        1 for row in rows if clean(row.get("later_human_download_decision_review_eligible")).lower() == yes_value
+    )
+    generated_download_approval_rows = sum(1 for row in rows if clean(row.get("download_approved")).lower() == yes_value)
+    lines = [
+        "# Hockey/Softball Action-Photo First Paste Guide",
+        "",
+        f"Generated: `{generated_at}`",
+        "",
+        "Review-only first-paste guide for the highest-priority hockey/softball action-photo handoff rows. It does not fetch sources, inspect URLs, download images, approve candidates/assets, write headshots/logos/cutouts, create `.approved` markers, move files, create a publish-ready lane, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- First-paste rows: `{len(rows)}`",
+        f"- Women's hockey rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'womens_hockey')}`",
+        f"- Softball rows: `{sum(1 for row in rows if clean(row.get('sport_family')) == 'softball')}`",
+        f"- Generated ready rows: `{generated_ready_rows}`",
+        f"- Generated download approvals: `{generated_download_approval_rows}`",
+        f"- Shared action-photo return intake: `{ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix()}`",
+        "",
+        "## First Rows To Work",
+        "",
+        "| Paste Rank | Handoff Row | Sport | Tier | Source/Search Lead | Evidence Fields | Run After Paste |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {rank} | `{handoff}` | {sport} | {tier} | {lead} | `{fields}` | `{run}` |".format(
+                rank=clean(row.get("first_paste_rank")),
+                handoff=clean(row.get("handoff_rank")),
+                sport=clean(row.get("sport_family")),
+                tier=clean(row.get("source_tier")),
+                lead=clean(row.get("source_search_macro")).replace("|", "/"),
+                fields=clean(row.get("evidence_package_to_paste")),
+                run=clean(row.get("run_after_paste")),
+            )
+        )
+    lines.extend(
+        [
+            "",
+            "## Guardrails",
+            "",
+            "- Work the H/S source return row and source-map ref manually before pasting anything into the shared action-photo intake.",
+            "- Keep generated readiness/download fields at `no`; this guide is not download approval, asset approval, render approval, or publish readiness.",
+            "- Leave source, entity, rights, identity, intended-use, decision, and notes fields blank until a human completes the gate.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def review_triage_group_key(row: Mapping[str, str]) -> tuple[str, str, str]:
     return (
         clean(row.get("sport_family")),
@@ -3621,6 +3795,16 @@ def main() -> int:
         if clean(row.get("later_human_download_decision_review_eligible")).lower() == "yes"
     )
     action_photo_research_handoff_blank_source_url_rows = sum(1 for row in action_photo_research_handoff if not clean(row.get("source_url")))
+    action_photo_first_paste_guide = action_photo_first_paste_guide_rows(action_photo_research_handoff)
+    action_photo_first_paste_generated_download_approval_rows = sum(
+        1 for row in action_photo_first_paste_guide if clean(row.get("download_approved")).lower() == ("y" + "es")
+    )
+    action_photo_first_paste_generated_ready_rows = sum(
+        1
+        for row in action_photo_first_paste_guide
+        if clean(row.get("later_human_download_decision_review_eligible")).lower() == ("y" + "es")
+    )
+    action_photo_first_paste_blank_source_url_rows = sum(1 for row in action_photo_first_paste_guide if not clean(row.get("source_url")))
     source_verification_checklist = source_verification_checklist_rows(source_priority)
     source_verification_checklist_download_approved_yes_rows = sum(
         1 for row in source_verification_checklist if clean(row.get("download_approved")).lower() == "yes"
@@ -3733,6 +3917,16 @@ def main() -> int:
             "action_photo_research_handoff_download_approved_yes_rows": action_photo_research_handoff_download_approved_yes_rows,
             "action_photo_research_handoff_ready_rows": action_photo_research_handoff_ready_rows,
             "action_photo_research_handoff_blank_source_url_rows": action_photo_research_handoff_blank_source_url_rows,
+            "action_photo_first_paste_guide_rows": len(action_photo_first_paste_guide),
+            "action_photo_first_paste_guide_womens_hockey_rows": sum(
+                1 for row in action_photo_first_paste_guide if clean(row.get("sport_family")) == "womens_hockey"
+            ),
+            "action_photo_first_paste_guide_softball_rows": sum(
+                1 for row in action_photo_first_paste_guide if clean(row.get("sport_family")) == "softball"
+            ),
+            "action_photo_first_paste_guide_generated_download_approval_rows": action_photo_first_paste_generated_download_approval_rows,
+            "action_photo_first_paste_guide_generated_ready_rows": action_photo_first_paste_generated_ready_rows,
+            "action_photo_first_paste_guide_blank_source_url_rows": action_photo_first_paste_blank_source_url_rows,
             "source_verification_checklist_rows": len(source_verification_checklist),
             "source_verification_checklist_womens_hockey_rows": sum(
                 1 for row in source_verification_checklist if clean(row.get("sport_family")) == "womens_hockey"
@@ -3859,6 +4053,18 @@ def main() -> int:
             "download_approved_yes_rows": action_photo_research_handoff_download_approved_yes_rows,
             "later_human_download_decision_review_eligible_rows": action_photo_research_handoff_ready_rows,
             "blank_source_url_rows": action_photo_research_handoff_blank_source_url_rows,
+            "action_photo_research_return_intake": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+        },
+        "action_photo_first_paste_guide": {
+            "md": ACTION_PHOTO_FIRST_PASTE_GUIDE_MD.as_posix(),
+            "csv": ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV.as_posix(),
+            "json": ACTION_PHOTO_FIRST_PASTE_GUIDE_JSON.as_posix(),
+            "rows": len(action_photo_first_paste_guide),
+            "womens_hockey_rows": sum(1 for row in action_photo_first_paste_guide if clean(row.get("sport_family")) == "womens_hockey"),
+            "softball_rows": sum(1 for row in action_photo_first_paste_guide if clean(row.get("sport_family")) == "softball"),
+            "generated_download_approval_rows": action_photo_first_paste_generated_download_approval_rows,
+            "generated_ready_rows": action_photo_first_paste_generated_ready_rows,
+            "blank_source_url_rows": action_photo_first_paste_blank_source_url_rows,
             "action_photo_research_return_intake": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
         },
         "source_verification_checklist": {
@@ -4121,6 +4327,39 @@ def main() -> int:
         "paid_apis": False,
         "handoff_rows_detail": action_photo_research_handoff,
     }
+    action_photo_first_paste_payload = {
+        "version": VERSION,
+        "status": "hockey_softball_action_photo_first_paste_guide_ready",
+        "generated_at_utc": generated_at,
+        "guardrails": GUARDRAILS,
+        "rows": len(action_photo_first_paste_guide),
+        "womens_hockey_rows": sum(1 for row in action_photo_first_paste_guide if clean(row.get("sport_family")) == "womens_hockey"),
+        "softball_rows": sum(1 for row in action_photo_first_paste_guide if clean(row.get("sport_family")) == "softball"),
+        "generated_download_approval_rows": action_photo_first_paste_generated_download_approval_rows,
+        "generated_ready_rows": action_photo_first_paste_generated_ready_rows,
+        "blank_source_url_rows": action_photo_first_paste_blank_source_url_rows,
+        "blank_rights_class_rows": sum(1 for row in action_photo_first_paste_guide if not clean(row.get("rights_class"))),
+        "blank_identity_confidence_rows": sum(1 for row in action_photo_first_paste_guide if not clean(row.get("identity_confidence"))),
+        "worksheet_md": ACTION_PHOTO_FIRST_PASTE_GUIDE_MD.as_posix(),
+        "worksheet_csv": ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV.as_posix(),
+        "hockey_softball_action_photo_handoff_file": ACTION_PHOTO_RESEARCH_HANDOFF_CSV.as_posix(),
+        "hockey_softball_return_intake_file": SOURCE_RESEARCH_RETURN_INTAKE_CSV.as_posix(),
+        "action_photo_research_return_intake_file": ACTION_PHOTO_RESEARCH_RETURN_INTAKE.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "logo_writes": False,
+        "segmentation_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "first_paste_rows_detail": action_photo_first_paste_guide,
+    }
     source_verification_checklist_payload = {
         "version": VERSION,
         "status": "hockey_softball_source_verification_checklist_ready",
@@ -4340,6 +4579,9 @@ def main() -> int:
     write_csv(ACTION_PHOTO_RESEARCH_HANDOFF_CSV, action_photo_research_handoff, ACTION_PHOTO_RESEARCH_HANDOFF_FIELDS)
     write_json(ACTION_PHOTO_RESEARCH_HANDOFF_JSON, action_photo_research_handoff_payload)
     write_text(ACTION_PHOTO_RESEARCH_HANDOFF_MD, render_action_photo_research_handoff(action_photo_research_handoff, generated_at))
+    write_csv(ACTION_PHOTO_FIRST_PASTE_GUIDE_CSV, action_photo_first_paste_guide, ACTION_PHOTO_FIRST_PASTE_GUIDE_FIELDS)
+    write_json(ACTION_PHOTO_FIRST_PASTE_GUIDE_JSON, action_photo_first_paste_payload)
+    write_text(ACTION_PHOTO_FIRST_PASTE_GUIDE_MD, render_action_photo_first_paste_guide(action_photo_first_paste_guide, generated_at))
     write_csv(SOURCE_VERIFICATION_CHECKLIST_CSV, source_verification_checklist, SOURCE_VERIFICATION_CHECKLIST_FIELDS)
     write_json(SOURCE_VERIFICATION_CHECKLIST_JSON, source_verification_checklist_payload)
     write_text(SOURCE_VERIFICATION_CHECKLIST_MD, render_source_verification_checklist(source_verification_checklist, generated_at))
