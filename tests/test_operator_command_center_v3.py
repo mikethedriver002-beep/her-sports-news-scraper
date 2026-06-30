@@ -3095,21 +3095,43 @@ def test_active_asset_evidence_gap_fields_are_display_only(tmp_path, monkeypatch
     assert liberty_intake["current_legacy_registry_source"] == "https://upload.wikimedia.org/new-york-liberty-logo.png"
     assert liberty_intake["current_unapproved_status"] == "unapproved_review_required"
     assert liberty_intake["manual_intake_files"] == "data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv"
+    assert liberty_intake["operator_next_actions"] == (
+        "inspect_wnba_logo_contact_sheet|fill_wnba_team_logo_review_intake_csv|answer_source_and_logo_readiness_questions|"
+        "keep_manual_decisions_review_only"
+    )
+    assert "validate_hsd_wnba_asset_registry_v1.py" in liberty_intake["refresh_commands"]
+    assert "generate_hsd_wnba_logo_contact_sheet_v1.py" in liberty_intake["refresh_commands"]
+    assert "generate_hsd_operator_command_center_v2.py" in liberty_intake["refresh_commands"]
     assert liberty_intake["approval_state_change"] == "false"
     assert liberty_intake["asset_downloads"] == "false"
     assert "Manual Logo Verification Intake Bridge" in intake_md
+    assert "data/asset_registry/wnba/wnba_team_logo_contact_sheet.md" in intake_md
+    assert "data/asset_registry/wnba/wnba_team_logo_review_intake.csv" in intake_md
+    assert "Operator next actions: `inspect_wnba_logo_contact_sheet|fill_wnba_team_logo_review_intake_csv" in intake_md
+    assert "After manual review only, rerun the WNBA asset registry validator" in intake_md
     assert "Human-edited manual intake files: `data/asset_registry/wnba/team_logos.csv|data/asset_registry/wnba/logo_sources.csv`" in intake_md
     assert len(league_mark_intake_rows) == 1
     wnba_intake = league_mark_intake_rows[0]
     assert wnba_intake["entity_name"] == "WNBA"
     assert wnba_intake["manual_intake_files"] == "data/asset_registry/wnba/wnba_league_mark_review_intake.csv"
     assert wnba_intake["template_requirement_rule"] == "non_blocking_until_selected_template_requires_league_mark"
+    assert wnba_intake["operator_next_actions"] == (
+        "inspect_wnba_logo_catalog_report|fill_wnba_league_mark_review_intake_csv|answer_league_mark_template_requirement|"
+        "keep_manual_decisions_review_only"
+    )
+    assert "validate_hsd_wnba_asset_registry_v1.py" in wnba_intake["refresh_commands"]
     assert "mark_not_required_for_selected_template" in wnba_intake["allowed_manual_outcomes"]
     assert "Manual League-Mark Context Intake" in league_intake_md
     assert "optional/non-blocking unless the selected template explicitly requires it" in league_intake_md
+    assert "data/asset_registry/wnba/logo_review_catalog_report.md" in league_intake_md
+    assert "Operator next actions: `inspect_wnba_logo_catalog_report|fill_wnba_league_mark_review_intake_csv" in league_intake_md
     assert "Cannot clear automatically because" in html
     assert "Manual Logo Verification Intake Bridge" in html
     assert "Manual League-Mark Context Intake" in html
+    assert "inspect_wnba_logo_contact_sheet" in html
+    assert "fill_wnba_team_logo_review_intake_csv" in html
+    assert "fill_wnba_league_mark_review_intake_csv" in html
+    assert "validate_hsd_wnba_asset_registry_v1.py" in html
     assert "non-blocking unless required" in html
     assert all(row["publish_ready"] == "false" for row in active_rows)
     assert all(row["auto_approval"] == "false" for row in active_rows)
