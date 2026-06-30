@@ -8302,6 +8302,20 @@ def game_source_confirmation_return_lane_detail() -> str:
     )
 
 
+def breaking_public_signal_return_lane_detail() -> str:
+    payload = read_json("breaking_public_signal_return_summary_v1.json")
+    summary = payload.get("summary") if isinstance(payload, dict) else {}
+    if not isinstance(summary, dict) or not summary:
+        return "Return summary not generated yet; run News to create missing checked URL/result/timestamp counts."
+    return (
+        f"rows={summary.get('rows', 0)}; "
+        f"missing_checked_url={summary.get('missing_operator_checked_url', 0)}; "
+        f"missing_confirmation_result={summary.get('missing_operator_confirmation_result', 0)}; "
+        f"missing_confirmed_at_utc={summary.get('missing_operator_confirmed_at_utc', 0)}; "
+        f"ready_for_operator_review={summary.get('operator_return_ready_for_review', 0)}"
+    )
+
+
 def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
     guardrail = "Review-only and artifact-only; no source fetching, downloads, source enablement, approvals, publish-ready movement, or publishing."
     return [
@@ -8341,6 +8355,7 @@ def build_operator_next_action_synthesis() -> List[Dict[str, str]]:
             "breaking_public_signal_confirmation_intake.csv",
             "operator_checked_url, operator_confirmation_result, operator_confirmed_at_utc, operator_notes",
             guardrail,
+            breaking_public_signal_return_lane_detail(),
         ),
         next_action_synthesis_row(
             5,

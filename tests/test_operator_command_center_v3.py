@@ -159,6 +159,21 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
         ),
         encoding="utf-8",
     )
+    Path("breaking_public_signal_return_summary_v1.json").write_text(
+        json.dumps(
+            {
+                "summary": {
+                    "rows": 4,
+                    "missing_operator_checked_url": 3,
+                    "missing_operator_confirmation_result": 2,
+                    "missing_operator_confirmed_at_utc": 2,
+                    "operator_return_ready_for_review": 1,
+                },
+                "rows": [],
+            }
+        ),
+        encoding="utf-8",
+    )
 
     payload = command_center.build_payload()
     html = command_center.render_html(payload)
@@ -184,6 +199,7 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert "operator_found_official_url" in html
     assert "operator_confirmed_at_utc" in html
     assert "operator_confidence" not in html
+    assert "missing_confirmed_at_utc=2" in html
     assert "breaking_public_signal_confirmation_intake.csv" in markdown
 
     command_center.write_outputs(payload)
@@ -194,10 +210,12 @@ def test_operator_next_action_synthesis_unifies_manual_lanes(tmp_path, monkeypat
     assert len(csv_rows) == 6
     breaking_row = next(row for row in csv_rows if row["lane"] == "Breaking/public-signal returns")
     assert breaking_row["operator_return_fields"] == "operator_checked_url, operator_confirmation_result, operator_confirmed_at_utc, operator_notes"
+    assert breaking_row["lane_detail"] == "rows=4; missing_checked_url=3; missing_confirmation_result=2; missing_confirmed_at_utc=2; ready_for_operator_review=1"
     assert manifest["guardrails"]["automatic_downloads"] is False
     assert manifest["guardrails"]["auto_approval"] is False
     assert manifest["counts"]["ready_to_open"] == 6
     assert "does not fetch sources" in synthesis_md
+    assert "missing_confirmed_at_utc=2" in synthesis_md
     assert "Resolved local path" in synthesis_md
 
 
