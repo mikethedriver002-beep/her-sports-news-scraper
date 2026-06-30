@@ -4114,6 +4114,13 @@ def seed_manual_visual_qa_decision_files() -> None:
                     "evidence": "final_score_context=True; headshot_bridge=approved_local_headshot_review_draft_only_not_premium_final_score; composition_contract=headshot_bridge_not_roster_portrait_action_photo_replacement_lane_reserved; roster_portrait_risk=Headshot bridge is review-draft-only and subordinate to the action-photo route.",
                 },
                 {
+                    "check_id": "preview_freshness_current_handoff",
+                    "check_label": "Preview freshness vs current handoff",
+                    "qa_result": "pass",
+                    "passed": True,
+                    "evidence": "renderer_packet=render_prep_1_current-story; handoff_packet=render_prep_1_current-story; renderer_generated_at_utc=2026-06-29T22:15:05+00:00; handoff_generated_at_utc=2026-06-29T22:14:55+00:00; fresh_after_handoff=True.",
+                },
+                {
                     "check_id": "premium_editorial_clutter_scan",
                     "check_label": "Premium editorial clutter scan",
                     "qa_result": "pass_human_review_required",
@@ -5809,10 +5816,11 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["inbox_exists"] is True
     assert payload["operator_decision_panel"]["inbox_rows"] == 0
     assert payload["operator_decision_panel"]["history_issue_count"] == 0
-    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:6] == [
+    assert [item["label"] for item in payload["operator_decision_panel"]["qa_cues"]][:7] == [
         "Premium route limit",
         "Action-photo readiness",
         "Bridge/composition balance",
+        "Latest render freshness",
         "Premium editorial clutter scan",
         "Title contrast and fit",
         "Score/team readability",
@@ -5824,8 +5832,10 @@ def test_operator_command_center_builds_daily_ops_view(tmp_path, monkeypatch) ->
     assert payload["operator_decision_panel"]["qa_cues"][2]["tone"] == "warn"
     assert "headshot_bridge_not_roster_portrait" in payload["operator_decision_panel"]["qa_cues"][2]["evidence"]
     assert payload["operator_decision_panel"]["qa_cues"][3]["tone"] == "good"
-    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][3]["evidence"]
-    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][4]["evidence"]
+    assert "fresh_after_handoff=True" in payload["operator_decision_panel"]["qa_cues"][3]["evidence"]
+    assert payload["operator_decision_panel"]["qa_cues"][4]["tone"] == "good"
+    assert "premium editorial hierarchy" in payload["operator_decision_panel"]["qa_cues"][4]["evidence"]
+    assert "reference_white_gold_title" in payload["operator_decision_panel"]["qa_cues"][5]["evidence"]
     assert any(item["label"] == "Player ledger readability" for item in payload["operator_decision_panel"]["qa_cues"])
     assert [item["label"] for item in payload["operator_decision_panel"]["render_gallery"]] == ["Primary feed", "Story", "Square"]
     assert all(item["exists"] is True for item in payload["operator_decision_panel"]["render_gallery"])
