@@ -12,7 +12,7 @@ from typing import Any, Iterable, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import output_path, run_output_dir, write_json, write_text
+from hsd_run_io import output_path, run_output_dir, strip_volatile_markdown_lines, write_json, write_text
 
 
 VERSION = "hsd-external-research-packet-v1-review-only"
@@ -407,7 +407,7 @@ def build_packet(args: argparse.Namespace) -> dict[str, Any]:
     }
     readme = render_readme(payload)
     body = render_email_body(payload)
-    write_text(packet_dir / "README.md", readme)
+    write_text(packet_dir / "README.md", readme, normalize=strip_volatile_markdown_lines)
     write_text(email_draft_path, body)
     write_json(
         gmail_payload_path,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import shutil
 import subprocess
@@ -12,7 +11,7 @@ from typing import Any, Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import output_path, run_output_dir
+from hsd_run_io import output_path, run_output_dir, strip_volatile_markdown_lines, write_csv, write_json, write_text
 
 
 VERSION = "hsd-adobe-visual-qa-packet-v1-review-only"
@@ -170,23 +169,6 @@ def worksheet_rows() -> list[dict[str, str]]:
             }
         )
     return rows
-
-
-def write_csv(path: Path, rows: Iterable[dict[str, str]], fieldnames: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def write_json(path: Path, payload: Any) -> None:
-    write_text(path, json.dumps(payload, indent=2, sort_keys=True))
 
 
 def copy_required_inputs(packet_dir: Path) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
@@ -359,8 +341,8 @@ def build_packet(args: argparse.Namespace) -> dict[str, Any]:
         "publishing": False,
         "move_files": False,
     }
-    write_text(readme_path, render_readme(payload))
-    write_json(manifest_path, payload)
+    write_text(readme_path, render_readme(payload), normalize=strip_volatile_markdown_lines)
+    write_json(manifest_path, payload, sort_keys=True)
     return payload
 
 

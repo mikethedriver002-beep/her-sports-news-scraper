@@ -11,7 +11,7 @@ from typing import Any, Iterable, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import output_path, run_output_dir
+from hsd_run_io import output_path, run_output_dir, strip_volatile_markdown_lines, write_csv, write_json, write_text
 
 
 VERSION = "hsd-adobe-visual-qa-renderer-revision-plan-v1-review-only"
@@ -143,24 +143,6 @@ def read_revision_rows(path: Path) -> tuple[list[dict[str, str]], list[str]]:
     with path.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
         reader = csv.DictReader(handle)
         return [{str(key): csv_value(value) for key, value in row.items()} for row in reader], list(reader.fieldnames or [])
-
-
-def write_csv(path: Path, rows: Iterable[Mapping[str, Any]], fields: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 
 def normalized(value: Any) -> str:
@@ -590,11 +572,11 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "move_files": False,
     }
     write_csv(out_csv, plan_rows, PLAN_FIELDS)
-    write_text(out_md, render_report(payload, plan_rows))
-    write_json(out_json, payload)
+    write_text(out_md, render_report(payload, plan_rows), normalize=strip_volatile_markdown_lines)
+    write_json(out_json, payload, sort_keys=True)
     write_csv(out_spec_csv, spec_rows, SPEC_FIELDS)
-    write_text(out_spec_md, render_spec_markdown(payload, spec_rows))
-    write_json(out_spec_json, {**payload, "status": spec_status, "spec_rows_detail": spec_rows})
+    write_text(out_spec_md, render_spec_markdown(payload, spec_rows), normalize=strip_volatile_markdown_lines)
+    write_json(out_spec_json, {**payload, "status": spec_status, "spec_rows_detail": spec_rows}, sort_keys=True)
     return payload
 
 

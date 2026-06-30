@@ -11,7 +11,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import write_csv, write_json, write_text
+from hsd_run_io import strip_volatile_markdown_lines, write_csv, write_json, write_text
 from scripts import validate_hsd_conductor_directive_v1 as directive_validator
 
 
@@ -306,7 +306,7 @@ def build_payload() -> dict[str, Any]:
 
 
 def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
-    md_path = write_text(f"{output_stem}.md", render_markdown(payload))
+    md_path = write_text(f"{output_stem}.md", render_markdown(payload), normalize=strip_volatile_markdown_lines)
     json_path = write_json(f"{output_stem}.json", payload)
     csv_path = write_csv(
         f"{output_stem}.csv",
