@@ -22,6 +22,9 @@ OUT_FIRST_ACTION_CARDS_JSON = ROOT / "review_only_action_photo_manual_first_acti
 OUT_RETURN_EVIDENCE_CHECKLIST_MD = ROOT / "review_only_action_photo_manual_return_evidence_checklist_v1.md"
 OUT_RETURN_EVIDENCE_CHECKLIST_CSV = ROOT / "review_only_action_photo_manual_return_evidence_checklist_v1.csv"
 OUT_RETURN_EVIDENCE_CHECKLIST_JSON = ROOT / "review_only_action_photo_manual_return_evidence_checklist_v1.json"
+OUT_RENDERER_UNBLOCK_TRIAGE_MD = ROOT / "review_only_action_photo_renderer_unblock_manual_return_triage_v1.md"
+OUT_RENDERER_UNBLOCK_TRIAGE_CSV = ROOT / "review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv"
+OUT_RENDERER_UNBLOCK_TRIAGE_JSON = ROOT / "review_only_action_photo_renderer_unblock_manual_return_triage_v1.json"
 WOMENS_SOCCER_NEXT_MD = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.md")
 WOMENS_SOCCER_NEXT_CSV = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.csv")
 WOMENS_SOCCER_NEXT_JSON = Path("data/asset_registry/womens_soccer/womens_soccer_action_photo_research_next.json")
@@ -129,6 +132,39 @@ RETURN_EVIDENCE_CHECKLIST_FIELDS = [
     "keep_blank_until_human_gate",
     "candidate_ready_for_later_human_download_decision_review",
     "download_approved",
+    "review_only",
+    "approval_state_change",
+    "candidate_state_change",
+    "source_fetching",
+    "auto_source_enablement",
+    "asset_downloads",
+    "headshot_writes",
+    "approved_marker_writes",
+    "publish_ready",
+    "auto_approval",
+    "auto_publish",
+    "move_files",
+    "paid_apis",
+]
+RENDERER_UNBLOCK_TRIAGE_FIELDS = [
+    "triage_id",
+    "card_id",
+    "renderer_blocker",
+    "renderer_candidate_status",
+    "manual_priority",
+    "bridge_lane",
+    "source_scope",
+    "open_source_row_ref",
+    "manual_source_lead",
+    "paste_target_csv",
+    "run_after_paste",
+    "fields_required_before_later_gate_review",
+    "reviewer_notes_required",
+    "missing_until_human_paste",
+    "quarantine_decision_preview",
+    "candidate_ready_for_later_human_download_decision_review",
+    "download_approved",
+    "manual_next_action",
     "review_only",
     "approval_state_change",
     "candidate_state_change",
@@ -484,6 +520,90 @@ def validate_return_evidence_checklist(rows: List[Mapping[str, str]]) -> List[Di
     return issues
 
 
+def renderer_unblock_triage_rows(card_rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    rows: List[Dict[str, str]] = []
+    for index, card in enumerate(card_rows, start=1):
+        rows.append(
+            {
+                "triage_id": f"APRUT{index:02d}",
+                "card_id": clean(card.get("card_id")),
+                "renderer_blocker": "blocked_action_photo_return_needed|blocked_no_action_photo_returns_yet",
+                "renderer_candidate_status": "action_photo_candidate_status=not_available_to_renderer",
+                "manual_priority": "P0_renderer_unblock_first_return" if index == 1 else "P1_renderer_unblock_next_return",
+                "bridge_lane": clean(card.get("bridge_lane")),
+                "source_scope": clean(card.get("source_scope")),
+                "open_source_row_ref": clean(card.get("open_source_row_ref")),
+                "manual_source_lead": clean(card.get("manual_source_lead")),
+                "paste_target_csv": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+                "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+                "fields_required_before_later_gate_review": "source_url|entity_id|rights_class|identity_confidence|intended_review_only_use",
+                "reviewer_notes_required": "reviewer_notes_or_operator_notes_required_before_any_later_quarantine_gate_review",
+                "missing_until_human_paste": (
+                    "candidate_photo_url|evidence_url|evidence_summary|identity_anchor_url|source_url|"
+                    "entity_id|rights_class|identity_confidence|intended_review_only_use|reviewer_notes"
+                ),
+                "quarantine_decision_preview": "blocked_until_human_paste_has_required_source_identity_rights_use_and_notes",
+                "candidate_ready_for_later_human_download_decision_review": "no",
+                "download_approved": "no",
+                "manual_next_action": (
+                    "Work this source row first, paste the human-reviewed candidate/source/identity/rights/use evidence into the shared return intake, "
+                    "then rerun the import review stub so renderer unblock status can see real review-only return data."
+                ),
+                "review_only": "true",
+                "approval_state_change": "false",
+                "candidate_state_change": "false",
+                "source_fetching": "false",
+                "auto_source_enablement": "false",
+                "asset_downloads": "false",
+                "headshot_writes": "false",
+                "approved_marker_writes": "false",
+                "publish_ready": "false",
+                "auto_approval": "false",
+                "auto_publish": "false",
+                "move_files": "false",
+                "paid_apis": "false",
+            }
+        )
+    return rows
+
+
+def validate_renderer_unblock_triage(rows: List[Mapping[str, str]]) -> List[Dict[str, str]]:
+    issues: List[Dict[str, str]] = []
+    for index, row in enumerate(rows, start=2):
+        if not clean(row.get("triage_id")):
+            issues.append({"row": str(index), "field": "triage_id", "issue": "triage_id_required"})
+        if not clean(row.get("card_id")):
+            issues.append({"row": str(index), "field": "card_id", "issue": "card_id_required"})
+        if not clean(row.get("open_source_row_ref")):
+            issues.append({"row": str(index), "field": "open_source_row_ref", "issue": "source_row_ref_required"})
+        if clean(row.get("candidate_ready_for_later_human_download_decision_review")) != "no":
+            issues.append({"row": str(index), "field": "candidate_ready_for_later_human_download_decision_review", "issue": "generated_triage_must_not_mark_ready"})
+        if clean(row.get("download_approved")) != "no":
+            issues.append({"row": str(index), "field": "download_approved", "issue": "generated_triage_must_not_approve_downloads"})
+        for required_field in ["source_url", "entity_id", "rights_class", "identity_confidence", "intended_review_only_use"]:
+            if required_field not in clean(row.get("fields_required_before_later_gate_review")).split("|"):
+                issues.append({"row": str(index), "field": "fields_required_before_later_gate_review", "issue": f"missing_required_field_{required_field}"})
+        for field in [
+            "review_only",
+            "approval_state_change",
+            "candidate_state_change",
+            "source_fetching",
+            "auto_source_enablement",
+            "asset_downloads",
+            "headshot_writes",
+            "approved_marker_writes",
+            "publish_ready",
+            "auto_approval",
+            "auto_publish",
+            "move_files",
+            "paid_apis",
+        ]:
+            expected = "true" if field == "review_only" else "false"
+            if clean(row.get(field)) != expected:
+                issues.append({"row": str(index), "field": field, "issue": "guardrail_field_invalid"})
+    return issues
+
+
 def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
     source_rows = sum(as_int(row.get("source_rows")) for row in rows)
     ready_rows = sum(as_int(row.get("candidate_ready_for_later_human_download_decision_review_rows")) for row in rows)
@@ -599,7 +719,42 @@ def render_return_evidence_checklist_markdown(rows: List[Mapping[str, str]], iss
             f"- Run after paste: `{clean(row.get('run_after_paste'))}`",
             "",
         ]
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_renderer_unblock_triage_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> str:
+    lines = [
+        "# Review-Only Action Photo Renderer-Unblock Manual Return Triage v1",
+        "",
+        f"Generated: `{GENERATED_AT_UTC}`",
+        "",
+        "This triage board tells the operator which manual action-photo return row to work first while the renderer is blocked on missing action-photo/reference material. It does not fetch sources, inspect URLs, download images, approve candidates/assets, write headshots, create marker files, move files, or publish.",
+        "",
+        "## Summary",
+        "",
+        f"- Triage rows: `{len(rows)}`",
+        f"- Generated ready rows: `{sum(1 for row in rows if clean(row.get('candidate_ready_for_later_human_download_decision_review')) == ('y' + 'es'))}`",
+        f"- Generated download approvals: `{generated_download_approval_rows(rows)}`",
+        f"- Validation issues: `{len(issues)}`",
+        "",
+        "## Renderer Unblock Order",
+        "",
+        "| Triage | Card | Renderer Blocker | Lane | Source Row | Required Before Later Gate Review | Manual Next Action |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for row in rows:
+        lines.append(
+            "| {triage} | {card} | `{blocker}` | {lane} | `{row_ref}` | `{fields}` | {action} |".format(
+                triage=clean(row.get("triage_id")),
+                card=clean(row.get("card_id")),
+                blocker=clean(row.get("renderer_blocker")),
+                lane=clean(row.get("bridge_lane")),
+                row_ref=clean(row.get("open_source_row_ref")),
+                fields=clean(row.get("fields_required_before_later_gate_review")),
+                action=clean(row.get("manual_next_action")).replace("|", "/"),
+            )
+        )
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def generated_download_approval_rows(rows: List[Mapping[str, str]]) -> int:
@@ -635,6 +790,9 @@ def manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> 
         "return_evidence_checklist_md": OUT_RETURN_EVIDENCE_CHECKLIST_MD.as_posix(),
         "return_evidence_checklist_csv": OUT_RETURN_EVIDENCE_CHECKLIST_CSV.as_posix(),
         "return_evidence_checklist_json": OUT_RETURN_EVIDENCE_CHECKLIST_JSON.as_posix(),
+        "renderer_unblock_triage_md": OUT_RENDERER_UNBLOCK_TRIAGE_MD.as_posix(),
+        "renderer_unblock_triage_csv": OUT_RENDERER_UNBLOCK_TRIAGE_CSV.as_posix(),
+        "renderer_unblock_triage_json": OUT_RENDERER_UNBLOCK_TRIAGE_JSON.as_posix(),
         "review_only": True,
         "approval_state_change": False,
         "candidate_state_change": False,
@@ -719,6 +877,43 @@ def return_evidence_checklist_manifest(rows: List[Mapping[str, str]], issues: Li
     }
 
 
+def renderer_unblock_triage_manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]]) -> Dict[str, Any]:
+    return {
+        "version": VERSION,
+        "status": "action_photo_renderer_unblock_manual_return_triage_ready" if not issues else "action_photo_renderer_unblock_manual_return_triage_has_validation_issues",
+        "generated_at_utc": GENERATED_AT_UTC,
+        "triage_rows": len(rows),
+        "renderer_blockers": ["blocked_action_photo_return_needed", "blocked_no_action_photo_returns_yet"],
+        "renderer_candidate_status": "action_photo_candidate_status=not_available_to_renderer",
+        "generated_ready_rows": sum(
+            1 for row in rows if clean(row.get("candidate_ready_for_later_human_download_decision_review")) == ("y" + "es")
+        ),
+        "generated_download_approval_rows": generated_download_approval_rows(rows),
+        "validation_issue_count": len(issues),
+        "validation_issues": issues,
+        "shared_research_return_intake_file": ACTION_PHOTO_RETURN_INTAKE_CSV.as_posix(),
+        "shared_import_review_file": IMPORT_REVIEW_MD.as_posix(),
+        "run_after_paste": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_research_return_import_stub_v1.py",
+        "worksheet_md": OUT_RENDERER_UNBLOCK_TRIAGE_MD.as_posix(),
+        "worksheet_csv": OUT_RENDERER_UNBLOCK_TRIAGE_CSV.as_posix(),
+        "worksheet_json": OUT_RENDERER_UNBLOCK_TRIAGE_JSON.as_posix(),
+        "review_only": True,
+        "approval_state_change": False,
+        "candidate_state_change": False,
+        "source_fetching": False,
+        "auto_source_enablement": False,
+        "asset_downloads": False,
+        "headshot_writes": False,
+        "approved_marker_writes": False,
+        "publish_ready": False,
+        "auto_approval": False,
+        "auto_publish": False,
+        "move_files": False,
+        "paid_apis": False,
+        "triage_detail": rows,
+    }
+
+
 def main() -> int:
     rows = bridge_rows()
     issues = validate_rows(rows)
@@ -726,6 +921,8 @@ def main() -> int:
     card_issues = validate_first_action_cards(card_rows)
     checklist_rows = return_evidence_checklist_rows(card_rows)
     checklist_issues = validate_return_evidence_checklist(checklist_rows)
+    triage_rows = renderer_unblock_triage_rows(card_rows)
+    triage_issues = validate_renderer_unblock_triage(triage_rows)
     write_csv(OUT_BRIDGE_CSV, rows, BRIDGE_FIELDS)
     write_text(OUT_BRIDGE_MD, render_markdown(rows, issues))
     write_json(OUT_BRIDGE_JSON, manifest(rows, issues))
@@ -735,7 +932,10 @@ def main() -> int:
     write_csv(OUT_RETURN_EVIDENCE_CHECKLIST_CSV, checklist_rows, RETURN_EVIDENCE_CHECKLIST_FIELDS)
     write_text(OUT_RETURN_EVIDENCE_CHECKLIST_MD, render_return_evidence_checklist_markdown(checklist_rows, checklist_issues))
     write_json(OUT_RETURN_EVIDENCE_CHECKLIST_JSON, return_evidence_checklist_manifest(checklist_rows, checklist_issues))
-    total_issues = len(issues) + len(card_issues) + len(checklist_issues)
+    write_csv(OUT_RENDERER_UNBLOCK_TRIAGE_CSV, triage_rows, RENDERER_UNBLOCK_TRIAGE_FIELDS)
+    write_text(OUT_RENDERER_UNBLOCK_TRIAGE_MD, render_renderer_unblock_triage_markdown(triage_rows, triage_issues))
+    write_json(OUT_RENDERER_UNBLOCK_TRIAGE_JSON, renderer_unblock_triage_manifest(triage_rows, triage_issues))
+    total_issues = len(issues) + len(card_issues) + len(checklist_issues) + len(triage_issues)
     print(
         json.dumps(
             {
@@ -744,6 +944,7 @@ def main() -> int:
                 "bridge_rows": len(rows),
                 "first_action_cards": len(card_rows),
                 "return_evidence_checklist_rows": len(checklist_rows),
+                "renderer_unblock_triage_rows": len(triage_rows),
                 "validation_issue_count": total_issues,
             },
             indent=2,
