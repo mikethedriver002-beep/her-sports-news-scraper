@@ -161,3 +161,25 @@ def test_packet_reports_missing_candidate_without_approval_side_effects(tmp_path
     assert manifest["publish_ready"] is False
     assert len(manual_rows) == 1
     assert len(handoff_rows) == 5
+
+
+def test_apq001_manual_review_packet_skips_timestamp_only_rewrites(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    module = load_module()
+    seed_candidate(run_dir, module)
+    seed_reference_inputs(run_dir)
+
+    assert module.main(["--head-commit", "abc123"]) == 0
+
+    packet = run_dir / "apq001_manual_asset_review_packet"
+    manifest_path = packet / "manifest.json"
+    readme_path = packet / "README.md"
+    first_manifest = manifest_path.read_text(encoding="utf-8")
+    first_readme = readme_path.read_text(encoding="utf-8")
+
+    assert module.main(["--head-commit", "abc123"]) == 0
+
+    assert manifest_path.read_text(encoding="utf-8") == first_manifest
+    assert readme_path.read_text(encoding="utf-8") == first_readme

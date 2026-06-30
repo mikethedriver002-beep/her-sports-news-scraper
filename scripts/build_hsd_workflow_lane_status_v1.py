@@ -11,7 +11,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import output_path, read_csv, write_csv, write_json, write_text
+from hsd_run_io import output_path, read_csv, strip_volatile_markdown_lines, write_csv, write_json, write_text
 
 
 VERSION = "hsd-workflow-lane-status-v1-review-only"
@@ -1278,7 +1278,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
-    md_path = write_text(f"{output_stem}.md", render_markdown(payload))
+    md_path = write_text(f"{output_stem}.md", render_markdown(payload), normalize=strip_volatile_markdown_lines)
     json_path = write_json(f"{output_stem}.json", payload)
     csv_path = write_csv(
         f"{output_stem}.csv",
@@ -1327,7 +1327,7 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
             "guardrail_warnings",
         ],
     )
-    nudge_md_path = write_text(f"{DEFAULT_NUDGE_STEM}.md", render_nudge_markdown(payload))
+    nudge_md_path = write_text(f"{DEFAULT_NUDGE_STEM}.md", render_nudge_markdown(payload), normalize=strip_volatile_markdown_lines)
     nudge_json_path = write_json(
         f"{DEFAULT_NUDGE_STEM}.json",
         {
@@ -1360,7 +1360,7 @@ def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
         },
     )
     nudge_csv_path = write_csv(f"{DEFAULT_NUDGE_STEM}.csv", payload["nudge_synthesis"], NUDGE_FIELDS)
-    recovery_md_path = write_text(f"{DEFAULT_RECOVERY_STEM}.md", render_recovery_markdown(payload))
+    recovery_md_path = write_text(f"{DEFAULT_RECOVERY_STEM}.md", render_recovery_markdown(payload), normalize=strip_volatile_markdown_lines)
     recovery_json_path = write_json(
         f"{DEFAULT_RECOVERY_STEM}.json",
         {

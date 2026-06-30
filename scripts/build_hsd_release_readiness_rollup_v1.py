@@ -10,7 +10,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import input_path, run_output_dir, write_csv, write_json, write_text
+from hsd_run_io import input_path, run_output_dir, strip_volatile_markdown_lines, write_csv, write_json, write_text
 from scripts import guardrail_check
 
 
@@ -334,7 +334,7 @@ def render_markdown(payload: dict[str, Any]) -> str:
 
 
 def write_outputs(payload: dict[str, Any], output_stem: str) -> dict[str, str]:
-    md_path = write_text(f"{output_stem}.md", render_markdown(payload))
+    md_path = write_text(f"{output_stem}.md", render_markdown(payload), normalize=strip_volatile_markdown_lines)
     json_path = write_json(f"{output_stem}.json", payload)
     csv_path = write_csv(f"{output_stem}.csv", payload["checks"], ROLLUP_FIELDS)
     return {"markdown": str(md_path), "json": str(json_path), "csv": str(csv_path)}

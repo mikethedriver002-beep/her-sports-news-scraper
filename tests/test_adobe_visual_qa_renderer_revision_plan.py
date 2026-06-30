@@ -226,3 +226,33 @@ def test_renderer_revision_plan_blocks_invalid_or_unsafe_revision_rows(tmp_path:
     assert manifest["approved_marker_writes"] is False
     assert manifest["publish_ready"] is False
     assert manifest["publishing"] is False
+
+
+def test_renderer_revision_plan_skips_timestamp_only_rewrites(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    module = load_module()
+    write_csv(
+        run_dir / "adobe_visual_qa_revision_requests.csv",
+        [revision_row("AVQR001", "ig_story_9x16", "Shift upper text blocks down vertically to clear the top interface safe zone.")],
+        module.REVISION_REQUEST_FIELDS,
+    )
+
+    assert module.main([]) == 0
+
+    plan_json = run_dir / "adobe_visual_qa_renderer_revision_plan.json"
+    plan_md = run_dir / "adobe_visual_qa_renderer_revision_plan.md"
+    spec_json = run_dir / "adobe_visual_qa_renderer_revision_spec.json"
+    spec_md = run_dir / "adobe_visual_qa_renderer_revision_spec.md"
+    first_plan_json = plan_json.read_text(encoding="utf-8")
+    first_plan_md = plan_md.read_text(encoding="utf-8")
+    first_spec_json = spec_json.read_text(encoding="utf-8")
+    first_spec_md = spec_md.read_text(encoding="utf-8")
+
+    assert module.main([]) == 0
+
+    assert plan_json.read_text(encoding="utf-8") == first_plan_json
+    assert plan_md.read_text(encoding="utf-8") == first_plan_md
+    assert spec_json.read_text(encoding="utf-8") == first_spec_json
+    assert spec_md.read_text(encoding="utf-8") == first_spec_md

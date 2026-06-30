@@ -11,7 +11,7 @@ from typing import Any, Iterable, Mapping
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import output_path, run_output_dir
+from hsd_run_io import output_path, run_output_dir, strip_volatile_markdown_lines, write_csv, write_json, write_text
 
 
 VERSION = "hsd-renderer-next-lane-brief-v1-review-only"
@@ -145,24 +145,6 @@ def read_csv_rows(path: Path) -> tuple[list[dict[str, str]], list[str]]:
     with path.open(newline="", encoding="utf-8-sig", errors="replace") as handle:
         reader = csv.DictReader(handle)
         return [{str(key): csv_value(value) for key, value in row.items()} for row in reader], list(reader.fieldnames or [])
-
-
-def write_csv(path: Path, rows: Iterable[Mapping[str, Any]], fields: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
 
 
 def guardrail_values() -> dict[str, str]:
@@ -499,9 +481,9 @@ def build_brief(args: argparse.Namespace) -> dict[str, Any]:
 
     write_csv(output_rel(OUT_QUEUE_REL), queue, QUEUE_FIELDS)
     write_csv(output_rel(OUT_CHECKLIST_REL), checks, CHECKLIST_FIELDS)
-    write_json(output_rel(OUT_MANIFEST_REL), payload)
-    write_text(output_rel(OUT_BRIEF_REL), render_brief(payload, queue))
-    write_text(output_rel(OUT_PROMPT_REL), render_next_prompt(payload))
+    write_json(output_rel(OUT_MANIFEST_REL), payload, sort_keys=True)
+    write_text(output_rel(OUT_BRIEF_REL), render_brief(payload, queue), normalize=strip_volatile_markdown_lines)
+    write_text(output_rel(OUT_PROMPT_REL), render_next_prompt(payload), normalize=strip_volatile_markdown_lines)
     return payload
 
 

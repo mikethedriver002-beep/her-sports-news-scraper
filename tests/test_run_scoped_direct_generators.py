@@ -25,6 +25,84 @@ def test_run_io_writes_to_env_folder_and_reads_run_first(tmp_path, monkeypatch) 
     assert hsd_run_io.output_path("nested/status.json") == run_dir / "nested" / "status.json"
 
 
+def test_write_json_skips_timestamp_only_rewrite(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    target = tmp_path / "status.json"
+
+    hsd_run_io.write_json(
+        target,
+        {"generated_at_utc": "2026-06-30T10:00:00+00:00", "status": "ready", "rows": [{"entity": "wnba", "count": 4}]},
+        sort_keys=True,
+    )
+    hsd_run_io.write_json(
+        target,
+        {"generated_at_utc": "2026-06-30T11:00:00+00:00", "status": "ready", "rows": [{"entity": "wnba", "count": 4}]},
+        sort_keys=True,
+    )
+
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    assert payload["generated_at_utc"] == "2026-06-30T10:00:00+00:00"
+    assert payload["status"] == "ready"
+
+
+def test_write_json_rewrites_when_nonvolatile_payload_changes(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    target = tmp_path / "status.json"
+
+    hsd_run_io.write_json(
+        target,
+        {"generated_at_utc": "2026-06-30T10:00:00+00:00", "status": "ready", "rows": [{"entity": "wnba", "count": 4}]},
+        sort_keys=True,
+    )
+    hsd_run_io.write_json(
+        target,
+        {"generated_at_utc": "2026-06-30T11:00:00+00:00", "status": "ready", "rows": [{"entity": "wnba", "count": 5}]},
+        sort_keys=True,
+    )
+
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    assert payload["generated_at_utc"] == "2026-06-30T11:00:00+00:00"
+    assert payload["rows"][0]["count"] == 5
+
+
+def test_write_text_can_ignore_generated_line_when_requested(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    target = tmp_path / "report.md"
+
+    def strip_generated_line(text: str) -> str:
+        return "\n".join(line for line in text.splitlines() if not line.startswith("Generated:"))
+
+    hsd_run_io.write_text(target, "# Report\n\nGenerated: 2026-06-30T10:00:00+00:00\n\nStable body.\n")
+    hsd_run_io.write_text(
+        target,
+        "# Report\n\nGenerated: 2026-06-30T11:00:00+00:00\n\nStable body.\n",
+        normalize=strip_generated_line,
+    )
+
+    assert target.read_text(encoding="utf-8") == "# Report\n\nGenerated: 2026-06-30T10:00:00+00:00\n\nStable body.\n"
+
+
+def test_write_csv_can_ignore_reviewed_at_field_when_requested(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    target = tmp_path / "intake.csv"
+    fieldnames = ["asset_id", "operator_decision", "reviewed_at_local"]
+
+    hsd_run_io.write_csv(
+        target,
+        [{"asset_id": "APQ001", "operator_decision": "hold", "reviewed_at_local": "2026-06-30T10:00:00-04:00"}],
+        fieldnames,
+    )
+    hsd_run_io.write_csv(
+        target,
+        [{"asset_id": "APQ001", "operator_decision": "hold", "reviewed_at_local": "2026-06-30T11:00:00-04:00"}],
+        fieldnames,
+        volatile_fields=["reviewed_at_local"],
+    )
+
+    rows = list(csv.DictReader(target.read_text(encoding="utf-8").splitlines()))
+    assert rows == [{"asset_id": "APQ001", "operator_decision": "hold", "reviewed_at_local": "2026-06-30T10:00:00-04:00"}]
+
+
 def test_direct_run_generators_are_wired_to_shared_run_io() -> None:
     required = {
         "generate_hsd_results_desk_v5.py": ["from hsd_run_io import", "write_text(BOX_SCORE_SUMMARY_FILE", "write_json(MANIFEST_FILE"],

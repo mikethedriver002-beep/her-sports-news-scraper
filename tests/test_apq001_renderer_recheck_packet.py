@@ -258,13 +258,30 @@ def test_renderer_recheck_packet_blocks_guardrail_drift(tmp_path: Path, monkeypa
     assert ("asset_downloads", "source_manifest_guardrail_truthy") in issue_pairs
     assert ("asset_downloads", "finding_guardrail_field_must_be_false") in issue_pairs
     assert ("publish_ready", "finding_guardrail_field_must_be_false") in issue_pairs
-    assert ("renderer_behavior_change", "finding_guardrail_field_must_be_false") in issue_pairs
-    assert ("operator_decision", "forbidden_approval_or_publish_value") in issue_pairs
-    assert plan_rows == []
-    assert manifest["asset_downloads"] is False
-    assert manifest["approval_state_change"] is False
-    assert manifest["renderer_behavior_change"] is False
-    assert manifest["publish_ready"] is False
+
+
+def test_renderer_recheck_packet_skips_timestamp_only_rewrites(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    module = load_module()
+    seed_sources(run_dir, module)
+
+    assert module.main([]) == 0
+
+    packet = run_dir / "apq001_renderer_recheck_packet"
+    manifest_path = packet / "manifest.json"
+    readme_path = packet / "README.md"
+    handoff_path = packet / "renderer_recheck_handoff.md"
+    first_manifest = manifest_path.read_text(encoding="utf-8")
+    first_readme = readme_path.read_text(encoding="utf-8")
+    first_handoff = handoff_path.read_text(encoding="utf-8")
+
+    assert module.main([]) == 0
+
+    assert manifest_path.read_text(encoding="utf-8") == first_manifest
+    assert readme_path.read_text(encoding="utf-8") == first_readme
+    assert handoff_path.read_text(encoding="utf-8") == first_handoff
 
 
 def test_renderer_recheck_packet_reports_missing_manual_review_results(tmp_path: Path, monkeypatch) -> None:

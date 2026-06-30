@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import hashlib
 import json
 import shutil
@@ -13,7 +12,7 @@ from typing import Any, Iterable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from hsd_run_io import output_path, run_output_dir
+from hsd_run_io import output_path, run_output_dir, strip_volatile_markdown_lines, write_csv, write_json, write_text
 
 
 VERSION = "hsd-apq001-manual-asset-review-packet-v1-review-only"
@@ -175,23 +174,6 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
-
-
-def write_csv(path: Path, rows: Iterable[dict[str, str]], fieldnames: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-
-
-def write_json(path: Path, payload: Any) -> None:
-    write_text(path, json.dumps(payload, indent=2, sort_keys=True))
 
 
 def manual_asset_review_rows() -> list[dict[str, str]]:
@@ -460,8 +442,8 @@ def build_packet(head_commit: str | None = None) -> dict[str, Any]:
         missing=missing,
         head_commit=head_commit or git_head(),
     )
-    write_json(packet_dir / "manifest.json", payload)
-    write_text(packet_dir / "README.md", render_readme(payload))
+    write_json(packet_dir / "manifest.json", payload, sort_keys=True)
+    write_text(packet_dir / "README.md", render_readme(payload), normalize=strip_volatile_markdown_lines)
     return payload
 
 

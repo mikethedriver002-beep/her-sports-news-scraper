@@ -127,3 +127,41 @@ def test_packet_builder_accepts_manual_include_and_keeps_missing_visible(tmp_pat
     assert "missing/file.md" in manifest["missing_files"]
     assert "- `missing/file.md`" in readme
     assert manifest["send_policy"] == "draft_by_default_send_only_when_time_sensitive"
+
+
+def test_external_research_packet_skips_timestamp_only_readme_rewrites(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(tmp_path / "run"))
+    write(tmp_path / "docs/HSD_OPERATING_WORKFLOW_V1.md", "# Workflow")
+    write(tmp_path / "docs/HSD_EXTERNAL_RESEARCH_PACKET_TEMPLATE.md", "# Template")
+    write(tmp_path / "docs/HSD_RESEARCH_ALERT_EMAIL_TEMPLATE.md", "# Email")
+    write(tmp_path / "docs/HSD_REVIEW_ONLY_ASSET_DOWNLOAD_POLICY.md", "# Download policy")
+    write(tmp_path / "launch_operating_sop.md", "# SOP")
+    write(tmp_path / "launch_command_center.md", "# Command")
+    write(tmp_path / "outputs/local/latest/files/operator_command_center.html", "<html>center</html>")
+    write(tmp_path / "outputs/local/latest/files/operator_command_center.md", "# Center")
+    write(tmp_path / "outputs/local/latest/files/operator_command_center.json", '{"status":"ok"}')
+
+    module = load_module()
+    args = module.parse_args(
+        [
+            "--tool",
+            "chatgpt_pro",
+            "--lane",
+            "workflow",
+            "--packet-name",
+            "workflow-packet",
+            "--head-commit",
+            "abc123",
+        ]
+    )
+
+    payload = module.build_packet(args)
+    packet_dir = Path(payload["packet_dir"])
+    readme_path = packet_dir / "README.md"
+    first_readme = readme_path.read_text(encoding="utf-8")
+
+    payload = module.build_packet(args)
+
+    assert Path(payload["packet_dir"]) == packet_dir
+    assert readme_path.read_text(encoding="utf-8") == first_readme
