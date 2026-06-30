@@ -393,6 +393,9 @@ MIRRORED_REVIEW_ARTIFACTS = [
     "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.json",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json",
@@ -881,6 +884,9 @@ ARTIFACTS = [
     ("Graphics", "Action-photo renderer-unblock manual return triage", "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.md"),
     ("Graphics", "Action-photo renderer-unblock manual return triage data", "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv"),
     ("Graphics", "Action-photo renderer-unblock manual return triage manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.json"),
+    ("Graphics", "Action-photo to renderer bridge", "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md"),
+    ("Graphics", "Action-photo to renderer bridge data", "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv"),
+    ("Graphics", "Action-photo to renderer bridge manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json"),
     ("Graphics", "Action-photo research return paste worksheet", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md"),
     ("Graphics", "Action-photo research return paste worksheet data", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv"),
     ("Graphics", "Action-photo research return paste worksheet manifest", "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json"),
@@ -1189,6 +1195,9 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_manual_research_bridge_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_to_renderer_bridge_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
@@ -1197,9 +1206,9 @@ RUN_COMMANDS = {
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_prompt_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_external_research_packet_manifest_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
-    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
-    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
-    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py",
+    "data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\report_hsd_action_photo_quarantine_preflight_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.md": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.csv": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
     "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_summary_board_v1.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_action_photo_candidate_intake_v1.py",
@@ -2208,6 +2217,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_manual_first_action_cards_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_manual_first_action_cards_v1.json")
     action_photo_manual_return_evidence_checklist_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_manual_return_evidence_checklist_v1.json")
     action_photo_renderer_unblock_triage_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.json")
+    action_photo_to_renderer_bridge_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.json")
     action_photo_research_return_paste_worksheet_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.json")
     action_photo_research_bundle_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_research_run_bundle_v1.json")
     action_photo_preflight_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_quarantine_preflight_v1.json")
@@ -2394,6 +2404,13 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         action_photo_renderer_unblock_triage_rows,
         RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_renderer_unblock_manual_return_triage_v1.md"],
         context="action-photo renderer-unblock manual return triage",
+    )
+    action_photo_to_renderer_bridge_rows = as_int(action_photo_to_renderer_bridge_manifest.get("bridge_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0
+    action_photo_to_renderer_bridge_cue = packet_freshness_cue(
+        "data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md",
+        action_photo_to_renderer_bridge_rows,
+        RUN_COMMANDS["data/asset_registry/action_photo_candidates/review_only_action_photo_to_renderer_bridge_v1.md"],
+        context="action-photo to renderer bridge",
     )
     action_photo_research_return_paste_worksheet_cue = packet_freshness_cue(
         "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_paste_worksheet_v1.md",
@@ -2922,6 +2939,30 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_renderer_unblock_triage_asset_downloads": bool(action_photo_renderer_unblock_triage_manifest.get("asset_downloads")) if isinstance(action_photo_renderer_unblock_triage_manifest, dict) else False,
         "action_photo_renderer_unblock_triage_headshot_writes": bool(action_photo_renderer_unblock_triage_manifest.get("headshot_writes")) if isinstance(action_photo_renderer_unblock_triage_manifest, dict) else False,
         "action_photo_renderer_unblock_triage_approved_marker_writes": bool(action_photo_renderer_unblock_triage_manifest.get("approved_marker_writes")) if isinstance(action_photo_renderer_unblock_triage_manifest, dict) else False,
+        "action_photo_to_renderer_bridge_status": clean(action_photo_to_renderer_bridge_manifest.get("status")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_generated_at": clean(action_photo_to_renderer_bridge_manifest.get("generated_at_utc")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_rows": action_photo_to_renderer_bridge_rows,
+        "action_photo_to_renderer_bridge_bridge_status": clean(action_photo_to_renderer_bridge_manifest.get("bridge_status")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_renderer_unblocked": bool(action_photo_to_renderer_bridge_manifest.get("renderer_unblocked")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else False,
+        "action_photo_to_renderer_bridge_renderer_action_photo_status": clean(action_photo_to_renderer_bridge_manifest.get("renderer_action_photo_status")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_operator_decision": clean(action_photo_to_renderer_bridge_manifest.get("operator_decision")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_render_packet_title": clean(action_photo_to_renderer_bridge_manifest.get("render_packet_title")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_active_asset_stop_go": clean(action_photo_to_renderer_bridge_manifest.get("active_asset_stop_go")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_external_return_rows": as_int(action_photo_to_renderer_bridge_manifest.get("external_return_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_external_missing_rows": as_int(action_photo_to_renderer_bridge_manifest.get("external_missing_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_external_direct_image_hold_rows": as_int(action_photo_to_renderer_bridge_manifest.get("external_direct_image_hold_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_external_identity_vocab_mismatch_rows": as_int(action_photo_to_renderer_bridge_manifest.get("external_identity_vocab_mismatch_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_import_rows_with_data": as_int(action_photo_to_renderer_bridge_manifest.get("import_rows_with_data")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_import_ready_rows": as_int(action_photo_to_renderer_bridge_manifest.get("import_ready_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_quarantine_ready_rows": as_int(action_photo_to_renderer_bridge_manifest.get("quarantine_ready_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_download_approved_yes_rows": as_int(action_photo_to_renderer_bridge_manifest.get("download_approved_yes_rows")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else 0,
+        "action_photo_to_renderer_bridge_next_queue_id": clean(action_photo_to_renderer_bridge_manifest.get("next_queue_id")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_next_review_id": clean(action_photo_to_renderer_bridge_manifest.get("next_review_id")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else "",
+        "action_photo_to_renderer_bridge_source_fetching": bool(action_photo_to_renderer_bridge_manifest.get("source_fetching")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else False,
+        "action_photo_to_renderer_bridge_auto_source_enablement": bool(action_photo_to_renderer_bridge_manifest.get("auto_source_enablement")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else False,
+        "action_photo_to_renderer_bridge_asset_downloads": bool(action_photo_to_renderer_bridge_manifest.get("asset_downloads")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else False,
+        "action_photo_to_renderer_bridge_headshot_writes": bool(action_photo_to_renderer_bridge_manifest.get("headshot_writes")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else False,
+        "action_photo_to_renderer_bridge_approved_marker_writes": bool(action_photo_to_renderer_bridge_manifest.get("approved_marker_writes")) if isinstance(action_photo_to_renderer_bridge_manifest, dict) else False,
         "action_photo_research_return_paste_worksheet_status": clean(action_photo_research_return_paste_worksheet_manifest.get("status")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else "",
         "action_photo_research_return_paste_worksheet_generated_at": clean(action_photo_research_return_paste_worksheet_manifest.get("generated_at_utc")) if isinstance(action_photo_research_return_paste_worksheet_manifest, dict) else "",
         "action_photo_research_return_paste_worksheet_rows": action_photo_research_return_paste_worksheet_rows,
@@ -3013,6 +3054,9 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "action_photo_renderer_unblock_triage_freshness_status": action_photo_renderer_unblock_triage_cue["status"],
         "action_photo_renderer_unblock_triage_freshness_detail": action_photo_renderer_unblock_triage_cue["detail"],
         "action_photo_renderer_unblock_triage_refresh_command": action_photo_renderer_unblock_triage_cue["run_command"],
+        "action_photo_to_renderer_bridge_freshness_status": action_photo_to_renderer_bridge_cue["status"],
+        "action_photo_to_renderer_bridge_freshness_detail": action_photo_to_renderer_bridge_cue["detail"],
+        "action_photo_to_renderer_bridge_refresh_command": action_photo_to_renderer_bridge_cue["run_command"],
         "action_photo_research_return_paste_worksheet_freshness_status": action_photo_research_return_paste_worksheet_cue["status"],
         "action_photo_research_return_paste_worksheet_freshness_detail": action_photo_research_return_paste_worksheet_cue["detail"],
         "action_photo_research_return_paste_worksheet_refresh_command": action_photo_research_return_paste_worksheet_cue["run_command"],
@@ -10477,6 +10521,13 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>Renderer unblock triage</span><strong>{html.escape(str(panel.get('action_photo_renderer_unblock_triage_rows', 0)))}</strong></div>
             <div><span>Unblock ready/gen dl</span><strong>{html.escape(str(panel.get('action_photo_renderer_unblock_triage_generated_ready_rows', 0)))}/{html.escape(str(panel.get('action_photo_renderer_unblock_triage_generated_download_approval_rows', 0)))}</strong></div>
             <div><span>Unblock writes</span><strong>{html.escape(str(panel.get('action_photo_renderer_unblock_triage_asset_downloads', False)).lower())}/{html.escape(str(panel.get('action_photo_renderer_unblock_triage_headshot_writes', False)).lower())}/{html.escape(str(panel.get('action_photo_renderer_unblock_triage_approved_marker_writes', False)).lower())}</strong></div>
+            <div><span>AP renderer bridge</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_rows', 0)))}</strong></div>
+            <div><span>AP bridge decision</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_operator_decision') or 'missing'))}</strong></div>
+            <div><span>AP bridge unblocked</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_renderer_unblocked', False)).lower())}</strong></div>
+            <div><span>AP bridge first APQ</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_next_queue_id') or 'missing'))}/{html.escape(str(panel.get('action_photo_to_renderer_bridge_next_review_id') or 'missing'))}</strong></div>
+            <div><span>AP bridge import ready</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_import_rows_with_data', 0)))}/{html.escape(str(panel.get('action_photo_to_renderer_bridge_import_ready_rows', 0)))}</strong></div>
+            <div><span>AP bridge quarantine</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_quarantine_ready_rows', 0)))}/{html.escape(str(panel.get('action_photo_to_renderer_bridge_download_approved_yes_rows', 0)))}</strong></div>
+            <div><span>AP bridge writes</span><strong>{html.escape(str(panel.get('action_photo_to_renderer_bridge_asset_downloads', False)).lower())}/{html.escape(str(panel.get('action_photo_to_renderer_bridge_headshot_writes', False)).lower())}/{html.escape(str(panel.get('action_photo_to_renderer_bridge_approved_marker_writes', False)).lower())}</strong></div>
             <div><span>Action-photo bundle</span><strong>{html.escape(str(panel.get('action_photo_research_run_bundle_rows', 0)))}</strong></div>
             <div><span>Action-photo preflight</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_rows', 0)))}</strong></div>
             <div><span>Action-photo ready dl</span><strong>{html.escape(str(panel.get('action_photo_quarantine_preflight_ready_for_human_download_decision_rows', 0)))}</strong></div>
@@ -12348,6 +12399,16 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- Action-photo renderer-unblock triage source-fetching/auto-source-enable: {asset_panel.get('action_photo_renderer_unblock_triage_source_fetching', False)}/{asset_panel.get('action_photo_renderer_unblock_triage_auto_source_enablement', False)}",
         f"- Action-photo renderer-unblock triage asset/headshot/marker writes: {asset_panel.get('action_photo_renderer_unblock_triage_asset_downloads', False)}/{asset_panel.get('action_photo_renderer_unblock_triage_headshot_writes', False)}/{asset_panel.get('action_photo_renderer_unblock_triage_approved_marker_writes', False)}",
         f"- Action-photo renderer-unblock triage generated: {asset_panel.get('action_photo_renderer_unblock_triage_generated_at') or 'missing'}",
+        f"- Action-photo to renderer bridge rows: {asset_panel.get('action_photo_to_renderer_bridge_rows', 0)}",
+        f"- Action-photo to renderer bridge status/decision: {asset_panel.get('action_photo_to_renderer_bridge_bridge_status') or 'missing'}/{asset_panel.get('action_photo_to_renderer_bridge_operator_decision') or 'missing'}",
+        f"- Action-photo to renderer bridge renderer-unblocked: {asset_panel.get('action_photo_to_renderer_bridge_renderer_unblocked', False)}",
+        f"- Action-photo to renderer bridge first queue/review: {asset_panel.get('action_photo_to_renderer_bridge_next_queue_id') or 'missing'}/{asset_panel.get('action_photo_to_renderer_bridge_next_review_id') or 'missing'}",
+        f"- Action-photo to renderer bridge import data/ready rows: {asset_panel.get('action_photo_to_renderer_bridge_import_rows_with_data', 0)}/{asset_panel.get('action_photo_to_renderer_bridge_import_ready_rows', 0)}",
+        f"- Action-photo to renderer bridge quarantine ready/download-approved rows: {asset_panel.get('action_photo_to_renderer_bridge_quarantine_ready_rows', 0)}/{asset_panel.get('action_photo_to_renderer_bridge_download_approved_yes_rows', 0)}",
+        f"- Action-photo to renderer bridge external direct-image/identity holds: {asset_panel.get('action_photo_to_renderer_bridge_external_direct_image_hold_rows', 0)}/{asset_panel.get('action_photo_to_renderer_bridge_external_identity_vocab_mismatch_rows', 0)}",
+        f"- Action-photo to renderer bridge source-fetching/auto-source-enable: {asset_panel.get('action_photo_to_renderer_bridge_source_fetching', False)}/{asset_panel.get('action_photo_to_renderer_bridge_auto_source_enablement', False)}",
+        f"- Action-photo to renderer bridge asset/headshot/marker writes: {asset_panel.get('action_photo_to_renderer_bridge_asset_downloads', False)}/{asset_panel.get('action_photo_to_renderer_bridge_headshot_writes', False)}/{asset_panel.get('action_photo_to_renderer_bridge_approved_marker_writes', False)}",
+        f"- Action-photo to renderer bridge generated: {asset_panel.get('action_photo_to_renderer_bridge_generated_at') or 'missing'}",
         f"- Action-photo research run bundle rows: {asset_panel.get('action_photo_research_run_bundle_rows', 0)}",
         f"- Action-photo research run bundle download-approved yes rows: {asset_panel.get('action_photo_research_run_bundle_download_approved_yes_rows', 0)}",
         f"- Action-photo research run bundle generated: {asset_panel.get('action_photo_research_run_bundle_generated_at') or 'missing'}",
