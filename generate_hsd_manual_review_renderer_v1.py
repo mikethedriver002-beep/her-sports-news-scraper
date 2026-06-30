@@ -23,7 +23,7 @@ except Exception:  # pragma: no cover - validated by runtime status report
     ImageStat = None
 
 
-VERSION = "hsd-manual-review-renderer-v1.61.0-open-score-rails"
+VERSION = "hsd-manual-review-renderer-v1.62.0-story-safezone-square-debox"
 HANDOFF_DIR_NAME = "render_handoff_top_packet"
 OUT_DIR = output_path(HANDOFF_DIR_NAME)
 OUT_PREVIEW = OUT_DIR / "draft_preview.png"
@@ -108,8 +108,10 @@ PHOTO_FIRST_SAFE_ZONES = {
     "default": {"top": 90, "bottom": 90, "left": 60, "right": 60},
     "ig_feed_4x5": {"top": 90, "bottom": 90, "left": 60, "right": 60},
     "square_feed_1x1": {"top": 90, "bottom": 90, "left": 60, "right": 60},
-    "ig_story_9x16": {"top": 120, "bottom": 140, "left": 60, "right": 60},
+    "ig_story_9x16": {"top": 216, "bottom": 140, "left": 60, "right": 60},
 }
+PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX = 96
+PHOTO_FIRST_SQUARE_SCORE_GRID_TREATMENT = "open_typography_deboxed_no_score_grid_panels"
 PHOTO_FIRST_SCORE_ASYMMETRY_CONTRACT = {
     "winner_score_scale": 1.0,
     "loser_score_scale": 0.52,
@@ -2369,6 +2371,23 @@ def format_reference_spec(format_spec: Dict[str, Any], reference: Dict[str, Any]
     return loaded or square_reference_spec()
 
 
+def story_safe_zone_shifted_template_spec(template_spec: Dict[str, Any], format_id: str) -> Dict[str, Any]:
+    if clean(format_id) != "ig_story_9x16" or not template_spec:
+        return template_spec
+    shifted = json.loads(json.dumps(template_spec))
+    offset = PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX
+    badge = shifted.get("badge") if isinstance(shifted.get("badge"), dict) else {}
+    if "y" in badge:
+        badge["y"] = int(badge.get("y", 0)) + offset
+    zones = shifted.get("zones") if isinstance(shifted.get("zones"), dict) else {}
+    for zone in zones.values():
+        if isinstance(zone, dict) and "y" in zone:
+            zone["y"] = int(zone.get("y", 0)) + offset
+    shifted["story_safe_zone_offset_px"] = offset
+    shifted["story_safe_zone_policy"] = "story badge and title zones shift below native social UI danger zones"
+    return shifted
+
+
 def draw_context_divider(image: Any, box: Tuple[int, int, int, int], text: str) -> None:
     x, y, w, h = box
     draw = ImageDraw.Draw(image, "RGBA")
@@ -2919,18 +2938,19 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
     if is_square:
         photo_box = [48, 350, 356, 374]
         score_top = 360
-        score_h = 124
-        score_gap = 20
+        score_h = 112
+        score_gap = 42
         stat_box = [60, 740, 960, 64]
         hook_box = [60, 838, 960, 94]
-        context_extra_gap = 34
+        context_extra_gap = 64
     elif is_story:
-        photo_box = [56, 520, 456, 684]
-        score_top = 520
+        story_offset = PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX
+        photo_box = [56, 520 + story_offset, 456, 684]
+        score_top = 520 + story_offset
         score_h = 206
         score_gap = 24
-        stat_box = [72, 1248, 936, 104]
-        hook_box = [72, 1392, 936, 132]
+        stat_box = [72, 1248 + story_offset, 936, 104]
+        hook_box = [72, 1392 + story_offset, 936, 132]
         context_extra_gap = 48
     else:
         photo_box = [48, 370, 452, 580]
@@ -2957,6 +2977,10 @@ def photo_first_layout_geometry(format_spec: Dict[str, Any]) -> Dict[str, Any]:
         "matchup_angle_box": hook_box,
         "minimum_clearance_px": 24,
         "text_clearance_policy": "photo-first stage, score lanes, stat strip, and matchup module must remain visually separated; human review still required.",
+        "story_safe_zone_offset_px": PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX if is_story else 0,
+        "story_safe_zone_policy": "story title and brand lockup shifted down for native social UI clearance" if is_story else "",
+        "square_score_grid_treatment": PHOTO_FIRST_SQUARE_SCORE_GRID_TREATMENT if is_square else "",
+        "square_score_grid_panel_policy": "score values render as open typography over wash accents; compact square rows avoid boxed score-grid containers" if is_square else "",
     }
     geometry.update(photo_first_athlete_visual_contract(geometry))
     geometry.update(photo_first_safe_zone_contract(format_spec, geometry))
@@ -3244,11 +3268,11 @@ def photo_first_score_slab_box(box: Tuple[int, int, int, int], *, winner: bool =
     x, y, w, h = box
     compact = h <= 130
     if winner:
-        slab_w = min(226 if not compact else 176, max(150 if compact else 184, int(w * (0.350 if compact else 0.365))))
+        slab_w = min(226 if not compact else 160, max(144 if compact else 184, int(w * (0.300 if compact else 0.365))))
     else:
-        slab_w = min(160 if not compact else 132, max(116 if compact else 132, int(w * (0.240 if compact else 0.255))))
-    inset_y = 22 if not compact else 15
-    right_inset = 28 if not compact else 26
+        slab_w = min(160 if not compact else 126, max(116 if compact else 126, int(w * (0.215 if compact else 0.255))))
+    inset_y = 22 if not compact else 11
+    right_inset = 28 if not compact else 24
     return (x + w - slab_w - right_inset, y + inset_y, slab_w, h - inset_y * 2)
 
 
@@ -3355,8 +3379,12 @@ def draw_photo_first_score_row(
     if ImageFilter is not None:
         rail_shadow = rail_shadow.filter(ImageFilter.GaussianBlur(12))
     image.alpha_composite(rail_shadow)
-    draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 38 if winner else 18), width=2 if winner else 1)
-    draw.line((x + 1, y + 40, x + 1, y + h - 40), fill=(*accent, 50 if winner else 20), width=2 if winner else 1)
+    if compact:
+        draw.line((x + 12, y + h - 24, x + w - 48, y + h - 34), fill=(*accent, 20 if winner else 10), width=1)
+        draw.line((x + 3, y + 34, x + 3, y + h - 36), fill=(*accent, 18 if winner else 10), width=1)
+    else:
+        draw.line((x + 2, y + h - 30, x + w - 34, y + h - 30), fill=(*accent, 38 if winner else 18), width=2 if winner else 1)
+        draw.line((x + 1, y + 40, x + 1, y + h - 40), fill=(*accent, 50 if winner else 20), width=2 if winner else 1)
     logo_size = min(h - 46, 86 if winner else 58)
     logo_box = (x + 32, y + (h - logo_size) // 2 + (18 if not compact else 14), logo_size, logo_size)
     draw_team_logo_slot(image, team, logo_box, aliases, logos, accent, winner=winner, treatment="editorial_identifier")
@@ -3378,13 +3406,17 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(score_glow, "RGBA")
-    glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, 18 if winner else 6))
+    glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, (8 if winner else 3) if compact else (18 if winner else 6)))
     if ImageFilter is not None:
         score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
     image.alpha_composite(score_glow)
-    draw.line((sx + 8, sy + 14, sx + 8, sy + sh - 14), fill=(*accent, 58 if winner else 24), width=2)
-    draw.line((sx + 24, sy + sh - 8, sx + sw - 12, sy + sh - 8), fill=(*accent, 24 if winner else 12), width=1)
-    draw.line((sx + 36, sy + 8, sx + sw - 24, sy + 8), fill=(248, 250, 255, 54 if winner else 24), width=1)
+    if compact:
+        draw.line((sx + 18, sy + sh - 7, sx + sw - 10, sy + sh - 12), fill=(*accent, 20 if winner else 10), width=1)
+        draw.line((sx + 24, sy + 6, sx + sw - 18, sy + 2), fill=(248, 250, 255, 18 if winner else 8), width=1)
+    else:
+        draw.line((sx + 8, sy + 14, sx + 8, sy + sh - 14), fill=(*accent, 58 if winner else 24), width=2)
+        draw.line((sx + 24, sy + sh - 8, sx + sw - 12, sy + sh - 8), fill=(*accent, 24 if winner else 12), width=1)
+        draw.line((sx + 36, sy + 8, sx + sw - 24, sy + 8), fill=(248, 250, 255, 54 if winner else 24), width=1)
     cell = photo_first_score_digit_cell_box(score_box)
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"] + (12 if winner else 4), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
@@ -3545,14 +3577,14 @@ def draw_photo_first_final_score_template(
     reference: Dict[str, Any],
     stat_module: Dict[str, Any],
 ) -> bool:
-    template_spec = format_reference_spec(format_spec, reference)
+    format_id = clean(format_spec.get("format_id"))
+    template_spec = story_safe_zone_shifted_template_spec(format_reference_spec(format_spec, reference), format_id)
     width, height = int(format_spec["width"]), int(format_spec["height"])
     aliases, logos = team_registry()
     winner_profile = team_visual_profile(score["winner"], aliases, logos, (247, 203, 84))
     loser_profile = team_visual_profile(score["loser"], aliases, logos, (37, 99, 163))
     winner_accent = winner_profile["accent_rgb"]
     loser_accent = loser_profile["accent_rgb"]
-    format_id = clean(format_spec.get("format_id"))
     is_story = height > 1500
 
     geometry = photo_first_layout_geometry(format_spec)
@@ -4264,7 +4296,8 @@ def render_format(packet: Dict[str, Any], template: Dict[str, str], spec: Dict[s
 
 def preview_title_crop_box(format_id: str, width: int, height: int) -> Tuple[int, int, int, int]:
     if format_id == "ig_story_9x16":
-        return (72, 148, width - 72, min(height, 348))
+        offset = PHOTO_FIRST_STORY_SAFE_ZONE_OFFSET_PX
+        return (72, 148 + offset, width - 72, min(height, 348 + offset))
     if format_id == "square_feed_1x1":
         return (48, 102, width - 48, min(height, 258))
     return (48, 110, width - 48, min(height, 304))
@@ -4704,6 +4737,10 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
             row["photo_first_safe_zone_status"] = geometry.get("safe_zone_status")
             row["photo_first_safe_zone_px"] = geometry.get("safe_zone_px")
             row["photo_first_safe_zone_policy"] = geometry.get("safe_zone_policy")
+            row["story_safe_zone_offset_px"] = geometry.get("story_safe_zone_offset_px")
+            row["story_safe_zone_offset_policy"] = geometry.get("story_safe_zone_policy")
+            row["square_score_grid_treatment"] = geometry.get("square_score_grid_treatment")
+            row["square_score_grid_panel_policy"] = geometry.get("square_score_grid_panel_policy")
             row["photo_first_depth_layer_contract"] = geometry.get("depth_layer_contract")
             row["photo_first_depth_layer_order"] = geometry.get("depth_layer_order")
             row["photo_first_procedural_texture_contract"] = geometry.get("procedural_texture_contract")
