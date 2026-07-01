@@ -3429,8 +3429,17 @@ def draw_photo_first_score_row(
     score_box = photo_first_score_slab_box(box, winner=winner)
     team_text_box = photo_first_score_team_text_box(box, winner=winner)
     team_type = photo_first_type_spec("team", compact=compact, winner=winner)
-    team_fill = (248, 250, 255, 255) if winner else (232, 236, 242, 190)
-    team_stroke_fill = team_fill
+    team_fill = PALETTE["ink"] if winner else (170, 180, 194)
+    team_stroke = team_type["stroke"]
+    team_stroke_fill = None
+    score_fill = PALETTE["ink"] if winner else (178, 184, 194)
+    score_stroke_fill = None
+    if clean(format_id) == "ig_feed_4x5":
+        team_fill = (248, 250, 255, 255) if winner else (232, 236, 242, 190)
+        team_stroke = 1
+        team_stroke_fill = team_fill
+        score_fill = PALETTE["gold"] if winner else (236, 239, 244, 198)
+        score_stroke_fill = score_fill
     draw_reference_text(
         image,
         team_text_box,
@@ -3440,8 +3449,8 @@ def draw_photo_first_score_row(
         team_type["resolved_min"],
         team_fill,
         max_lines=2,
-        stroke=1,
-        stroke_fill=team_stroke_fill,
+        stroke=team_stroke,
+        **({"stroke_fill": team_stroke_fill} if team_stroke_fill is not None else {}),
     )
 
     sx, sy, sw, sh = score_box
@@ -3463,8 +3472,6 @@ def draw_photo_first_score_row(
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"] + (12 if winner else 4), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
     min_score_size = score_type["resolved_min"]
-    score_fill = PALETTE["gold"] if winner else (236, 239, 244, 198)
-    score_stroke_fill = score_fill
     draw_reference_text(
         image,
         (cell[0] + 3, cell[1] - 2, cell[2] - cell[0] - 6, cell[3] - cell[1] + 3),
@@ -3476,7 +3483,7 @@ def draw_photo_first_score_row(
         max_lines=1,
         align="right",
         stroke=1,
-        stroke_fill=score_stroke_fill,
+        **({"stroke_fill": score_stroke_fill} if score_stroke_fill is not None else {}),
     )
 
 

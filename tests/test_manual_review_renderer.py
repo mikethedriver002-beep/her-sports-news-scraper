@@ -1436,6 +1436,49 @@ def test_manual_review_renderer_photo_first_score_lock_slab_reads_as_open_typogr
     assert winner_ratios["gold"] > loser_ratios["gold"] + 0.30
 
 
+def test_manual_review_renderer_photo_first_score_row_keeps_non_feed_legacy_treatment() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    image = Image.new("RGBA", (1080, 1080), (2, 4, 9, 255))
+    row = tuple(module.photo_first_layout_geometry({"format_id": "square_feed_1x1", "width": 1080, "height": 1080})["winner_score_row_box"])
+    module.draw_photo_first_score_row(
+        image,
+        row,
+        "Chicago Sky",
+        "124",
+        (72, 144, 216),
+        {},
+        {},
+        winner=True,
+        format_id="square_feed_1x1",
+    )
+
+    sx, sy, sw, sh = module.photo_first_score_slab_box(row, winner=True)
+    slab = image.crop((sx, sy, sx + sw, sy + sh)).convert("RGB")
+    data = slab.tobytes()
+    pixels = max(1, len(data) // 3)
+    dark_pixels = 0
+    muted_pixels = 0
+    gold_pixels = 0
+    for index in range(0, len(data), 3):
+        r, g, b = data[index], data[index + 1], data[index + 2]
+        if r <= 32 and g <= 36 and b <= 48:
+            dark_pixels += 1
+        if 170 <= r <= 186 and 176 <= g <= 194 and 188 <= b <= 208:
+            muted_pixels += 1
+        if r >= 190 and 140 <= g <= 220 and b <= 140:
+            gold_pixels += 1
+
+    assert dark_pixels / pixels > 0.22
+    assert muted_pixels / pixels > 0.002
+    assert gold_pixels / pixels < 0.02
+
+
 def test_manual_review_renderer_photo_first_removes_redundant_score_context_and_headline_rule(monkeypatch) -> None:
     import importlib.util
 
