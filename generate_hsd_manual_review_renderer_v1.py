@@ -3848,8 +3848,18 @@ def draw_final_score_template(image: Any, packet: Dict[str, Any], template: Dict
     left = 54
     right = width - 54
     card_h = content_bottom - content_top
-    draw_rounded(draw, (left, content_top, right, content_bottom), 22, PALETTE["paper"], (255, 255, 255), 2)
-    draw.rectangle((left, content_top, left + 22, content_bottom), fill=PALETTE["gold"])
+
+    # Keep the 4:5 card lighter so the score rail reads as typography instead of a dashboard panel.
+    if spec.get("format_id") == "ig_feed_4x5":
+        wash_layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        wash_draw = ImageDraw.Draw(wash_layer, "RGBA")
+        wash_draw.rounded_rectangle((left, content_top, right, content_bottom), radius=22, fill=(13, 20, 35, 140))
+        image.alpha_composite(wash_layer)
+        draw = ImageDraw.Draw(image)
+        draw.line((left + 2, content_top + 28, left + 2, content_bottom - 28), fill=PALETTE["gold"], width=4)
+    else:
+        draw_rounded(draw, (left, content_top, right, content_bottom), 22, PALETTE["paper"], (255, 255, 255), 2)
+        draw.rectangle((left, content_top, left + 22, content_bottom), fill=PALETTE["gold"])
 
     text_left = 92
     text_right = right - 48
@@ -3859,7 +3869,8 @@ def draw_final_score_template(image: Any, packet: Dict[str, Any], template: Dict
     y += 60
 
     hero_font = font(64 if not is_square else 56, True)
-    y = draw_text_block(draw, (text_left, y), f"{score['winner']} {score['verb']} {score['loser']}", hero_font, (22, 26, 36), text_right - text_left, 3, 10)
+    headline_color = PALETTE["ink"] if spec.get("format_id") == "ig_feed_4x5" else (22, 26, 36)
+    y = draw_text_block(draw, (text_left, y), f"{score['winner']} {score['verb']} {score['loser']}", hero_font, headline_color, text_right - text_left, 3, 10)
     y += 34
 
     panel_h = 178 if not is_square else 145
