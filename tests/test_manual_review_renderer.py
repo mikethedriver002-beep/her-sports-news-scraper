@@ -129,6 +129,9 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
     assert manifest["source_cue"] == "source_confidence_ready"
     assert manifest["copy_context"] == "4 source(s); publish_grade score 92."
     assert manifest["renderer_mode"] == "template_driven_review_drafts"
+    assert manifest["guardrails"]["review_only"] is True
+    assert manifest["guardrails"]["publish_ready"] is False
+    assert manifest["guardrails"]["auto_publish"] is False
     assert manifest["content_module"]["content_module_mode"] == "game_edge_fallback"
     assert manifest["content_module"]["content_module_status"] == "fallback_game_edge_no_verified_stat_text"
     assert manifest["content_module"]["content_module_fallback_label"] == "SCORE-DERIVED EDGE"
@@ -1883,6 +1886,38 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
     assert blue_pixels / pixels < 0.024
     assert dense_panel_pixels / pixels < 0.955
     assert near_black_pixels / pixels < 0.92
+
+
+def test_manual_review_renderer_photo_first_public_canvas_copy_uses_middots_for_feed_only() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    score = {
+        "winner": "New York Liberty",
+        "loser": "Las Vegas Aces",
+        "winner_score": "87",
+        "loser_score": "76",
+    }
+    stat_module = {
+        "player_name": "Breanna Stewart",
+        "status": "verified_player_stat_module",
+        "callouts": [
+            {"value": "20", "label": "PTS"},
+            {"value": "6", "label": "REB"},
+            {"value": "4", "label": "AST"},
+        ],
+    }
+
+    feed_copy = module.photo_first_public_canvas_copy(score, stat_module, format_id="ig_feed_4x5")
+    story_copy = module.photo_first_public_canvas_copy(score, stat_module, format_id="ig_story_9x16")
+
+    assert feed_copy["stat_line"] == "20 PTS · 6 REB · 4 AST"
+    assert story_copy["stat_line"] == "20 PTS / 6 REB / 4 AST"
+    assert feed_copy["review_marker"] == "Review Draft Only"
 
 
 def test_manual_review_renderer_background_draws_editorial_depth_markers_without_washing_title() -> None:
