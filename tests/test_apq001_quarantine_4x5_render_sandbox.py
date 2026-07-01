@@ -28,17 +28,32 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def create_source_image(path: Path) -> None:
+def create_source_image(path: Path, *, variant: str = "default") -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    image = Image.new("RGB", (1440, 1800), (18, 24, 34))
+    base = {
+        "default": (18, 24, 34),
+        "shadow": (46, 18, 38),
+        "explicit": (18, 38, 26),
+    }[variant]
+    accent = {
+        "default": (214, 132, 46),
+        "shadow": (164, 48, 88),
+        "explicit": (54, 148, 96),
+    }[variant]
+    inner = {
+        "default": (54, 88, 132),
+        "shadow": (92, 42, 118),
+        "explicit": (40, 92, 120),
+    }[variant]
+    image = Image.new("RGB", (1440, 1800), base)
     draw = ImageDraw.Draw(image)
     for y in range(0, image.height, 60):
         tone = 22 + (y // 60) * 3
         draw.rectangle((0, y, image.width, y + 59), fill=(tone, tone + 14, tone + 28))
-    draw.ellipse((290, 230, 1120, 1540), fill=(214, 132, 46))
-    draw.ellipse((420, 310, 1000, 1360), fill=(54, 88, 132))
+    draw.ellipse((290, 230, 1120, 1540), fill=accent)
+    draw.ellipse((420, 310, 1000, 1360), fill=inner)
     draw.rectangle((80, 1380, 1360, 1710), fill=(12, 18, 24))
-    draw.text((96, 1410), "APQ001", fill=(255, 255, 255))
+    draw.text((96, 1410), f"APQ001-{variant}", fill=(255, 255, 255))
     image.save(path)
 
 
@@ -55,11 +70,16 @@ def test_builds_apq001_quarantine_4x5_render_sandbox(tmp_path: Path, monkeypatch
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
     module = load_module()
 
-    source_path = run_dir / module.SOURCE_CANDIDATE_REL
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "ROOT", repo_root)
+    source_path = repo_root / module.SOURCE_CANDIDATE_REL
+    stale_shadow_source = run_dir / module.SOURCE_CANDIDATE_REL
     reference_path = run_dir / module.REFERENCE_RENDER_REL
-    create_source_image(source_path)
+    create_source_image(source_path, variant="default")
+    create_source_image(stale_shadow_source, variant="shadow")
     create_reference_render(reference_path)
     source_hash_before = sha256_file(source_path)
+    stale_hash_before = sha256_file(stale_shadow_source)
 
     assert module.main([]) == 0
 
@@ -91,6 +111,7 @@ def test_builds_apq001_quarantine_4x5_render_sandbox(tmp_path: Path, monkeypatch
     assert manifest["source_candidate_readable"] is True
     assert manifest["reference_render_present"] is True
     assert manifest["source_candidate_sha256"] == source_hash_before
+    assert manifest["source_candidate_sha256"] != stale_hash_before
     assert tuple(manifest["render_size"]) == (1080, 1350)
     assert manifest["validation_issue_count"] == 0
     assert manifest["validation_issue"] == ""
@@ -122,11 +143,39 @@ def test_builds_apq001_quarantine_4x5_render_sandbox(tmp_path: Path, monkeypatch
     assert "middle dots" in report.lower()
 
 
+def test_uses_explicit_temp_source_candidate_when_provided(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    module = load_module()
+
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "ROOT", repo_root)
+    stale_shadow_source = run_dir / module.SOURCE_CANDIDATE_REL
+    explicit_source = tmp_path / "temp-source" / "apq001_review_only_candidate.jpg"
+    reference_path = run_dir / module.REFERENCE_RENDER_REL
+    create_source_image(stale_shadow_source, variant="shadow")
+    create_source_image(explicit_source, variant="explicit")
+    create_reference_render(reference_path)
+
+    assert module.main(["--source-candidate", str(explicit_source)]) == 0
+
+    out = run_dir / "apq001_quarantine_4x5_render_sandbox"
+    manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+
+    assert manifest["status"] == "apq001_quarantine_4x5_render_sandbox_ready"
+    assert manifest["source_candidate_sha256"] == sha256_file(explicit_source)
+    assert manifest["source_candidate_sha256"] != sha256_file(stale_shadow_source)
+    assert manifest["source_candidate_present"] is True
+    assert manifest["source_candidate_readable"] is True
+
+
 def test_reports_missing_apq001_source_without_fake_success(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     run_dir = tmp_path / "run" / "files"
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
     module = load_module()
+    monkeypatch.setattr(module, "ROOT", tmp_path / "repo")
 
     assert module.main([]) == 1
 

@@ -25,6 +25,7 @@ except Exception:  # pragma: no cover - handled at runtime
 
 VERSION = "hsd-apq001-quarantine-4x5-render-sandbox-v1-review-only"
 GENERATED_BY = "scripts/build_hsd_apq001_quarantine_4x5_render_sandbox_v1.py"
+ROOT = Path(__file__).resolve().parents[1]
 LATEST_FILES_ROOT = Path("outputs/local/latest/files")
 OUT_DIR_REL = Path("apq001_quarantine_4x5_render_sandbox")
 OUT_MANIFEST_REL = OUT_DIR_REL / "manifest.json"
@@ -90,6 +91,18 @@ def find_input(path: Path) -> Path | None:
     return None
 
 
+def resolve_source_candidate(source_candidate: str) -> Path:
+    source_path = Path(source_candidate)
+    if source_path.as_posix() == SOURCE_CANDIDATE_REL.as_posix():
+        return (ROOT / SOURCE_CANDIDATE_REL).resolve()
+    if source_path.is_absolute():
+        return source_path
+    for candidate in (source_path, LATEST_FILES_ROOT / source_path):
+        if candidate.exists() and candidate.is_file():
+            return candidate.resolve()
+    return source_path.resolve()
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -149,8 +162,6 @@ def add_vignette(canvas: Any) -> None:
 
     # Dark scrim and soft edge falloff to keep the action-photo read legible.
     draw.rectangle((0, 0, width, height), fill=(5, 8, 12, 118))
-    for inset, alpha in ((0, 96), (42, 72), (86, 48), (132, 28)):
-        draw.rectangle((inset, inset, width - inset, height - inset), outline=(0, 0, 0, alpha), width=2)
 
     canvas.alpha_composite(overlay)
 
@@ -170,7 +181,7 @@ def add_score_rail(canvas: Any) -> None:
     draw.text((72, 74), "QUARANTINE PROTOTYPE", font=top_label_font, fill=(236, 240, 245, 240))
     draw.text((72, 112), "ACTION PHOTO 4:5 SANDBOX", font=small_font, fill=(205, 212, 221, 220))
     draw.text((72, 186), "82", font=score_font, fill=(255, 245, 230, 255))
-    draw.text((310, 212), "•", font=period_font, fill=(235, 238, 240, 235))
+    draw.text((310, 212), "\u00b7", font=period_font, fill=(235, 238, 240, 235))
     draw.text((345, 186), "79", font=score_font, fill=(235, 238, 240, 225))
     draw.text((72, 340), "OPEN SCORE TYPOGRAPHY", font=small_font, fill=(220, 226, 233, 195))
     draw.line((72, 384, width - 72, 384), fill=(255, 255, 255, 48), width=2)
@@ -181,17 +192,16 @@ def add_lower_stat_strip(canvas: Any) -> None:
         return
     draw = ImageDraw.Draw(canvas)
     width, height = canvas.size
-    strip_top = height - 202
-    draw.rectangle((0, strip_top, width, height), fill=(10, 14, 20, 168))
-    draw.line((72, strip_top + 26, width - 72, strip_top + 26), fill=(255, 255, 255, 42), width=1)
+    strip_top = height - 170
+    draw.line((72, strip_top, width - 72, strip_top), fill=(255, 255, 255, 52), width=1)
 
     label_font = load_font(24, bold=True)
     stat_font = load_font(31, bold=False)
     small_font = load_font(20, bold=False)
 
-    draw.text((72, strip_top + 40), "APQ001 QUARANTINE LAYER", font=label_font, fill=(247, 247, 244, 248))
-    draw.text((72, strip_top + 78), "PTS 22 • REB 7 • AST 5 • TOV 2", font=stat_font, fill=(232, 238, 244, 232))
-    draw.text((72, strip_top + 124), "RAW EDITORIAL STUDY ONLY", font=small_font, fill=(203, 211, 221, 210))
+    draw.text((72, strip_top + 22), "APQ001 QUARANTINE LAYER", font=label_font, fill=(247, 247, 244, 248))
+    draw.text((72, strip_top + 60), "PTS 22 \u00b7 REB 7 \u00b7 AST 5 \u00b7 TOV 2", font=stat_font, fill=(232, 238, 244, 232))
+    draw.text((72, strip_top + 104), "RAW EDITORIAL STUDY ONLY", font=small_font, fill=(203, 211, 221, 210))
 
 
 def add_watermark(canvas: Any) -> None:
@@ -199,21 +209,20 @@ def add_watermark(canvas: Any) -> None:
         return
     width, height = canvas.size
     overlay = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-    watermark_font = load_font(28, bold=True)
-    tiny_font = load_font(20, bold=True)
+    edge_draw = ImageDraw.Draw(overlay)
+    tiny_font = load_font(18, bold=True)
+    watermark_font = load_font(34, bold=True)
 
-    # Visible burn-in repeated across the image.
-    for row_y in range(72, height - 220, 112):
-        offset = 42 if (row_y // 112) % 2 else 0
-        for x in range(-20, width + 240, 340):
-            draw.text((x + offset, row_y), WATERMARK_TEXT, font=watermark_font, fill=(255, 255, 255, 42))
+    # Keep the burn-in visible, but move it away from the primary score and label areas.
+    edge_draw.text((72, 34), WATERMARK_TEXT, font=tiny_font, fill=(255, 255, 255, 108))
+    edge_draw.text((72, height - 40), WATERMARK_TEXT, font=tiny_font, fill=(255, 255, 255, 96))
 
-    draw.rounded_rectangle((56, 58, width - 56, 132), radius=24, outline=(255, 255, 255, 65), width=2, fill=(0, 0, 0, 0))
-    draw.text((86, 80), WATERMARK_TEXT, font=tiny_font, fill=(255, 255, 255, 190))
-    draw.rectangle((56, height - 150, width - 56, height - 56), outline=(255, 255, 255, 55), width=2)
-    draw.text((88, height - 126), WATERMARK_TEXT, font=tiny_font, fill=(255, 255, 255, 176))
-
+    diagonal = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    diag_draw = ImageDraw.Draw(diagonal)
+    diag_draw.text((120, height // 2 - 22), WATERMARK_TEXT, font=watermark_font, fill=(255, 255, 255, 36))
+    diag_draw.text((420, height // 2 + 78), WATERMARK_TEXT, font=watermark_font, fill=(255, 255, 255, 28))
+    diagonal = diagonal.rotate(-18, resample=Image.Resampling.BICUBIC, expand=False, center=(width // 2, height // 2))
+    canvas.alpha_composite(diagonal)
     canvas.alpha_composite(overlay)
 
 
@@ -296,7 +305,7 @@ This is a review-only quarantine sandbox. It reads the APQ001 quarantine source 
 
 
 def build_payload(args: argparse.Namespace) -> dict[str, Any]:
-    source_path = find_input(Path(args.source_candidate)) or Path(args.source_candidate)
+    source_path = resolve_source_candidate(args.source_candidate)
     reference_path = find_input(Path(args.reference_render)) if args.reference_render else None
     out_dir = output_rel(OUT_DIR_REL)
     out_dir.mkdir(parents=True, exist_ok=True)
