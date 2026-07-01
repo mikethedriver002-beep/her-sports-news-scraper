@@ -3401,10 +3401,6 @@ def draw_photo_first_score_row(
     compact = h <= 130
     draw = ImageDraw.Draw(image, "RGBA")
     if clean(format_id) == "ig_feed_4x5":
-        if compact:
-            draw.line((x + 16, y + h - 26, x + w - 56, y + h - 36), fill=(*accent, 8 if winner else 4), width=1)
-        else:
-            draw.line((x + 14, y + h - 28, x + w - 52, y + h - 28), fill=(*accent, 10 if winner else 6), width=1)
         logo_size = min(h - 52, 82 if winner else 56)
     else:
         rail_shadow = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -3433,6 +3429,8 @@ def draw_photo_first_score_row(
     score_box = photo_first_score_slab_box(box, winner=winner)
     team_text_box = photo_first_score_team_text_box(box, winner=winner)
     team_type = photo_first_type_spec("team", compact=compact, winner=winner)
+    team_fill = (248, 250, 255, 255) if winner else (232, 236, 242, 190)
+    team_stroke_fill = team_fill
     draw_reference_text(
         image,
         team_text_box,
@@ -3440,32 +3438,20 @@ def draw_photo_first_score_row(
         team_type["font"],
         team_type["resolved_size"],
         team_type["resolved_min"],
-        PALETTE["ink"] if winner else (170, 180, 194),
+        team_fill,
         max_lines=2,
-        stroke=team_type["stroke"],
+        stroke=1,
+        stroke_fill=team_stroke_fill,
     )
 
     sx, sy, sw, sh = score_box
-    score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(score_glow, "RGBA")
-    if clean(format_id) == "ig_feed_4x5":
-        glow_draw.ellipse((sx - 34, sy - 22, sx + sw + 40, sy + sh + 24), fill=(*accent, (6 if winner else 2) if compact else (10 if winner else 4)))
-        if ImageFilter is not None:
-            score_glow = score_glow.filter(ImageFilter.GaussianBlur(11))
-    else:
+    if clean(format_id) != "ig_feed_4x5":
+        score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        glow_draw = ImageDraw.Draw(score_glow, "RGBA")
         glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, (8 if winner else 3) if compact else (18 if winner else 6)))
         if ImageFilter is not None:
             score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
-    image.alpha_composite(score_glow)
-    if clean(format_id) == "ig_feed_4x5":
-        if compact:
-            draw.line((sx + 18, sy + sh - 8, sx + sw - 12, sy + sh - 12), fill=(*accent, 14 if winner else 8), width=1)
-            draw.line((sx + 24, sy + 8, sx + sw - 18, sy + 4), fill=(248, 250, 255, 12 if winner else 6), width=1)
-        else:
-            draw.line((sx + 12, sy + 16, sx + 12, sy + sh - 16), fill=(*accent, 34 if winner else 16), width=1)
-            draw.line((sx + 28, sy + sh - 10, sx + sw - 14, sy + sh - 10), fill=(*accent, 18 if winner else 10), width=1)
-            draw.line((sx + 38, sy + 10, sx + sw - 28, sy + 10), fill=(248, 250, 255, 34 if winner else 16), width=1)
-    else:
+        image.alpha_composite(score_glow)
         if compact:
             draw.line((sx + 18, sy + sh - 7, sx + sw - 10, sy + sh - 12), fill=(*accent, 20 if winner else 10), width=1)
             draw.line((sx + 24, sy + 6, sx + sw - 18, sy + 2), fill=(248, 250, 255, 18 if winner else 8), width=1)
@@ -3477,6 +3463,8 @@ def draw_photo_first_score_row(
     score_type = photo_first_type_spec("score", compact=compact, winner=winner)
     score_size = min(score_type["resolved_size"] + (12 if winner else 4), max(58, int((cell[2] - cell[0]) * 0.92)), max(58, int((cell[3] - cell[1]) * 1.02)))
     min_score_size = score_type["resolved_min"]
+    score_fill = PALETTE["gold"] if winner else (236, 239, 244, 198)
+    score_stroke_fill = score_fill
     draw_reference_text(
         image,
         (cell[0] + 3, cell[1] - 2, cell[2] - cell[0] - 6, cell[3] - cell[1] + 3),
@@ -3484,11 +3472,11 @@ def draw_photo_first_score_row(
         score_type["font"],
         score_size,
         min_score_size,
-        PALETTE["ink"] if winner else (178, 184, 194),
+        score_fill,
         max_lines=1,
         align="right",
         stroke=1,
-        stroke_fill=(0, 0, 0),
+        stroke_fill=score_stroke_fill,
     )
 
 

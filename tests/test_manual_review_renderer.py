@@ -1352,7 +1352,7 @@ def test_manual_review_renderer_photo_first_score_slab_stays_inside_score_row() 
             assert loser_slab[2] <= 126
 
 
-def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_cell() -> None:
+def test_manual_review_renderer_photo_first_score_lock_slab_reads_as_open_typography() -> None:
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
@@ -1362,16 +1362,28 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
 
     image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
     geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
-    row = tuple(geometry["winner_score_row_box"])
+    winner_row = tuple(geometry["winner_score_row_box"])
+    loser_row = tuple(geometry["loser_score_row_box"])
     module.draw_photo_first_score_row(
         image,
-        row,
+        winner_row,
         "Chicago Sky",
         "124",
         (72, 144, 216),
         {},
         {},
         winner=True,
+        format_id="ig_feed_4x5",
+    )
+    module.draw_photo_first_score_row(
+        image,
+        loser_row,
+        "Las Vegas Aces",
+        "87",
+        (229, 173, 62),
+        {},
+        {},
+        winner=False,
         format_id="ig_feed_4x5",
     )
 
@@ -1387,43 +1399,41 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
     assert "photo_first_open_score_lockup" in module.RENDER_BACKGROUND_CUES
     assert "borderless_score_text_treatment" in module.RENDER_BACKGROUND_CUES
     assert "dashboard_panel_risk_visual_qa" in module.RENDER_BACKGROUND_CUES
-    sx, sy, sw, sh = module.photo_first_score_slab_box(row, winner=True)
+    sx, sy, sw, sh = module.photo_first_score_slab_box(winner_row, winner=True)
     cell = module.photo_first_score_digit_cell_box((sx, sy, sw, sh))
     assert cell[0] - sx >= 18
     assert sx + sw - cell[2] >= 10
     assert sy + sh - cell[3] >= 10
     assert cell[3] - cell[1] <= sh - 20
-    slab = image.crop((sx, sy, sx + sw, sy + sh)).convert("RGB")
-    data = slab.tobytes()
-    pixels = max(1, len(data) // 3)
-    pale_tile_pixels = 0
-    dark_rail_pixels = 0
-    accent_spine_pixels = 0
-    bright_score_pixels = 0
-    for index in range(0, len(data), 3):
-        r, g, b = data[index], data[index + 1], data[index + 2]
-        if r >= 220 and g >= 225 and b >= 230:
-            pale_tile_pixels += 1
-        if r <= 28 and g <= 32 and b <= 40:
-            dark_rail_pixels += 1
-        if b >= 120 and 45 <= r <= 110 and 90 <= g <= 170:
-            accent_spine_pixels += 1
-        if r >= 190 and g >= 190 and b >= 185:
-            bright_score_pixels += 1
+    winner_crop = image.crop((sx + 12, sy + 8, sx + sw - 10, sy + sh - 8)).convert("RGB")
+    loser_sx, loser_sy, loser_sw, loser_sh = module.photo_first_score_slab_box(loser_row, winner=False)
+    loser_crop = image.crop((loser_sx + 12, loser_sy + 8, loser_sx + loser_sw - 10, loser_sy + loser_sh - 8)).convert("RGB")
 
-    assert pale_tile_pixels / pixels < 0.36
-    assert dark_rail_pixels / pixels > 0.28
-    assert bright_score_pixels / pixels > 0.16
-    assert accent_spine_pixels / pixels > 0.012
-    label_crop = image.crop((row[0] + 22, row[1] + 12, row[0] + 140, row[1] + 42)).convert("RGB")
-    label_data = label_crop.tobytes()
-    label_pixels = max(1, len(label_data) // 3)
-    label_light_pixels = 0
-    for index in range(0, len(label_data), 3):
-        r, g, b = label_data[index], label_data[index + 1], label_data[index + 2]
-        if r >= 185 and g >= 185 and b >= 175:
-            label_light_pixels += 1
-    assert label_light_pixels / label_pixels < 0.01
+    def pixel_ratios(crop: Image.Image) -> dict[str, float]:
+        data = crop.tobytes()
+        pixels = max(1, len(data) // 3)
+        bright_pixels = 0
+        gold_pixels = 0
+        dark_pixels = 0
+        for index in range(0, len(data), 3):
+            r, g, b = data[index], data[index + 1], data[index + 2]
+            if r >= 190 and g >= 190 and b >= 185:
+                bright_pixels += 1
+            if r >= 190 and 140 <= g <= 220 and b <= 140:
+                gold_pixels += 1
+            if r <= 32 and g <= 36 and b <= 48:
+                dark_pixels += 1
+        return {
+            "bright": bright_pixels / pixels,
+            "gold": gold_pixels / pixels,
+            "dark": dark_pixels / pixels,
+        }
+
+    winner_ratios = pixel_ratios(winner_crop)
+    loser_ratios = pixel_ratios(loser_crop)
+    assert winner_ratios["gold"] > 0.35
+    assert loser_ratios["bright"] > 0.20
+    assert winner_ratios["gold"] > loser_ratios["gold"] + 0.30
 
 
 def test_manual_review_renderer_photo_first_removes_redundant_score_context_and_headline_rule(monkeypatch) -> None:
