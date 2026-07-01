@@ -132,6 +132,18 @@ def test_command_center_links_apq001_manual_review_result_artifacts() -> None:
         assert command_center.RUN_COMMANDS[path] == importer_command
 
 
+def test_command_center_links_apq001_p0_prototype_artifacts() -> None:
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    smoke_test_command = ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_render_athlete_smoke_test_v2.py"
+
+    for path in [
+        "apq001_p0_prototype_draft.png",
+        "apq001_p0_prototype_manifest.json",
+    ]:
+        assert path in artifact_paths
+        assert command_center.RUN_COMMANDS[path] == smoke_test_command
+
+
 def test_command_center_links_apq001_renderer_recheck_packet_artifacts() -> None:
     artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
     packet_command = ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_apq001_renderer_recheck_packet_v1.py"
@@ -8536,6 +8548,87 @@ def test_apq001_manual_review_result_counts_surface_in_asset_panel(tmp_path, mon
     assert "apq001_manual_review_result_artifacts_ready" in html
     assert "needs_crop_or_layout_notes=1" in html
     assert "suitable_for_renderer_recheck=1" in html
+
+
+def test_apq001_p0_prototype_summary_surfaces_and_holds_guardrails(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    latest = tmp_path / "outputs" / "local" / "latest" / "files"
+    latest.mkdir(parents=True)
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(latest))
+    write_json(
+        "apq001_p0_prototype_manifest.json",
+        {
+            "version": "apq001_p0_smoke_test_v1",
+            "source_asset_id": "apq001-source-asset",
+            "source_candidate_status": {
+                "asset_state": "review_only_candidate",
+                "review_only_source_candidate": True,
+                "approved_asset": False,
+            },
+            "smoke_test_scope": {
+                "prototype_format": "p0_draft",
+                "validated_areas": ["crop framing", "exposure"],
+                "not_validated_in_this_run": ["final retouch", "renderer promotion"],
+            },
+            "review_only": True,
+            "publish_ready": False,
+            "approval_state_change": False,
+            "move_files": False,
+            "download_performed": False,
+            "publishing": False,
+        },
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+    markdown = command_center.render_markdown(command_center.build_payload())
+
+    assert panel["apq001_p0_prototype_status"] == "apq001_p0_prototype_artifacts_ready"
+    assert panel["apq001_p0_prototype_version"] == "apq001_p0_smoke_test_v1"
+    assert panel["apq001_p0_prototype_source_asset_id"] == "apq001-source-asset"
+    assert panel["apq001_p0_prototype_source_candidate_asset_state"] == "review_only_candidate"
+    assert panel["apq001_p0_prototype_source_candidate_review_only_source_candidate"] is True
+    assert panel["apq001_p0_prototype_source_candidate_approved_asset"] is False
+    assert panel["apq001_p0_prototype_smoke_test_scope_prototype_format"] == "p0_draft"
+    assert panel["apq001_p0_prototype_smoke_test_scope_validated_areas"] == "crop framing, exposure"
+    assert panel["apq001_p0_prototype_smoke_test_scope_not_validated_in_this_run"] == "final retouch, renderer promotion"
+    assert panel["apq001_p0_prototype_review_only"] is True
+    assert panel["apq001_p0_prototype_publish_ready"] is False
+    assert panel["apq001_p0_prototype_approval_state_change"] is False
+    assert panel["apq001_p0_prototype_move_files"] is False
+    assert panel["apq001_p0_prototype_download_performed"] is False
+    assert panel["apq001_p0_prototype_publishing"] is False
+    assert panel["apq001_p0_prototype_guardrails"] == "true/false/false/false/false/false"
+    assert panel["apq001_p0_prototype_next_action"] == "Review-only APQ001 prototype artifact for human inspection, not approval and not renderer asset promotion."
+    assert "APQ001 P0 prototype" in html
+    assert "apq001_p0_prototype_artifacts_ready" in html
+    assert "p0_smoke_test_v1" in html
+    assert "crop framing, exposure" in html
+    assert "Review-only APQ001 prototype artifact for human inspection" in panel["apq001_p0_prototype_next_action"]
+    assert "publish-ready" not in panel["apq001_p0_prototype_next_action"].lower()
+    assert "approval-ready" not in panel["apq001_p0_prototype_next_action"].lower()
+    assert "APQ001 P0 prototype status" in markdown
+    assert "APQ001 P0 prototype guardrails" in markdown
+    assert "Review-only APQ001 prototype artifact for human inspection" in markdown
+
+
+def test_apq001_p0_prototype_missing_manifest_falls_back_cleanly(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+    markdown = command_center.render_markdown(command_center.build_payload())
+
+    assert panel["apq001_p0_prototype_status"] == "not_generated"
+    assert panel["apq001_p0_prototype_version"] == ""
+    assert panel["apq001_p0_prototype_source_asset_id"] == ""
+    assert panel["apq001_p0_prototype_source_candidate_asset_state"] == ""
+    assert panel["apq001_p0_prototype_smoke_test_scope_prototype_format"] == ""
+    assert panel["apq001_p0_prototype_smoke_test_scope_validated_areas"] == "none"
+    assert panel["apq001_p0_prototype_smoke_test_scope_not_validated_in_this_run"] == "none"
+    assert panel["apq001_p0_prototype_guardrails"] == "false/false/false/false/false/false"
+    assert "not_generated" in html
+    assert "not_generated" in markdown
 
 
 def test_apq001_manual_review_ready_with_notes_stays_visible(tmp_path, monkeypatch) -> None:
