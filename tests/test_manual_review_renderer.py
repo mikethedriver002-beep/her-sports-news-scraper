@@ -1372,6 +1372,7 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
         {},
         {},
         winner=True,
+        format_id="ig_feed_4x5",
     )
 
     assert "photo_first_score_lock_slab" in module.RENDER_BACKGROUND_CUES
@@ -1623,6 +1624,7 @@ def test_manual_review_renderer_photo_first_stage_preserves_face_edge_signal() -
         },
         (72, 144, 216),
         tuple(geometry["photo_face_focus_box"]),
+        format_id="ig_feed_4x5",
     )
 
     assert drawn is True
@@ -1715,6 +1717,7 @@ def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> N
         },
         (72, 144, 216),
         tuple(geometry["photo_face_focus_box"]),
+        format_id="ig_feed_4x5",
     )
 
     assert drawn is True
@@ -1772,6 +1775,7 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
             ],
         },
         (72, 144, 216),
+        format_id="ig_feed_4x5",
     )
 
     assert "stat_proof_rail" in module.RENDER_BACKGROUND_CUES
