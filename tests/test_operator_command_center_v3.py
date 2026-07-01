@@ -8538,6 +8538,92 @@ def test_apq001_manual_review_result_counts_surface_in_asset_panel(tmp_path, mon
     assert "suitable_for_renderer_recheck=1" in html
 
 
+def test_apq001_manual_review_ready_with_notes_stays_visible(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    write_json(
+        "apq001_manual_review_result_manifest.json",
+        {
+            "status": "apq001_manual_review_result_artifacts_ready",
+            "review_only": True,
+            "validation_issue_count": 0,
+            "finding_rows": 2,
+            "manual_operator_decision_counts": {"suitable_for_renderer_handoff_review": 1},
+            "renderer_handoff_recommendation_counts": {
+                "needs_crop_or_layout_notes": 1,
+                "operator_fill_required": 0,
+                "suitable_for_renderer_recheck": 1,
+            },
+            "image_edits": False,
+            "new_downloads": False,
+            "asset_downloads": False,
+            "approval_state_change": False,
+            "approved_marker_writes": False,
+            "headshot_writes": False,
+            "renderer_behavior_change": False,
+            "publish_ready": False,
+            "publishing": False,
+            "move_files": False,
+            "auto_approval": False,
+            "auto_publish": False,
+            "paid_apis": False,
+        },
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["apq001_manual_review_operator_fill_required"] == 0
+    assert panel["apq001_manual_review_crop_layout_notes"] == 1
+    assert panel["apq001_manual_review_renderer_recheck"] == 1
+    assert panel["apq001_manual_review_badge"] == "READY_WITH_NOTES"
+    assert "READY_WITH_NOTES" in html
+    assert "review-only handoff planning" in panel["apq001_manual_review_next_action"]
+
+
+def test_apq001_and_adobe_guardrail_console_flags_forbidden_manifest_keys(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    write_json(
+        "apq001_manual_review_result_manifest.json",
+        {
+            "status": "apq001_manual_review_result_artifacts_ready",
+            "review_only": True,
+            "validation_issue_count": 0,
+            "renderer_handoff_recommendation_counts": {
+                "needs_crop_or_layout_notes": 0,
+                "operator_fill_required": 0,
+                "suitable_for_renderer_recheck": 1,
+            },
+            "auto_approval": True,
+            "approval_state_change": False,
+            "approved_marker_writes": False,
+            "publish_ready": False,
+            "publishing": False,
+            "move_files": False,
+        },
+    )
+    write_json(
+        "adobe_visual_qa_result_manifest.json",
+        {
+            "status": "adobe_visual_qa_revision_requests_ready",
+            "review_only": True,
+            "operator_decision_counts": {"revise": 1},
+            "approval_state_change": True,
+            "publish_ready": False,
+            "publishing": False,
+            "move_files": False,
+        },
+    )
+
+    panel = command_center.asset_availability_readiness_panel()
+    html = command_center.render_asset_readiness_panel(panel)
+
+    assert panel["apq001_manual_review_badge"] == "GUARDRAIL_VIOLATION"
+    assert "APQ001 review manifest contains a forbidden guardrail value" in panel["apq001_manual_review_next_action"]
+    assert panel["adobe_visual_qa_badge"] == "GUARDRAIL_VIOLATION"
+    assert "Adobe QA manifest contains a forbidden guardrail value" in panel["adobe_visual_qa_next_action"]
+    assert "GUARDRAIL_VIOLATION" in html
+
+
 def test_apq001_renderer_recheck_packet_counts_surface_in_asset_panel(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     latest = tmp_path / "outputs" / "local" / "latest" / "files"

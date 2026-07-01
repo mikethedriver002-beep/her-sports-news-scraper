@@ -2736,12 +2736,11 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     )
 
     # =========================================================================
-    # OPTIMIZED: DETAILED APQ001 OPERATIONAL STATE EVALUATION
+    # DETAILED APQ001 OPERATIONAL STATE EVALUATION
     # =========================================================================
     apq001_status = clean(apq001_manual_review_manifest.get("status")) or "not_generated"
     apq001_validation_issues = as_int(apq001_manual_review_manifest.get("validation_issue_count"))
 
-    # Extract the exact decision telemetry from our imported review-only record
     apq001_handoff_counts = apq001_manual_review_manifest.get("renderer_handoff_recommendation_counts", {})
     if not isinstance(apq001_handoff_counts, dict):
         apq001_handoff_counts = {}
@@ -2749,7 +2748,6 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     apq001_suitable_recheck = as_int(apq001_handoff_counts.get("suitable_for_renderer_recheck", 0))
     apq001_needs_notes = as_int(apq001_handoff_counts.get("needs_crop_or_layout_notes", 0))
 
-    # Guardrail Enforcement Validation Block
     apq001_safety_compromised = any(
         [
             yes(apq001_manual_review_manifest.get("approval_state_change")),
@@ -2757,13 +2755,22 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             yes(apq001_manual_review_manifest.get("publish_ready")),
             yes(apq001_manual_review_manifest.get("publishing")),
             yes(apq001_manual_review_manifest.get("move_files")),
+            yes(apq001_manual_review_manifest.get("auto_approval")),
+            yes(apq001_manual_review_manifest.get("auto_publish")),
+            yes(apq001_manual_review_manifest.get("paid_apis")),
+            yes(apq001_manual_review_manifest.get("asset_downloads")),
+            yes(apq001_manual_review_manifest.get("new_downloads")),
+            yes(apq001_manual_review_manifest.get("image_edits")),
+            yes(apq001_manual_review_manifest.get("headshot_writes")),
+            yes(apq001_manual_review_manifest.get("renderer_behavior_change")),
+            not yes(apq001_manual_review_manifest.get("review_only", True)),
         ]
     )
 
     if apq001_safety_compromised:
         apq001_manual_review_next_action = (
-            "CRITICAL GUARDRAIL LEAK: APQ001 review manifest contains a true value for forbidden write/publish fields. "
-            "Halt execution and sanitize import state."
+            "STOP: APQ001 review manifest contains a forbidden guardrail value. "
+            "Keep the lane review-only and inspect the manifest before any next step."
         )
         apq001_cockpit_badge = "GUARDRAIL_VIOLATION"
         apq001_tone = "bad"
@@ -2781,17 +2788,25 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
             )
             apq001_cockpit_badge = "OPERATOR_FILL_REQUIRED"
             apq001_tone = "warn"
-        elif apq001_needs_notes > 0 and apq001_suitable_recheck == 0:
-            apq001_manual_review_next_action = (
-                "CROP HOLD: Ingested asset flags layout anomalies. Review crop fit mapping rows inside "
-                "apq001_manual_review_result_findings.csv before starting renderer script modifications."
-            )
-            apq001_cockpit_badge = "REVISE_CROP_FIT"
-            apq001_tone = "neutral"
+        elif apq001_needs_notes > 0:
+            if apq001_suitable_recheck > 0:
+                apq001_manual_review_next_action = (
+                    "RECHECK WITH NOTES: APQ001 has renderer-recheck candidates and active crop/layout notes. "
+                    "Carry the notes into review-only handoff planning before any renderer implementation lane."
+                )
+                apq001_cockpit_badge = "READY_WITH_NOTES"
+                apq001_tone = "warn"
+            else:
+                apq001_manual_review_next_action = (
+                    "CROP HOLD: Ingested asset flags layout anomalies with no verified recheck marks. Review crop fit mapping rows inside "
+                    "apq001_manual_review_result_findings.csv before starting renderer script modifications."
+                )
+                apq001_cockpit_badge = "REVISE_CROP_FIT"
+                apq001_tone = "neutral"
         else:
             apq001_manual_review_next_action = (
-                "CLEAN RECHECK LANE: Asset is safely recorded in the quarantine reviewer registry. "
-                "Ready for localized structural prototyping in the renderer P0 design branch."
+                "RECHECK LANE: Asset is recorded in the quarantine reviewer registry with no active crop/layout notes. "
+                "Use a separate review-only renderer planning lane for any structural prototype."
             )
             apq001_cockpit_badge = "LANE_READY_FOR_RENDERER"
             apq001_tone = "good"
@@ -2806,7 +2821,7 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     apq001_manual_review_validation_issues = apq001_validation_issues
 
     # =========================================================================
-    # OPTIMIZED: DETAILED ADOBE VISUAL QA OPERATIONAL STATE EVALUATION
+    # DETAILED ADOBE VISUAL QA OPERATIONAL STATE EVALUATION
     # =========================================================================
     adobe_qa_manifest = read_json("adobe_visual_qa_result_manifest.json")
     adobe_qa_status = clean(adobe_qa_manifest.get("status")) or "not_generated"
@@ -2817,15 +2832,26 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
 
     adobe_qa_safety_compromised = any(
         [
+            yes(adobe_qa_manifest.get("approval_state_change")),
+            yes(adobe_qa_manifest.get("approved_marker_writes")),
             yes(adobe_qa_manifest.get("publish_ready")),
             yes(adobe_qa_manifest.get("publishing")),
             yes(adobe_qa_manifest.get("move_files")),
+            yes(adobe_qa_manifest.get("auto_approval")),
+            yes(adobe_qa_manifest.get("auto_publish")),
+            yes(adobe_qa_manifest.get("paid_apis")),
+            yes(adobe_qa_manifest.get("asset_downloads")),
+            yes(adobe_qa_manifest.get("new_downloads")),
+            yes(adobe_qa_manifest.get("image_edits")),
+            yes(adobe_qa_manifest.get("headshot_writes")),
+            yes(adobe_qa_manifest.get("renderer_behavior_change")),
+            not yes(adobe_qa_manifest.get("review_only", True)),
         ]
     )
 
     if adobe_qa_safety_compromised:
         adobe_qa_next_action = (
-            "STOP: Adobe QA importer breached isolation boundaries. Clean staging directories immediately."
+            "STOP: Adobe QA manifest contains a forbidden guardrail value. Keep the packet review-only and inspect the manifest before any renderer step."
         )
         adobe_qa_badge = "GUARDRAIL_VIOLATION"
         adobe_qa_tone = "bad"
@@ -3314,6 +3340,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "apq001_manual_review_publish_ready": yes(apq001_manual_review_manifest.get("publish_ready")),
         "apq001_manual_review_publishing": yes(apq001_manual_review_manifest.get("publishing")),
         "apq001_manual_review_move_files": yes(apq001_manual_review_manifest.get("move_files")),
+        "apq001_manual_review_badge": apq001_cockpit_badge,
+        "apq001_manual_review_tone": apq001_tone,
         "apq001_manual_review_next_action": apq001_manual_review_next_action,
         "adobe_visual_qa_status": adobe_qa_status,
         "adobe_visual_qa_operator_decision_summary": compact_counts(adobe_qa_decisions, ["hold", "revise", "approve_for_manual_next_step"]),
