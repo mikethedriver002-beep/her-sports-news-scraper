@@ -3448,9 +3448,14 @@ def draw_photo_first_score_row(
     sx, sy, sw, sh = score_box
     score_glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(score_glow, "RGBA")
-    glow_draw.ellipse((sx - 34, sy - 22, sx + sw + 40, sy + sh + 24), fill=(*accent, (6 if winner else 2) if compact else (10 if winner else 4)))
-    if ImageFilter is not None:
-        score_glow = score_glow.filter(ImageFilter.GaussianBlur(11))
+    if clean(format_id) == "ig_feed_4x5":
+        glow_draw.ellipse((sx - 34, sy - 22, sx + sw + 40, sy + sh + 24), fill=(*accent, (6 if winner else 2) if compact else (10 if winner else 4)))
+        if ImageFilter is not None:
+            score_glow = score_glow.filter(ImageFilter.GaussianBlur(11))
+    else:
+        glow_draw.ellipse((sx - 42, sy - 28, sx + sw + 48, sy + sh + 30), fill=(*accent, (8 if winner else 3) if compact else (18 if winner else 6)))
+        if ImageFilter is not None:
+            score_glow = score_glow.filter(ImageFilter.GaussianBlur(15))
     image.alpha_composite(score_glow)
     if clean(format_id) == "ig_feed_4x5":
         if compact:
@@ -3654,7 +3659,7 @@ def draw_photo_first_stat_strip(
         return
     draw_reference_text(
         image,
-        (x + 32, y + (18 if not compact else 14), w - 64, 40 if not compact else 30),
+        (x + 32, y + (18 if clean(format_id) == "ig_feed_4x5" else (20 if not compact else 15)), w - 64, 40 if not compact else 30),
         athlete_line,
         athlete_type["font"],
         athlete_type["resolved_size"],
@@ -3666,7 +3671,7 @@ def draw_photo_first_stat_strip(
     )
     draw_reference_text(
         image,
-        (x + 32, y + (58 if not compact else 42), w - 64, 32 if not compact else 24),
+        (x + 32, y + (58 if clean(format_id) == "ig_feed_4x5" else (64 if not compact else 45)), w - 64, 32 if not compact else 24),
         stat_line,
         stat_type["font"],
         stat_type["resolved_size"],
