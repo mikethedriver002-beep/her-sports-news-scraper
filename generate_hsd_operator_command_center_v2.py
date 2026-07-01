@@ -631,6 +631,8 @@ ARTIFACTS = [
     ("Decision", "APQ001 manual review result report", "apq001_manual_review_result_report.md"),
     ("Decision", "APQ001 manual review result manifest", "apq001_manual_review_result_manifest.json"),
     ("Decision", "APQ001 manual review result findings", "apq001_manual_review_result_findings.csv"),
+    ("Decision", "APQ001 P0 prototype draft", "apq001_p0_prototype_draft.png"),
+    ("Decision", "APQ001 P0 prototype manifest", "apq001_p0_prototype_manifest.json"),
     ("Decision", "APQ001 renderer recheck packet guide", "apq001_renderer_recheck_packet/README.md"),
     ("Decision", "APQ001 renderer recheck packet manifest", "apq001_renderer_recheck_packet/manifest.json"),
     ("Decision", "APQ001 renderer recheck plan", "apq001_renderer_recheck_packet/renderer_recheck_plan.csv"),
@@ -1414,6 +1416,8 @@ RUN_COMMANDS = {
     "apq001_manual_review_result_report.md": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
     "apq001_manual_review_result_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
     "apq001_manual_review_result_findings.csv": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
+    "apq001_p0_prototype_draft.png": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_render_athlete_smoke_test_v2.py",
+    "apq001_p0_prototype_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\generate_hsd_render_athlete_smoke_test_v2.py",
     "apq001_renderer_recheck_packet/README.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_apq001_renderer_recheck_packet_v1.py",
     "apq001_renderer_recheck_packet/manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_apq001_renderer_recheck_packet_v1.py",
     "apq001_renderer_recheck_packet/renderer_recheck_plan.csv": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_apq001_renderer_recheck_packet_v1.py",
@@ -2195,6 +2199,18 @@ def packet_freshness_html(panel: Mapping[str, Any], prefix: str, label: str) -> 
     """
 
 
+def list_summary(value: Any, default: str = "none") -> str:
+    if isinstance(value, list):
+        items = [clean(item) for item in value if clean(item)]
+        return ", ".join(items) if items else default
+    text = clean(value)
+    return text or default
+
+
+def truthy_flag(value: Any) -> bool:
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "pass", "ready"}
+
+
 def hockey_softball_helper_summary_rows(manifest: Mapping[str, Any] | None) -> int:
     if not isinstance(manifest, dict):
         return 0
@@ -2291,6 +2307,8 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     action_photo_cutout_readiness_manifest = read_json("data/asset_registry/action_photo_candidates/review_only_action_photo_cutout_readiness_v1.json")
     apq001_manual_review_manifest = read_json("apq001_manual_review_result_manifest.json")
     apq001_manual_review_findings = read_csv("apq001_manual_review_result_findings.csv")
+    apq001_p0_prototype_manifest_path = find_existing_input("apq001_p0_prototype_manifest.json")
+    apq001_p0_prototype_manifest = read_json("apq001_p0_prototype_manifest.json")
     apq001_renderer_recheck_manifest = read_json("apq001_renderer_recheck_packet/manifest.json")
     apq001_renderer_recheck_plan_rows = read_csv("apq001_renderer_recheck_packet/renderer_recheck_plan.csv")
     apq001_renderer_recheck_checklist_rows = read_csv("apq001_renderer_recheck_packet/renderer_recheck_checklist.csv")
@@ -2820,6 +2838,34 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
     apq001_manual_review_status = apq001_status
     apq001_manual_review_validation_issues = apq001_validation_issues
 
+    apq001_p0_prototype_source_candidate_status = (
+        apq001_p0_prototype_manifest.get("source_candidate_status")
+        if isinstance(apq001_p0_prototype_manifest.get("source_candidate_status"), dict)
+        else {}
+    )
+    apq001_p0_prototype_smoke_test_scope = (
+        apq001_p0_prototype_manifest.get("smoke_test_scope")
+        if isinstance(apq001_p0_prototype_manifest.get("smoke_test_scope"), dict)
+        else {}
+    )
+    apq001_p0_prototype_review_only = truthy_flag(apq001_p0_prototype_manifest.get("review_only"))
+    apq001_p0_prototype_publish_ready = truthy_flag(apq001_p0_prototype_manifest.get("publish_ready"))
+    apq001_p0_prototype_approval_state_change = truthy_flag(apq001_p0_prototype_manifest.get("approval_state_change"))
+    apq001_p0_prototype_move_files = truthy_flag(apq001_p0_prototype_manifest.get("move_files"))
+    apq001_p0_prototype_download_performed = truthy_flag(apq001_p0_prototype_manifest.get("download_performed"))
+    apq001_p0_prototype_publishing = truthy_flag(apq001_p0_prototype_manifest.get("publishing"))
+    apq001_p0_prototype_guardrails = (
+        f"{str(apq001_p0_prototype_review_only).lower()}/"
+        f"{str(apq001_p0_prototype_publish_ready).lower()}/"
+        f"{str(apq001_p0_prototype_approval_state_change).lower()}/"
+        f"{str(apq001_p0_prototype_move_files).lower()}/"
+        f"{str(apq001_p0_prototype_download_performed).lower()}/"
+        f"{str(apq001_p0_prototype_publishing).lower()}"
+    )
+    apq001_p0_prototype_next_action = (
+        "Review-only APQ001 prototype artifact for human inspection, not approval and not renderer asset promotion."
+    )
+
     # =========================================================================
     # DETAILED ADOBE VISUAL QA OPERATIONAL STATE EVALUATION
     # =========================================================================
@@ -3343,6 +3389,23 @@ def asset_availability_readiness_panel() -> Dict[str, Any]:
         "apq001_manual_review_badge": apq001_cockpit_badge,
         "apq001_manual_review_tone": apq001_tone,
         "apq001_manual_review_next_action": apq001_manual_review_next_action,
+        "apq001_p0_prototype_status": "apq001_p0_prototype_artifacts_ready" if apq001_p0_prototype_manifest_path.exists() else "not_generated",
+        "apq001_p0_prototype_version": clean(apq001_p0_prototype_manifest.get("version")),
+        "apq001_p0_prototype_source_asset_id": clean(apq001_p0_prototype_manifest.get("source_asset_id")),
+        "apq001_p0_prototype_source_candidate_asset_state": clean(apq001_p0_prototype_source_candidate_status.get("asset_state")),
+        "apq001_p0_prototype_source_candidate_review_only_source_candidate": yes(apq001_p0_prototype_source_candidate_status.get("review_only_source_candidate")),
+        "apq001_p0_prototype_source_candidate_approved_asset": yes(apq001_p0_prototype_source_candidate_status.get("approved_asset")),
+        "apq001_p0_prototype_smoke_test_scope_prototype_format": clean(apq001_p0_prototype_smoke_test_scope.get("prototype_format")),
+        "apq001_p0_prototype_smoke_test_scope_validated_areas": list_summary(apq001_p0_prototype_smoke_test_scope.get("validated_areas")),
+        "apq001_p0_prototype_smoke_test_scope_not_validated_in_this_run": list_summary(apq001_p0_prototype_smoke_test_scope.get("not_validated_in_this_run")),
+        "apq001_p0_prototype_review_only": apq001_p0_prototype_review_only,
+        "apq001_p0_prototype_publish_ready": apq001_p0_prototype_publish_ready,
+        "apq001_p0_prototype_approval_state_change": apq001_p0_prototype_approval_state_change,
+        "apq001_p0_prototype_move_files": apq001_p0_prototype_move_files,
+        "apq001_p0_prototype_download_performed": apq001_p0_prototype_download_performed,
+        "apq001_p0_prototype_publishing": apq001_p0_prototype_publishing,
+        "apq001_p0_prototype_guardrails": apq001_p0_prototype_guardrails,
+        "apq001_p0_prototype_next_action": apq001_p0_prototype_next_action,
         "adobe_visual_qa_status": adobe_qa_status,
         "adobe_visual_qa_operator_decision_summary": compact_counts(adobe_qa_decisions, ["hold", "revise", "approve_for_manual_next_step"]),
         "adobe_visual_qa_validation_issues": as_int(adobe_qa_manifest.get("validation_issue_count")),
@@ -11218,6 +11281,10 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
             <div><span>APQ001 findings</span><strong>{html.escape(str(panel.get('apq001_manual_review_findings', 0)))}</strong><small>{html.escape(clean(panel.get('apq001_manual_review_operator_decision_summary')) or 'none')}</small></div>
             <div><span>APQ001 handoff</span><strong>{html.escape(clean(panel.get('apq001_manual_review_handoff_summary')) or 'none')}</strong></div>
             <div><span>APQ001 review guardrails</span><strong>{html.escape(str(panel.get('apq001_manual_review_asset_downloads', False)).lower())}/{html.escape(str(panel.get('apq001_manual_review_approval_state_change', False)).lower())}/{html.escape(str(panel.get('apq001_manual_review_renderer_behavior_change', False)).lower())}</strong><small>downloads/approval/renderer</small></div>
+            <div><span>APQ001 P0 prototype</span><strong>{html.escape(clean(panel.get('apq001_p0_prototype_status')) or 'not_generated')}</strong><small>{html.escape(clean(panel.get('apq001_p0_prototype_version')) or 'version missing')}</small></div>
+            <div><span>APQ001 P0 source</span><strong>{html.escape(clean(panel.get('apq001_p0_prototype_source_asset_id')) or 'missing')}</strong><small>{html.escape(clean(panel.get('apq001_p0_prototype_source_candidate_asset_state')) or 'missing')} / review-only candidate={html.escape(str(panel.get('apq001_p0_prototype_source_candidate_review_only_source_candidate', False)).lower())} / approved asset={html.escape(str(panel.get('apq001_p0_prototype_source_candidate_approved_asset', False)).lower())}</small></div>
+            <div><span>APQ001 P0 scope</span><strong>{html.escape(clean(panel.get('apq001_p0_prototype_smoke_test_scope_prototype_format')) or 'missing')}</strong><small>validated: {html.escape(clean(panel.get('apq001_p0_prototype_smoke_test_scope_validated_areas')) or 'none')} | not validated: {html.escape(clean(panel.get('apq001_p0_prototype_smoke_test_scope_not_validated_in_this_run')) or 'none')}</small></div>
+            <div><span>APQ001 P0 guardrails</span><strong>{html.escape(clean(panel.get('apq001_p0_prototype_guardrails')) or 'false/false/false/false/false/false')}</strong><small>review_only/publish_ready/approval_state_change/move_files/download_performed/publishing</small></div>
             <div><span>APQ001 recheck packet</span><strong>{html.escape(clean(panel.get('apq001_renderer_recheck_status')) or 'not_generated')}</strong></div>
             <div><span>APQ001 recheck rows</span><strong>{html.escape(str(panel.get('apq001_renderer_recheck_plan_rows', 0)))}/{html.escape(str(panel.get('apq001_renderer_recheck_checklist_rows', 0)))}</strong><small>plan/checklist</small></div>
             <div><span>APQ001 recheck priority</span><strong>{html.escape(clean(panel.get('apq001_renderer_recheck_priority_summary')) or 'none')}</strong></div>
@@ -11225,6 +11292,7 @@ def render_asset_readiness_panel(panel: Dict[str, Any]) -> str:
           </div>
           <p class="muted">{html.escape(clean(panel.get('action_photo_apq001_next_action')))}</p>
           <p class="muted">{html.escape(clean(panel.get('apq001_manual_review_next_action')))}</p>
+          <p class="muted">{html.escape(clean(panel.get('apq001_p0_prototype_next_action')))}</p>
           <p class="muted">{html.escape(clean(panel.get('apq001_renderer_recheck_next_action')))}</p>
           {panel.get('html_action_board', '')}
           {packet_freshness_html(panel, 'logo_review_packet', 'Logo review')}
@@ -13044,6 +13112,13 @@ def render_markdown(payload: Dict[str, Any]) -> str:
         f"- APQ001 manual review validation issues: {asset_panel.get('apq001_manual_review_validation_issues', 0)}",
         f"- APQ001 manual review guardrails asset/approval/renderer/publish: {asset_panel.get('apq001_manual_review_asset_downloads', False)}/{asset_panel.get('apq001_manual_review_approval_state_change', False)}/{asset_panel.get('apq001_manual_review_renderer_behavior_change', False)}/{asset_panel.get('apq001_manual_review_publishing', False)}",
         f"- APQ001 manual review next action: {asset_panel.get('apq001_manual_review_next_action') or 'Run the review-only importer after worksheets are filled.'}",
+        f"- APQ001 P0 prototype status: {asset_panel.get('apq001_p0_prototype_status') or 'not_generated'}",
+        f"- APQ001 P0 prototype version: {asset_panel.get('apq001_p0_prototype_version') or 'missing'}",
+        f"- APQ001 P0 prototype source asset: {asset_panel.get('apq001_p0_prototype_source_asset_id') or 'missing'}",
+        f"- APQ001 P0 prototype source state: {asset_panel.get('apq001_p0_prototype_source_candidate_asset_state') or 'missing'} / review-only candidate={asset_panel.get('apq001_p0_prototype_source_candidate_review_only_source_candidate', False)} / approved asset={asset_panel.get('apq001_p0_prototype_source_candidate_approved_asset', False)}",
+        f"- APQ001 P0 prototype scope: {asset_panel.get('apq001_p0_prototype_smoke_test_scope_prototype_format') or 'missing'}; validated={asset_panel.get('apq001_p0_prototype_smoke_test_scope_validated_areas') or 'none'}; not validated={asset_panel.get('apq001_p0_prototype_smoke_test_scope_not_validated_in_this_run') or 'none'}",
+        f"- APQ001 P0 prototype guardrails review_only/publish_ready/approval_state_change/move_files/download_performed/publishing: {asset_panel.get('apq001_p0_prototype_review_only', False)}/{asset_panel.get('apq001_p0_prototype_publish_ready', False)}/{asset_panel.get('apq001_p0_prototype_approval_state_change', False)}/{asset_panel.get('apq001_p0_prototype_move_files', False)}/{asset_panel.get('apq001_p0_prototype_download_performed', False)}/{asset_panel.get('apq001_p0_prototype_publishing', False)}",
+        f"- APQ001 P0 prototype next action: {asset_panel.get('apq001_p0_prototype_next_action') or 'Review-only APQ001 prototype artifact for human inspection, not approval and not renderer asset promotion.'}",
         f"- APQ001 renderer recheck packet status: {asset_panel.get('apq001_renderer_recheck_status') or 'not_generated'}",
         f"- APQ001 renderer recheck plan/checklist rows: {asset_panel.get('apq001_renderer_recheck_plan_rows', 0)}/{asset_panel.get('apq001_renderer_recheck_checklist_rows', 0)}",
         f"- APQ001 renderer recheck priority counts: {asset_panel.get('apq001_renderer_recheck_priority_summary') or 'none'}",
