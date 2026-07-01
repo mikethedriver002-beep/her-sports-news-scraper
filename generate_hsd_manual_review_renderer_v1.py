@@ -3432,12 +3432,14 @@ def draw_photo_first_score_row(
     team_fill = PALETTE["ink"] if winner else (170, 180, 194)
     team_stroke = team_type["stroke"]
     team_stroke_fill = None
+    team_size = team_type["resolved_size"]
+    team_min = team_type["resolved_min"]
     score_fill = PALETTE["ink"] if winner else (178, 184, 194)
     score_stroke_fill = None
     if clean(format_id) == "ig_feed_4x5":
-        team_fill = (248, 250, 255, 255) if winner else (232, 236, 242, 190)
-        team_stroke = 1
-        team_stroke_fill = team_fill
+        team_fill = (246, 249, 255, 235) if winner else (226, 232, 240, 195)
+        team_size = max(team_type["resolved_min"], team_type["resolved_size"] - (10 if winner else 6))
+        team_min = max(12, team_type["resolved_min"] - 2)
         score_fill = PALETTE["gold"] if winner else (236, 239, 244, 198)
         score_stroke_fill = score_fill
     draw_reference_text(
@@ -3445,10 +3447,10 @@ def draw_photo_first_score_row(
         team_text_box,
         short_team(team),
         team_type["font"],
-        team_type["resolved_size"],
-        team_type["resolved_min"],
+        team_size,
+        team_min,
         team_fill,
-        max_lines=2,
+        max_lines=1 if clean(format_id) == "ig_feed_4x5" else 2,
         stroke=team_stroke,
         **({"stroke_fill": team_stroke_fill} if team_stroke_fill is not None else {}),
     )

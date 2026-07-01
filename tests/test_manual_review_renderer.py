@@ -1435,6 +1435,31 @@ def test_manual_review_renderer_photo_first_score_lock_slab_reads_as_open_typogr
     assert loser_ratios["bright"] > 0.20
     assert winner_ratios["gold"] > loser_ratios["gold"] + 0.30
 
+    winner_tx, winner_ty, winner_tw, _ = module.photo_first_score_team_text_box(winner_row, winner=True)
+    loser_tx, loser_ty, loser_tw, _ = module.photo_first_score_team_text_box(loser_row, winner=False)
+    winner_label_crop = image.crop((winner_tx + 8, winner_ty + 18, winner_tx + winner_tw - 8, winner_ty + 62)).convert("RGB")
+    loser_label_crop = image.crop((loser_tx + 8, loser_ty + 18, loser_tx + loser_tw - 8, loser_ty + 62)).convert("RGB")
+
+    def label_ratios(crop: Image.Image) -> dict[str, float]:
+        data = crop.tobytes()
+        pixels = max(1, len(data) // 3)
+        bright_pixels = 0
+        white_pixels = 0
+        for index in range(0, len(data), 3):
+            r, g, b = data[index], data[index + 1], data[index + 2]
+            if r >= 200 and g >= 200 and b >= 200:
+                bright_pixels += 1
+            if r >= 240 and g >= 240 and b >= 240:
+                white_pixels += 1
+        return {"bright": bright_pixels / pixels, "white": white_pixels / pixels}
+
+    winner_label = label_ratios(winner_label_crop)
+    loser_label = label_ratios(loser_label_crop)
+    assert winner_label["bright"] > 0.10
+    assert winner_label["white"] < 0.22
+    assert loser_label["bright"] > 0.03
+    assert loser_label["white"] < 0.08
+
 
 def test_manual_review_renderer_photo_first_score_row_keeps_non_feed_legacy_treatment() -> None:
     import importlib.util
