@@ -123,7 +123,7 @@ def test_manual_review_renderer_reads_latest_handoff_and_writes_review_draft(tmp
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "draft_preview_created"
-    assert manifest["version"] == "hsd-manual-review-renderer-v1.62.0-story-safezone-square-debox"
+    assert manifest["version"] == "hsd-manual-review-renderer-v1.63.0-photo-first-open-rails"
     assert manifest["title"] == "Test Liberty result"
     assert manifest["source_artifact"] == "news_fact_packets.csv"
     assert manifest["source_cue"] == "source_confidence_ready"
@@ -1410,8 +1410,8 @@ def test_manual_review_renderer_photo_first_score_lock_slab_has_fitted_number_ce
         if r >= 190 and g >= 190 and b >= 185:
             bright_score_pixels += 1
 
-    assert pale_tile_pixels / pixels < 0.32
-    assert dark_rail_pixels / pixels > 0.55
+    assert pale_tile_pixels / pixels < 0.36
+    assert dark_rail_pixels / pixels > 0.28
     assert bright_score_pixels / pixels > 0.16
     assert accent_spine_pixels / pixels > 0.012
     label_crop = image.crop((row[0] + 22, row[1] + 12, row[0] + 140, row[1] + 42)).convert("RGB")
@@ -1798,9 +1798,9 @@ def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
         if r <= 6 and g <= 8 and b <= 14:
             near_black_pixels += 1
     assert gold_pixels / pixels > 0.003
-    assert blue_pixels / pixels < 0.030
-    assert dense_panel_pixels / pixels < 0.965
-    assert near_black_pixels / pixels < 0.91
+    assert blue_pixels / pixels < 0.024
+    assert dense_panel_pixels / pixels < 0.955
+    assert near_black_pixels / pixels < 0.92
 
 
 def test_manual_review_renderer_background_draws_editorial_depth_markers_without_washing_title() -> None:
