@@ -1858,6 +1858,7 @@ def test_manual_review_renderer_photo_first_stage_feed_decards_more_than_story()
         module_payload,
         (72, 144, 216),
         tuple(feed_geometry["photo_face_focus_box"]),
+        format_id="ig_feed_4x5",
     )
     assert module.draw_photo_first_athlete_stage(
         story_image,
@@ -1865,6 +1866,7 @@ def test_manual_review_renderer_photo_first_stage_feed_decards_more_than_story()
         module_payload,
         (72, 144, 216),
         tuple(story_geometry["photo_face_focus_box"]),
+        format_id="ig_story_9x16",
     )
 
     def lower_band_dark_ratio(image: Image.Image, box: tuple[int, int, int, int]) -> float:
