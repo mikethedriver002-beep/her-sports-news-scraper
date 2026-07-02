@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
 import time
 from dataclasses import dataclass
@@ -120,6 +121,14 @@ ACTION_TERMS = (
 )
 CLOSEUP_TERMS = ("headshot", "portrait", "posed", "media day", "close-up", "close up", "mugshot")
 LOW_VALUE_IMAGE_TERMS = ("logo", "icon", "sponsor", "ad", "advert", "scorebug", "watermark")
+LOW_VALUE_URL_TERMS = (
+    "pixel",
+    "scorecardresearch",
+    "stat_handler",
+    "banner",
+    "tracking",
+    "/akam/",
+)
 
 
 @dataclass(frozen=True)
@@ -323,6 +332,18 @@ def normalize_dimension(value: str) -> str:
     return digits
 
 
+def infer_dimensions(image: Mapping[str, str]) -> tuple[int | None, int | None]:
+    width = int(image["width"]) if clean(image.get("width")).isdigit() else None
+    height = int(image["height"]) if clean(image.get("height")).isdigit() else None
+    if width and height:
+        return width, height
+    src = clean(image.get("src")).lower()
+    match = re.search(r"(?<!\d)(\d{2,4})x(\d{2,4})(?!\d)", src)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return width, height
+
+
 def score_band(score: int) -> str:
     if score >= 2:
         return "likely"
@@ -349,8 +370,7 @@ def crop_potential(width: int | None, height: int | None, text: str) -> str:
 
 
 def score_candidate(image: Mapping[str, str], parser: ScoutPageParser, source_type: str) -> Dict[str, str]:
-    width = int(image["width"]) if clean(image.get("width")).isdigit() else None
-    height = int(image["height"]) if clean(image.get("height")).isdigit() else None
+    width, height = infer_dimensions(image)
     combined = normalize_text_fragments(
         clean(image.get("alt")),
         clean(image.get("caption")),
@@ -415,12 +435,17 @@ def likely_candidate_image(image: Mapping[str, str]) -> bool:
     ).lower()
     if not src or src.startswith("data:") or src.endswith(".svg"):
         return False
+    if any(term in src for term in LOW_VALUE_URL_TERMS):
+        return False
     if any(term in combined for term in LOW_VALUE_IMAGE_TERMS):
         return False
-    width = int(image["width"]) if clean(image.get("width")).isdigit() else None
-    height = int(image["height"]) if clean(image.get("height")).isdigit() else None
+    width, height = infer_dimensions(image)
     if width and height and max(width, height) < 250:
         return False
+    if width and height:
+        ratio = max(width, height) / max(1, min(width, height))
+        if ratio > 3.5:
+            return False
     return True
 
 
@@ -491,6 +516,7 @@ def candidate_rows_for_seed(
         if image_url in seen_urls or urlparse(image_url).scheme not in {"http", "https"}:
             continue
         seen_urls.add(image_url)
+        width, height = infer_dimensions(image)
         scores = score_candidate(image, parser, clean(seed.get("source_type")))
         notes_evidence = normalize_text_fragments(
             parser.page_title,
@@ -513,8 +539,8 @@ def candidate_rows_for_seed(
                 image_title=clean(image.get("title")) or parser.page_title,
                 credit_byline=clean(image.get("credit")) or parser.byline or (parser.page_credits[0] if parser.page_credits else ""),
                 source_domain=urlparse(page.url).netloc.lower(),
-                apparent_width=normalize_dimension(clean(image.get("width"))),
-                apparent_height=normalize_dimension(clean(image.get("height"))),
+                apparent_width=str(width or ""),
+                apparent_height=str(height or ""),
                 notes_evidence=notes_evidence[:500],
                 **scores,
             )
