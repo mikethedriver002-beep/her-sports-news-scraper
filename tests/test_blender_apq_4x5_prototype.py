@@ -142,6 +142,21 @@ def test_resolve_quarantine_photo_path_returns_absolute_repo_local_file(tmp_path
     assert resolved.exists()
 
 
+def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
+    module = load_module()
+    script = module.build_runner_script()
+
+    assert 'camera.data.type = "ORTHO"' in script
+    assert "camera.data.ortho_scale = 8.0" in script
+    assert '--quarantine-photo-path' in script
+    assert "arialbd.ttf" in script
+    assert "obj.data.font = font" in script
+    assert 'scene.render.engine = "BLENDER_EEVEE_NEXT"' in script
+    assert "rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0)" in script
+    assert 'ShaderNodeMapping' in script
+    assert 'mapping.inputs["Rotation"].default_value[2] = math.pi' in script
+
+
 def test_resolve_quarantine_photo_path_rejects_paths_outside_quarantine_root(tmp_path: Path, monkeypatch) -> None:
     module = load_module()
     repo_root = tmp_path / "repo"

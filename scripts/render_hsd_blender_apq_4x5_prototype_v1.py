@@ -214,6 +214,8 @@ def build_runner_script() -> str:
 
             import bpy
             BURN_IN_TEXT = "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
+            BOLD_FONT_PATH = Path("C:/Windows/Fonts/arialbd.ttf")
+            BOLD_FONT = None
 
 
             def argv_after_double_dash() -> list[str]:
@@ -235,6 +237,17 @@ def build_runner_script() -> str:
                 return (r / 255.0, g / 255.0, b / 255.0, alpha)
 
 
+            def bold_font():
+                global BOLD_FONT
+                if BOLD_FONT is not None:
+                    return BOLD_FONT
+                if BOLD_FONT_PATH.exists():
+                    BOLD_FONT = bpy.data.fonts.load(BOLD_FONT_PATH.as_posix(), check_existing=True)
+                else:
+                    BOLD_FONT = bpy.data.fonts[0] if bpy.data.fonts else None
+                return BOLD_FONT
+
+
             def clear_scene() -> None:
                 bpy.ops.object.select_all(action="SELECT")
                 bpy.ops.object.delete(use_global=False)
@@ -254,7 +267,8 @@ def build_runner_script() -> str:
             def setup_camera() -> None:
                 bpy.ops.object.camera_add(location=(0.0, -8.9, 1.95))
                 camera = bpy.context.active_object
-                camera.data.lens = 48.0
+                camera.data.type = "ORTHO"
+                camera.data.ortho_scale = 8.0
                 target = bpy.data.objects.new("APQTarget", None)
                 target.location = (0.0, 0.0, 0.75)
                 bpy.context.collection.objects.link(target)
@@ -306,7 +320,7 @@ def build_runner_script() -> str:
                 location: tuple[float, float, float],
                 size: float,
                 color: tuple[float, float, float, float],
-                rotation: tuple[float, float, float] = (0.0, 0.0, 0.0),
+                rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0),
                 extrude: float = 0.03,
                 bevel: float = 0.008,
                 align_x: str = "LEFT",
@@ -320,6 +334,9 @@ def build_runner_script() -> str:
                 obj.data.align_x = align_x
                 obj.data.resolution_u = 5
                 obj.data.fill_mode = "BOTH"
+                font = bold_font()
+                if font is not None:
+                    obj.data.font = font
                 material = make_material(f"{label}_Text", color, roughness=0.22, emission=4.0)
                 apply_material(obj, material)
                 return obj
@@ -338,12 +355,17 @@ def build_runner_script() -> str:
                     links = material.node_tree.links
                     for node in list(nodes):
                         nodes.remove(node)
+                    coords = nodes.new("ShaderNodeTexCoord")
+                    mapping = nodes.new("ShaderNodeMapping")
                     texture = nodes.new("ShaderNodeTexImage")
                     texture.image = image
                     texture.interpolation = "Smart"
                     texture.projection = "FLAT"
                     principled = nodes.new("ShaderNodeBsdfPrincipled")
                     output = nodes.new("ShaderNodeOutputMaterial")
+                    mapping.inputs["Rotation"].default_value[2] = math.pi
+                    links.new(coords.outputs["UV"], mapping.inputs["Vector"])
+                    links.new(mapping.outputs["Vector"], texture.inputs["Vector"])
                     links.new(texture.outputs["Color"], principled.inputs["Base Color"])
                     links.new(texture.outputs["Alpha"], principled.inputs["Alpha"])
                     links.new(principled.outputs["BSDF"], output.inputs["Surface"])
@@ -414,14 +436,14 @@ def build_runner_script() -> str:
                 stat_plate.scale = (2.05, 2.15, 1.0)
                 apply_material(stat_plate, make_material("StatPlateMaterial", (0.03, 0.04, 0.07, 1.0), roughness=0.88, alpha=0.72))
 
-                add_text("FINAL", location=(1.72, 0.10, 1.6), size=0.92, color=(0.98, 0.98, 0.98, 1.0))
-                add_text("APQ001", location=(1.76, 0.08, 1.05), size=0.34, color=(0.92, 0.72, 0.28, 1.0))
-                add_text("0 - 0", location=(1.72, 0.12, 0.58), size=0.64, color=(0.97, 0.97, 0.98, 1.0))
-                add_text("STAT LINE", location=(1.74, 0.11, 0.1), size=0.29, color=(0.73, 0.79, 0.88, 1.0))
+                add_text("FINAL", location=(1.72, 0.10, 1.6), size=1.5, color=(0.98, 0.98, 0.98, 1.0))
+                add_text("APQ001", location=(1.78, 0.08, 1.05), size=0.72, color=(0.92, 0.72, 0.28, 1.0))
+                add_text("0 - 0", location=(1.78, 0.12, 0.58), size=1.2, color=(0.97, 0.97, 0.98, 1.0))
+                add_text("STAT LINE", location=(1.78, 0.11, 0.1), size=0.56, color=(0.73, 0.79, 0.88, 1.0))
                 add_text(
                     "QUARANTINE REVIEW CONTEXT",
-                    location=(1.73, 0.08, -0.22),
-                    size=0.2,
+                    location=(1.78, 0.08, -0.24),
+                    size=0.34,
                     color=(0.58, 0.63, 0.72, 1.0),
                 )
 
@@ -437,11 +459,11 @@ def build_runner_script() -> str:
                 add_text(
                     burn_band_text,
                     location=(0.0, -0.16, -1.42),
-                    size=0.23,
+                    size=0.62,
                     color=(0.98, 0.98, 0.98, 1.0),
                     align_x="CENTER",
-                    extrude=0.02,
-                    bevel=0.004,
+                    extrude=0.0,
+                    bevel=0.0,
                 )
 
                 add_text(
@@ -482,16 +504,22 @@ def build_runner_script() -> str:
 
             def configure_render(output_png: Path) -> None:
                 scene = bpy.context.scene
-                scene.render.engine = "CYCLES"
+                scene.render.engine = "BLENDER_EEVEE_NEXT"
                 scene.render.resolution_x = 1080
                 scene.render.resolution_y = 1350
                 scene.render.resolution_percentage = 100
                 scene.render.filepath = output_png.as_posix()
                 scene.render.image_settings.file_format = "PNG"
                 scene.render.image_settings.color_mode = "RGBA"
-                scene.cycles.samples = 16
-                scene.cycles.use_denoising = True
-                scene.cycles.preview_samples = 8
+                if hasattr(scene, "eevee"):
+                    if hasattr(scene.eevee, "taa_render_samples"):
+                        scene.eevee.taa_render_samples = 1
+                    if hasattr(scene.eevee, "taa_samples"):
+                        scene.eevee.taa_samples = 1
+                    if hasattr(scene.eevee, "use_gtao"):
+                        scene.eevee.use_gtao = False
+                    if hasattr(scene.eevee, "use_bloom"):
+                        scene.eevee.use_bloom = False
                 scene.render.film_transparent = False
 
 
