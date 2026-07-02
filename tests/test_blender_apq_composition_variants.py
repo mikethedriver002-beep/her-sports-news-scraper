@@ -97,6 +97,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
         "score_drama_open_type",
         "open_editorial_type",
     ]
+    assert specs[0]["photo_anchor_type_treatment_mode"] == "open_scrim_hierarchy"
     assert all(spec["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for spec in specs)
     assert all(spec["review_only_derived_crop"] is False for spec in specs)
     assert all(spec["render_source_image_path"].endswith("apq001_review_only_candidate.jpg") for spec in specs)
@@ -108,6 +109,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["layout_polish_checks"]["photo_type_integration_improved"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
+    assert specs[0]["layout_polish_checks"]["typography_hierarchy_improved"] is True
     assert specs[0]["layout_polish_checks"]["split_panel_removed_or_minimized"] is True
     assert specs[0]["layout_polish_checks"]["full_photo_background_layer"] is True
     assert specs[0]["layout_polish_checks"]["photo_is_hero"] is True
@@ -219,6 +221,7 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["burn_in_position_mode"] == "bottom_safe_footer_tag" for row in manifest["variant_rows"])
     assert all(row["burn_in_treatment_mode"] == "bottom_safe_footer_tag" for row in manifest["variant_rows"])
     assert all(row["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for row in manifest["variant_rows"])
+    assert manifest["variant_rows"][0]["photo_anchor_type_treatment_mode"] == "open_scrim_hierarchy"
     assert [row["source_photo_focus_region"]["x"] for row in manifest["variant_rows"]] == [0.76, 0.75, 0.77]
     assert [row["subject_crop_balance_mode"] for row in manifest["variant_rows"]] == [
         "face_safe_open_balance",
