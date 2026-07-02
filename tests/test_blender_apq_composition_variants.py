@@ -80,6 +80,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert [spec["burn_in_position_mode"] for spec in specs] == ["lower_safe_band", "lower_safe_band", "lower_safe_band"]
     assert all(spec["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for spec in specs)
     assert all(spec["source_photo_focus_region"]["y"] == 0.5 for spec in specs)
+    assert all(spec["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for spec in specs)
     assert all(spec["review_only_derived_crop"] is False for spec in specs)
     assert all(spec["render_source_image_path"].endswith("apq001_review_only_candidate.jpg") for spec in specs)
     assert all(spec["layout_polish_checks"]["burn_in_inside_canvas"] is True for spec in specs)
@@ -164,6 +165,7 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert manifest["source_image_texture_mode"] == "placeholder"
     assert manifest["review_only_derived_crop"] is False
     assert manifest["review_only_derived_crop_paths"] == []
+    assert all(row["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for row in manifest["variant_rows"])
     assert manifest["review_only"] is True
     assert manifest["artifact_only"] is True
     assert manifest["apq001_quarantine_only"] is True
@@ -192,6 +194,7 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["burn_in_position_mode"] == "lower_safe_band" for row in manifest["variant_rows"])
     assert all(row["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for row in manifest["variant_rows"])
     assert all(row["source_photo_focus_region"]["x"] >= 0.64 for row in manifest["variant_rows"])
+    assert all(row["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for row in manifest["variant_rows"])
     assert all(row["review_only_derived_crop"] is False for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["burn_in_inside_canvas"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["frame_clutter_reduced"] is True for row in manifest["variant_rows"])

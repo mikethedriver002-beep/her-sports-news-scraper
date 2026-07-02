@@ -86,6 +86,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
         "source_photo_focus_region": {"x": 0.82, "y": 0.5},
+        "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
         "burn_in": {"location": (0.0, -0.2, -1.58), "size": 0.16, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
@@ -116,6 +117,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
         "source_photo_focus_region": {"x": 0.76, "y": 0.5},
+        "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
         "burn_in": {"location": (0.0, -0.2, -1.62), "size": 0.14, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
@@ -146,6 +148,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
         "source_photo_focus_region": {"x": 0.8, "y": 0.5},
+        "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
         "burn_in": {"location": (0.0, -0.2, -1.64), "size": 0.14, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
@@ -359,6 +362,7 @@ def build_variant_specs(scene_context: dict[str, Any]) -> list[dict[str, Any]]:
                 "burn_in_position_mode": str(base.get("burn_in_position_mode") or "lower_safe_band"),
                 "source_photo_crop_mode": str(base.get("source_photo_crop_mode") or "fit_1080x1350_right_focus"),
                 "source_photo_focus_region": dict(base.get("source_photo_focus_region") or {"x": 0.66, "y": 0.5}),
+                "photo_texture_render_layer_mode": str(base.get("photo_texture_render_layer_mode") or "texture_front_no_frame_cover"),
                 "review_only_derived_crop": False,
                 "render_source_image_path": source_image_path.as_posix(),
             }
@@ -379,6 +383,7 @@ def build_manual_rows(variant_specs: list[dict[str, Any]]) -> list[dict[str, str
                 "burn_in_legibility": "",
                 "source_photo_crop_mode": str(spec.get("source_photo_crop_mode") or ""),
                 "source_photo_focus_region": json.dumps(spec.get("source_photo_focus_region") or {}, sort_keys=True),
+                "photo_texture_render_layer_mode": str(spec.get("photo_texture_render_layer_mode") or ""),
                 "review_only_derived_crop": str(bool(spec.get("review_only_derived_crop"))).lower(),
                 "operator_decision": "",
                 "operator_notes": "",
@@ -801,7 +806,6 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 location = tuple(photo_frame.get("location") or (-2.3, 0.16, 0.32))
                 scale = tuple(photo_frame.get("scale") or (2.2, 2.8, 1.0))
                 rotation_z = math.radians(float(photo_frame.get("rotation_z") or -1.0))
-                frame_alpha = float(spec.get("photo_frame_alpha") or 0.16)
                 plane_scale = float(spec.get("photo_plane_scale") or 0.94)
                 plane_offset = float(spec.get("photo_plane_offset") or -0.014)
                 texture_status = {{
@@ -809,33 +813,41 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                     "source_image_texture_loaded": False,
                     "source_image_texture_mode": "placeholder_missing_source" if not source_image_present else "placeholder_texture_load_failed",
                     "source_image_texture_error": "",
+                    "photo_texture_render_layer_mode": str(spec.get("photo_texture_render_layer_mode") or "texture_front_no_frame_cover"),
                 }}
-                frame = add_plane(
-                    "PhotoFrame",
-                    location,
-                    (math.radians(-90.0), 0.0, rotation_z),
-                    scale,
-                    make_material("PhotoFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=frame_alpha),
-                )
-                frame.location = location
                 if source_image_present and source_photo_path.exists():
                     try:
                         image = bpy.data.images.load(source_photo_path.as_posix(), check_existing=True)
                         image_size = tuple(getattr(image, "size", (0, 0)))
                         if not image_size[0] or not image_size[1]:
                             raise RuntimeError("loaded_image_has_no_dimensions")
+                        add_plane(
+                            "PhotoShadowFrame",
+                            (location[0], location[1] + 0.032, location[2]),
+                            (math.radians(-90.0), 0.0, rotation_z),
+                            (scale[0] * 1.015, scale[1] * 1.015, 1.0),
+                            make_material("PhotoShadowFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=0.08),
+                        )
                         photo_plane = add_plane(
                             "PhotoTexture",
-                            (location[0], location[1] + plane_offset, location[2]),
+                            (location[0], location[1] + plane_offset - 0.03, location[2]),
                             (math.radians(-90.0), 0.0, rotation_z),
                             (scale[0] * plane_scale, scale[1] * plane_scale, 1.0),
                             make_photo_texture_material("APQSourcePhotoMaterial", image),
                         )
-                        photo_plane.location = (location[0], location[1] + plane_offset, location[2])
+                        photo_plane.location = (location[0], location[1] + plane_offset - 0.03, location[2])
                         texture_status["source_image_texture_loaded"] = True
                         texture_status["source_image_texture_mode"] = "loaded"
                     except Exception as exc:
                         texture_status["source_image_texture_error"] = str(exc)
+                        frame = add_plane(
+                            "PhotoFrame",
+                            location,
+                            (math.radians(-90.0), 0.0, rotation_z),
+                            scale,
+                            make_material("PhotoFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=0.16),
+                        )
+                        frame.location = location
                         placeholder = make_material("APQSourcePlaceholder", tuple(spec.get("accent_color") or [220, 120, 90]) + (1.0,), roughness=0.84, alpha=0.94)
                         apply_material(frame, placeholder)
                         add_text(
@@ -851,6 +863,14 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                             color=(0.98, 0.91, 0.79, 1.0),
                         )
                 else:
+                    frame = add_plane(
+                        "PhotoFrame",
+                        location,
+                        (math.radians(-90.0), 0.0, rotation_z),
+                        scale,
+                        make_material("PhotoFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=0.16),
+                    )
+                    frame.location = location
                     placeholder = make_material("APQSourcePlaceholder", tuple(spec.get("accent_color") or [220, 120, 90]) + (1.0,), roughness=0.84, alpha=0.94)
                     apply_material(frame, placeholder)
                     add_text(
@@ -1242,6 +1262,7 @@ def main(argv: list[str] | None = None) -> int:
             "burn_in_legibility",
             "source_photo_crop_mode",
             "source_photo_focus_region",
+            "photo_texture_render_layer_mode",
             "review_only_derived_crop",
             "operator_decision",
             "operator_notes",
