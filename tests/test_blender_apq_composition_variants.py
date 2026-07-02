@@ -77,7 +77,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["source_image_texture_attempted"] is False for spec in specs)
     assert all(spec["source_image_texture_loaded"] is False for spec in specs)
     assert all(spec["source_image_texture_mode"] == "pending" for spec in specs)
-    assert [spec["burn_in_position_mode"] for spec in specs] == ["lower_safe_band", "lower_safe_band", "lower_safe_band"]
+    assert [spec["burn_in_position_mode"] for spec in specs] == ["bottom_safe_footer_tag", "bottom_safe_footer_tag", "bottom_safe_footer_tag"]
     assert all(spec["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for spec in specs)
     assert [spec["source_photo_focus_region"]["x"] for spec in specs] == [0.76, 0.75, 0.77]
     assert all(spec["source_photo_focus_region"]["y"] == 0.5 for spec in specs)
@@ -86,12 +86,19 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
         "score_weighted_center_balance",
         "editorial_face_open_balance",
     ]
+    assert all(spec["burn_in_treatment_mode"] == "bottom_safe_footer_tag" for spec in specs)
+    assert [spec["score_typography_treatment"] for spec in specs] == [
+        "open_editorial_type",
+        "score_drama_open_type",
+        "open_editorial_type",
+    ]
     assert all(spec["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for spec in specs)
     assert all(spec["review_only_derived_crop"] is False for spec in specs)
     assert all(spec["render_source_image_path"].endswith("apq001_review_only_candidate.jpg") for spec in specs)
     assert all(spec["layout_polish_checks"]["burn_in_inside_canvas"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["burn_in_off_primary_body"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["frame_clutter_reduced"] is True for spec in specs)
-    assert all(spec["layout_polish_checks"]["editorial_panel_opened"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["score_panel_softened"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
     assert specs[0]["layout_polish_checks"]["photo_is_hero"] is True
@@ -199,7 +206,8 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["source_image_texture_loaded"] is False for row in manifest["variant_rows"])
     assert all(row["source_image_texture_mode"] == "placeholder_missing_source" for row in manifest["variant_rows"])
     assert all(row["placeholder_used"] is True for row in manifest["variant_rows"])
-    assert all(row["burn_in_position_mode"] == "lower_safe_band" for row in manifest["variant_rows"])
+    assert all(row["burn_in_position_mode"] == "bottom_safe_footer_tag" for row in manifest["variant_rows"])
+    assert all(row["burn_in_treatment_mode"] == "bottom_safe_footer_tag" for row in manifest["variant_rows"])
     assert all(row["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for row in manifest["variant_rows"])
     assert [row["source_photo_focus_region"]["x"] for row in manifest["variant_rows"]] == [0.76, 0.75, 0.77]
     assert [row["subject_crop_balance_mode"] for row in manifest["variant_rows"]] == [
@@ -207,11 +215,17 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
         "score_weighted_center_balance",
         "editorial_face_open_balance",
     ]
+    assert [row["score_typography_treatment"] for row in manifest["variant_rows"]] == [
+        "open_editorial_type",
+        "score_drama_open_type",
+        "open_editorial_type",
+    ]
     assert all(row["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for row in manifest["variant_rows"])
     assert all(row["review_only_derived_crop"] is False for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["burn_in_inside_canvas"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["burn_in_off_primary_body"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["frame_clutter_reduced"] is True for row in manifest["variant_rows"])
-    assert all(row["layout_polish_checks"]["editorial_panel_opened"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["score_panel_softened"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["face_edge_clipping_reduced"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
 
