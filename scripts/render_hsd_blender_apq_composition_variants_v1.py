@@ -85,13 +85,17 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_score_plate": False,
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
-        "source_photo_focus_region": {"x": 0.82, "y": 0.5},
+        "source_photo_focus_region": {"x": 0.76, "y": 0.5},
+        "subject_crop_balance_mode": "face_safe_open_balance",
         "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
-        "burn_in": {"location": (0.0, -0.2, -1.58), "size": 0.16, "align_x": "CENTER"},
+        "editorial_scrim": {"location": (2.72, 0.12, 0.98), "scale": (1.12, 4.1, 1.0), "alpha": 0.22},
+        "burn_in": {"location": (0.0, -0.2, -2.06), "size": 0.1, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
             "burn_in_inside_canvas": True,
             "frame_clutter_reduced": True,
+            "editorial_panel_opened": True,
+            "face_edge_clipping_reduced": True,
             "photo_is_hero": True,
             "text_kept_off_face": True,
         },
@@ -116,13 +120,17 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_score_plate": False,
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
-        "source_photo_focus_region": {"x": 0.76, "y": 0.5},
+        "source_photo_focus_region": {"x": 0.75, "y": 0.5},
+        "subject_crop_balance_mode": "score_weighted_center_balance",
         "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
-        "burn_in": {"location": (0.0, -0.2, -1.62), "size": 0.14, "align_x": "CENTER"},
+        "editorial_scrim": {"location": (2.56, 0.12, 0.98), "scale": (1.26, 4.1, 1.0), "alpha": 0.3},
+        "burn_in": {"location": (0.0, -0.2, -2.02), "size": 0.1, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
             "burn_in_inside_canvas": True,
             "frame_clutter_reduced": True,
+            "editorial_panel_opened": True,
+            "face_edge_clipping_reduced": True,
             "photo_is_hero": False,
             "text_kept_off_face": True,
         },
@@ -147,13 +155,17 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_score_plate": False,
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
-        "source_photo_focus_region": {"x": 0.8, "y": 0.5},
+        "source_photo_focus_region": {"x": 0.77, "y": 0.5},
+        "subject_crop_balance_mode": "editorial_face_open_balance",
         "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
-        "burn_in": {"location": (0.0, -0.2, -1.64), "size": 0.14, "align_x": "CENTER"},
+        "editorial_scrim": {"location": (2.78, 0.12, 0.98), "scale": (1.0, 4.1, 1.0), "alpha": 0.18},
+        "burn_in": {"location": (0.0, -0.2, -2.06), "size": 0.1, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
             "burn_in_inside_canvas": True,
             "frame_clutter_reduced": True,
+            "editorial_panel_opened": True,
+            "face_edge_clipping_reduced": True,
             "photo_is_hero": False,
             "text_kept_off_face": True,
         },
@@ -362,6 +374,7 @@ def build_variant_specs(scene_context: dict[str, Any]) -> list[dict[str, Any]]:
                 "burn_in_position_mode": str(base.get("burn_in_position_mode") or "lower_safe_band"),
                 "source_photo_crop_mode": str(base.get("source_photo_crop_mode") or "fit_1080x1350_right_focus"),
                 "source_photo_focus_region": dict(base.get("source_photo_focus_region") or {"x": 0.66, "y": 0.5}),
+                "subject_crop_balance_mode": str(base.get("subject_crop_balance_mode") or "balanced"),
                 "photo_texture_render_layer_mode": str(base.get("photo_texture_render_layer_mode") or "texture_front_no_frame_cover"),
                 "review_only_derived_crop": False,
                 "render_source_image_path": source_image_path.as_posix(),
@@ -383,6 +396,7 @@ def build_manual_rows(variant_specs: list[dict[str, Any]]) -> list[dict[str, str
                 "burn_in_legibility": "",
                 "source_photo_crop_mode": str(spec.get("source_photo_crop_mode") or ""),
                 "source_photo_focus_region": json.dumps(spec.get("source_photo_focus_region") or {}, sort_keys=True),
+                "subject_crop_balance_mode": str(spec.get("subject_crop_balance_mode") or ""),
                 "photo_texture_render_layer_mode": str(spec.get("photo_texture_render_layer_mode") or ""),
                 "review_only_derived_crop": str(bool(spec.get("review_only_derived_crop"))).lower(),
                 "operator_decision": "",
@@ -898,12 +912,16 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 backdrop.scale = (6.0, 4.8, 1.0)
                 apply_material(backdrop, make_material("BackdropMaterial", rgba(list(background), 1.0), roughness=1.0))
                 if spec.get("use_editorial_scrim"):
+                    scrim = spec.get("editorial_scrim", {{}}) if isinstance(spec.get("editorial_scrim"), dict) else {{}}
+                    scrim_location = tuple(scrim.get("location") or (2.28, 0.12, 0.98))
+                    scrim_scale = tuple(scrim.get("scale") or (1.72, 4.1, 1.0))
+                    scrim_alpha = float(scrim.get("alpha") or 0.56)
                     add_plane(
                         "EditorialScrim",
-                        (2.28, 0.12, 0.98),
+                        scrim_location,
                         (math.radians(-90.0), 0.0, 0.0),
-                        (1.72, 4.1, 1.0),
-                        make_material("EditorialScrimMaterial", (0.03, 0.05, 0.08, 1.0), roughness=0.95, alpha=0.56),
+                        scrim_scale,
+                        make_material("EditorialScrimMaterial", (0.03, 0.05, 0.08, 1.0), roughness=0.95, alpha=scrim_alpha),
                     )
                 if spec.get("use_score_plate"):
                     add_plane(
@@ -1262,6 +1280,7 @@ def main(argv: list[str] | None = None) -> int:
             "burn_in_legibility",
             "source_photo_crop_mode",
             "source_photo_focus_region",
+            "subject_crop_balance_mode",
             "photo_texture_render_layer_mode",
             "review_only_derived_crop",
             "operator_decision",
