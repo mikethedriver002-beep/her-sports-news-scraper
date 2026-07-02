@@ -114,6 +114,10 @@ def test_build_manifest_contains_required_review_only_false_fields(tmp_path: Pat
     assert manifest["publishing"] is False
     assert manifest["auto_publish"] is False
     assert manifest["auto_approval"] is False
+    assert manifest["visual_fit_checks"]["photo_visibility_intent"] is True
+    assert manifest["visual_fit_checks"]["burn_in_fits_canvas"] is True
+    assert manifest["visual_fit_checks"]["photo_first_composition"] is True
+    assert manifest["visual_fit_checks"]["stat_stack_fits_canvas"] is True
 
 
 def test_resolve_quarantine_photo_path_returns_absolute_repo_local_file(tmp_path: Path, monkeypatch) -> None:
@@ -157,12 +161,16 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert "rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0)" in script
     assert 'ShaderNodeMapping' in script
     assert 'mapping.inputs["Rotation"].default_value[2] = math.pi' in script
-    assert 'stat_plate.scale = (1.62, 2.05, 1.0)' in script
-    assert 'add_text("FINAL", location=(1.12, 0.10, 1.6), size=0.98' in script
+    assert "PHOTO_FRAME_SCALE = (2.32, 3.02, 1.0)" in script
+    assert "STAT_PANEL_SCALE = (1.48, 2.04, 1.0)" in script
+    assert 'add_text("FINAL", location=(1.04, 0.10, 1.62), size=0.86' in script
     assert 'QUARANTINE\\nREVIEW CONTEXT' in script
     assert 'if BURN_IN_TEXT not in burn_band_text:' in script
     assert 'burn_band_text = burn_band_text.replace(" - APQ001 ", " -\\nAPQ001 ", 1)' in script
-    assert 'size=0.32' in script
+    assert 'size=0.25' in script
+    assert "PhotoBacking" in script
+    assert 'PhotoAccentLineMaterial' in script
+    assert 'principled.inputs["Emission Strength"].default_value = 0.32' in script
 
 
 def test_resolve_quarantine_photo_path_rejects_paths_outside_quarantine_root(tmp_path: Path, monkeypatch) -> None:
@@ -246,6 +254,19 @@ def test_main_writes_one_png_and_manifest_with_stubbed_blender(tmp_path: Path, m
     assert manifest["auto_publish"] is False
     assert manifest["auto_approval"] is False
     assert manifest["source_payload_schema_version"] == "blender_apq_scene_payload_contract.v1"
+    assert manifest["visual_fit_checks"] == {
+        "burn_in_bottom_margin_px": 72,
+        "burn_in_fits_canvas": True,
+        "burn_in_line_count": 2,
+        "canvas_height_px": 1350,
+        "canvas_width_px": 1080,
+        "final_block_fits_canvas": True,
+        "photo_visibility_intent": True,
+        "photo_first_composition": True,
+        "photo_frame_fits_canvas": True,
+        "score_block_fits_canvas": True,
+        "stat_stack_fits_canvas": True,
+    }
 
 
 def test_main_blocks_on_traceback_and_removes_stale_png(tmp_path: Path, monkeypatch) -> None:
