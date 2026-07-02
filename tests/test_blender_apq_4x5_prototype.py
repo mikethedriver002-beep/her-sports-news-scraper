@@ -157,6 +157,12 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert "rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0)" in script
     assert 'ShaderNodeMapping' in script
     assert 'mapping.inputs["Rotation"].default_value[2] = math.pi' in script
+    assert 'stat_plate.scale = (1.62, 2.05, 1.0)' in script
+    assert 'add_text("FINAL", location=(1.12, 0.10, 1.6), size=0.98' in script
+    assert 'QUARANTINE\\nREVIEW CONTEXT' in script
+    assert 'if BURN_IN_TEXT not in burn_band_text:' in script
+    assert 'burn_band_text = burn_band_text.replace(" - APQ001 ", " -\\nAPQ001 ", 1)' in script
+    assert 'size=0.32' in script
 
 
 def test_resolve_quarantine_photo_path_rejects_paths_outside_quarantine_root(tmp_path: Path, monkeypatch) -> None:

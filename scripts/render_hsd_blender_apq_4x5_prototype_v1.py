@@ -455,19 +455,19 @@ def build_runner_script() -> str:
 
                 add_photo_plane(photo_path)
 
-                bpy.ops.mesh.primitive_plane_add(location=(2.05, 0.16, 0.2), rotation=(math.radians(-90.0), 0.0, 0.0))
+                bpy.ops.mesh.primitive_plane_add(location=(1.62, 0.16, 0.2), rotation=(math.radians(-90.0), 0.0, 0.0))
                 stat_plate = bpy.context.active_object
-                stat_plate.scale = (2.05, 2.15, 1.0)
+                stat_plate.scale = (1.62, 2.05, 1.0)
                 apply_material(stat_plate, make_material("StatPlateMaterial", (0.03, 0.04, 0.07, 1.0), roughness=0.88, alpha=0.72))
 
-                add_text("FINAL", location=(1.72, 0.10, 1.6), size=1.5, color=(0.98, 0.98, 0.98, 1.0))
-                add_text("APQ001", location=(1.78, 0.08, 1.05), size=0.72, color=(0.92, 0.72, 0.28, 1.0))
-                add_text("0 - 0", location=(1.78, 0.12, 0.58), size=1.2, color=(0.97, 0.97, 0.98, 1.0))
-                add_text("STAT LINE", location=(1.78, 0.11, 0.1), size=0.56, color=(0.73, 0.79, 0.88, 1.0))
+                add_text("FINAL", location=(1.12, 0.10, 1.6), size=0.98, color=(0.98, 0.98, 0.98, 1.0))
+                add_text("APQ001", location=(1.14, 0.08, 1.08), size=0.48, color=(0.92, 0.72, 0.28, 1.0))
+                add_text("0 - 0", location=(1.14, 0.12, 0.58), size=0.76, color=(0.97, 0.97, 0.98, 1.0))
+                add_text("STAT LINE", location=(1.14, 0.11, 0.1), size=0.36, color=(0.73, 0.79, 0.88, 1.0))
                 add_text(
-                    "QUARANTINE REVIEW CONTEXT",
-                    location=(1.78, 0.08, -0.24),
-                    size=0.34,
+                    "QUARANTINE\nREVIEW CONTEXT",
+                    location=(1.14, 0.08, -0.22),
+                    size=0.24,
                     color=(0.58, 0.63, 0.72, 1.0),
                 )
 
@@ -480,10 +480,13 @@ def build_runner_script() -> str:
                     )
 
                 burn_band_text = str(burn_in.get("text") or BURN_IN_TEXT)
+                if BURN_IN_TEXT not in burn_band_text:
+                    burn_band_text = BURN_IN_TEXT
+                burn_band_text = burn_band_text.replace(" - APQ001 ", " -\nAPQ001 ", 1)
                 add_text(
                     burn_band_text,
-                    location=(0.0, -0.16, -1.42),
-                    size=0.62,
+                    location=(0.0, -0.12, -1.42),
+                    size=0.32,
                     color=(0.98, 0.98, 0.98, 1.0),
                     align_x="CENTER",
                     extrude=0.0,
