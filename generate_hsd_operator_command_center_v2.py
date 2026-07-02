@@ -628,6 +628,10 @@ ARTIFACTS = [
     ("Decision", "Adobe renderer revision spec", "adobe_visual_qa_renderer_revision_spec.md"),
     ("Decision", "Adobe renderer revision spec data", "adobe_visual_qa_renderer_revision_spec.csv"),
     ("Decision", "Adobe renderer revision spec manifest", "adobe_visual_qa_renderer_revision_spec.json"),
+    ("Decision", "Render visual QA contact sheet refresh", "render_visual_qa_contact_sheet_refresh/README.md"),
+    ("Decision", "Render visual QA contact sheet refresh summary", "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md"),
+    ("Decision", "Render visual QA contact sheet refresh data", "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv"),
+    ("Decision", "Render visual QA contact sheet refresh manifest", "render_visual_qa_contact_sheet_refresh/manifest.json"),
     ("Decision", "APQ001 manual review result report", "apq001_manual_review_result_report.md"),
     ("Decision", "APQ001 manual review result manifest", "apq001_manual_review_result_manifest.json"),
     ("Decision", "APQ001 manual review result findings", "apq001_manual_review_result_findings.csv"),
@@ -1413,6 +1417,10 @@ RUN_COMMANDS = {
     "adobe_visual_qa_renderer_revision_spec.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "adobe_visual_qa_renderer_revision_spec.csv": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
     "adobe_visual_qa_renderer_revision_spec.json": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_adobe_visual_qa_renderer_revision_plan_v1.py",
+    "render_visual_qa_contact_sheet_refresh/README.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_render_visual_qa_contact_sheet_refresh_v1.py",
+    "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_render_visual_qa_contact_sheet_refresh_v1.py",
+    "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_render_visual_qa_contact_sheet_refresh_v1.py",
+    "render_visual_qa_contact_sheet_refresh/manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_render_visual_qa_contact_sheet_refresh_v1.py",
     "apq001_manual_review_result_report.md": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
     "apq001_manual_review_result_manifest.json": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
     "apq001_manual_review_result_findings.csv": ".\\.venv\\Scripts\\python.exe scripts\\import_hsd_apq001_manual_review_packet_v1.py",
@@ -4721,6 +4729,59 @@ def adobe_visual_qa_summary() -> Dict[str, Any]:
     }
 
 
+def render_visual_qa_contact_sheet_refresh_summary_data() -> Dict[str, Any]:
+    review_notes = [
+        "Score rail deboxed.",
+        "Lower stat rail softened.",
+        "Feed-only stat separator changed to middots.",
+    ]
+    remaining_caveats = [
+        "The headshot bridge still reads a little roster-card-ish and may need one more pass.",
+        "APQ001 quarantine action-photo prototypes remain review-only and must not be approved or moved.",
+        "No publishing or publish-ready lane work belongs in this packet.",
+    ]
+    manual_review_questions = [
+        "Hold, revise, or continue to the next renderer lane?",
+        "Does the headshot bridge still feel roster-card-ish enough to justify another visual pass?",
+        "Are the APQ001 quarantine action-photo prototypes still clearly review-only and untouched?",
+    ]
+    manifest = read_json("render_visual_qa_contact_sheet_refresh/manifest.json")
+    artifact_rows = manifest.get("artifact_rows", [])
+    if not isinstance(artifact_rows, list):
+        artifact_rows = []
+    latest_row = next((row for row in artifact_rows if clean(row.get("artifact_kind")) == "latest_4x5_render"), {})
+    contact_row = next((row for row in artifact_rows if clean(row.get("artifact_kind")) == "visual_contact_sheet"), {})
+    status = clean(manifest.get("status")) or "not_generated"
+    next_step = "Open the refresh packet and compare the latest 4:5, story, square, and contact-sheet paths by eye."
+    if status == "render_visual_qa_contact_sheet_refresh_reference_missing":
+        next_step = "Run the review-only contact sheet refresh builder after the expected render paths are available."
+    return {
+        "status": status,
+        "artifact_count": as_int(manifest.get("artifact_count")),
+        "present_source_count": as_int(manifest.get("present_source_count")),
+        "missing_source_count": as_int(manifest.get("missing_source_count")),
+        "latest_4x5_render_path": clean(manifest.get("latest_4x5_render_path")) or clean(latest_row.get("artifact_path")),
+        "story_render_path": clean(manifest.get("story_render_path")),
+        "square_render_path": clean(manifest.get("square_render_path")),
+        "contact_sheet_path": clean(manifest.get("contact_sheet_path")) or clean(contact_row.get("artifact_path")),
+        "render_handoff_manifest_path": clean(manifest.get("render_handoff_manifest_path")),
+        "review_notes": manifest.get("review_notes", review_notes),
+        "remaining_caveats": manifest.get("remaining_caveats", remaining_caveats),
+        "manual_review_questions": manifest.get("manual_review_questions", manual_review_questions),
+        "readme_path": "render_visual_qa_contact_sheet_refresh/README.md",
+        "summary_md_path": "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md",
+        "summary_csv_path": "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv",
+        "manifest_path": "render_visual_qa_contact_sheet_refresh/manifest.json",
+        "next_step": next_step,
+        "review_only": manifest.get("review_only") is True,
+        "asset_downloads": yes(manifest.get("asset_downloads")),
+        "approval_state_change": yes(manifest.get("approval_state_change")),
+        "publish_ready": yes(manifest.get("publish_ready")),
+        "publishing": yes(manifest.get("publishing")),
+        "move_files": yes(manifest.get("move_files")),
+    }
+
+
 def operator_decision_ui_panel() -> Dict[str, Any]:
     renderer = read_json("manual_review_renderer_manifest.json")
     delta = read_json("render_visual_delta_manifest.json")
@@ -4777,6 +4838,7 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
         "qa_check_count": clean(qa_summary.get("check_count")),
         "qa_cues": build_visual_qa_cues(qa),
         "adobe_visual_qa_summary": adobe_visual_qa_summary(),
+        "render_visual_qa_contact_sheet_refresh_summary": render_visual_qa_contact_sheet_refresh_summary_data(),
         "dimensions": f"{clean(dimensions.get('width')) or '0'}x{clean(dimensions.get('height')) or '0'}",
         "decision_draft": draft,
         "render_gallery": build_render_gallery(renderer, qa, delta, revision_plan, draft),
@@ -4797,6 +4859,8 @@ def operator_decision_ui_panel() -> Dict[str, Any]:
             file_shortcut("Adobe QA revision requests", "adobe_visual_qa_revision_requests.csv", "Use returned rows for renderer revision planning only."),
             file_shortcut("Adobe renderer revision plan", "adobe_visual_qa_renderer_revision_plan.md", "Review the priority renderer adjustments from manual Adobe QA."),
             file_shortcut("Adobe renderer revision spec", "adobe_visual_qa_renderer_revision_spec.md", "Use the review-only checklist to brief a future renderer implementation lane without changing behavior here."),
+            file_shortcut("Render QA refresh", "render_visual_qa_contact_sheet_refresh/README.md", "Open the review-only contact-sheet refresh packet for the latest 4:5, story, square, and contact-sheet paths."),
+            file_shortcut("Render QA refresh data", "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv", "Review the path table and manual questions before the next renderer lane."),
             file_shortcut("Copy sheet", "render_handoff_top_packet/copy_sheet.md", "Confirm the visible copy and source-safe summary."),
             file_shortcut("Source proof", "render_handoff_top_packet/source_proof.md", "Confirm the source artifact used for the draft."),
             file_shortcut("Decision draft CSV", "manual_visual_qa_operator_decision_draft.csv", "Use this as the generated row contract."),
@@ -10788,6 +10852,37 @@ def render_adobe_visual_qa_summary(summary: Dict[str, Any]) -> str:
     """
 
 
+def render_visual_qa_contact_sheet_refresh_summary_card(summary: Dict[str, Any]) -> str:
+    status_tone = "good" if clean(summary.get("status")) == "render_visual_qa_contact_sheet_refresh_ready" else "warn"
+    return f"""
+      <div class="decision-desk-section render-visual-qa-contact-sheet-refresh-summary">
+        <div class="row-kicker">
+          Render visual QA contact sheet refresh
+          {pill(clean(summary.get('status')) or 'not_generated', status_tone)}
+        </div>
+        <div class="decision-status-grid">
+          <div><span>Artifacts</span><strong>{html.escape(str(summary.get('artifact_count', 0)))}</strong><small>{html.escape(str(summary.get('present_source_count', 0)))} present</small></div>
+          <div><span>Missing</span><strong>{html.escape(str(summary.get('missing_source_count', 0)))}</strong><small>reference paths only</small></div>
+          <div><span>Latest 4:5</span><strong>{html.escape(clean(summary.get('latest_4x5_render_path')) or 'missing')}</strong><small>review only</small></div>
+          <div><span>Contact sheet</span><strong>{html.escape(clean(summary.get('contact_sheet_path')) or 'missing')}</strong><small>Adobe QA packet path</small></div>
+        </div>
+        <p>{html.escape(clean(summary.get('next_step')))}</p>
+        <div class="decision-button-row">
+          {open_link(clean(summary.get('readme_path')) or 'render_visual_qa_contact_sheet_refresh/README.md', 'Open refresh packet')}
+          {open_link(clean(summary.get('summary_md_path')) or 'render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md', 'Open refresh summary')}
+          {open_link(clean(summary.get('summary_csv_path')) or 'render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv', 'Open refresh data')}
+        </div>
+        <div class="safety-strip">
+          {pill('review-only', 'good' if summary.get('review_only') else 'warn')}
+          {pill('downloads: false', 'good' if not any([summary.get('asset_downloads'), summary.get('approval_state_change'), summary.get('publish_ready'), summary.get('publishing'), summary.get('move_files')]) else 'bad')}
+          {pill('approval change: false', 'good' if not summary.get('approval_state_change') else 'bad')}
+          {pill('publish-ready: false', 'good' if not summary.get('publish_ready') else 'bad')}
+          {pill('publishing: false', 'good' if not summary.get('publishing') else 'bad')}
+        </div>
+      </div>
+    """
+
+
 def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
     draft = panel.get("decision_draft", {}) if isinstance(panel.get("decision_draft"), dict) else {}
     draft_json = html.escape(json.dumps(draft), quote=True)
@@ -10888,6 +10983,7 @@ def render_operator_decision_panel(panel: Dict[str, Any]) -> str:
             </div>
           </div>
           {render_adobe_visual_qa_summary(panel.get('adobe_visual_qa_summary', {}))}
+          {render_visual_qa_contact_sheet_refresh_summary_card(panel.get('render_visual_qa_contact_sheet_refresh_summary', {}))}
           <div class="decision-desk-section">
             <div class="row-kicker">Render gallery {pill('review-only drafts')} {pill('no publish-ready lane')}</div>
             <div class="render-gallery-grid">

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import csv
+import importlib
+import importlib.util
 import json
 from pathlib import Path
 
@@ -115,6 +117,53 @@ def test_command_center_links_adobe_visual_qa_artifacts() -> None:
     for path in plan_artifacts:
         assert path in artifact_paths
         assert command_center.RUN_COMMANDS[path] == plan_command
+
+
+def test_command_center_links_render_visual_qa_contact_sheet_refresh_artifacts(tmp_path, monkeypatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "run" / "files"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    script = REPO / "scripts" / "build_hsd_render_visual_qa_contact_sheet_refresh_v1.py"
+    spec = importlib.util.spec_from_file_location("build_hsd_render_visual_qa_contact_sheet_refresh_v1", script)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for path in [
+        "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png",
+        "render_handoff_top_packet/review_drafts/draft_preview_story.png",
+        "render_handoff_top_packet/review_drafts/draft_preview_square.png",
+        "adobe_visual_qa_packet/drafts/draft_preview_visual_contact_sheet.png",
+        "render_handoff_top_packet/handoff_manifest.json",
+    ]:
+        source = run_dir / path
+        source.parent.mkdir(parents=True, exist_ok=True)
+        if source.suffix == ".json":
+            source.write_text(json.dumps({"status": "ready_for_review"}), encoding="utf-8")
+        else:
+            source.write_bytes(b"seeded bytes")
+    assert module.main(["--head-commit", "abc123"]) == 0
+    importlib.reload(command_center)
+
+    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    packet_command = ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_render_visual_qa_contact_sheet_refresh_v1.py"
+
+    assert "render_visual_qa_contact_sheet_refresh/README.md" in artifact_paths
+    assert "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md" in artifact_paths
+    assert "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv" in artifact_paths
+    assert "render_visual_qa_contact_sheet_refresh/manifest.json" in artifact_paths
+    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/README.md"] == packet_command
+    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md"] == packet_command
+    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv"] == packet_command
+    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/manifest.json"] == packet_command
+
+    payload = command_center.build_payload()
+    panel = payload["operator_decision_panel"]
+    refresh_summary = panel["render_visual_qa_contact_sheet_refresh_summary"]
+    assert refresh_summary["status"] == "render_visual_qa_contact_sheet_refresh_ready"
+    assert refresh_summary["latest_4x5_render_path"] == "render_handoff_top_packet/review_drafts/draft_preview_ig_feed.png"
+    assert refresh_summary["contact_sheet_path"] == "adobe_visual_qa_packet/drafts/draft_preview_visual_contact_sheet.png"
+    assert any(item["label"] == "Render QA refresh" for item in panel["file_shortcuts"])
+    assert any(item["label"] == "Render QA refresh data" for item in panel["file_shortcuts"])
 
 
 def test_command_center_links_apq001_manual_review_result_artifacts() -> None:
