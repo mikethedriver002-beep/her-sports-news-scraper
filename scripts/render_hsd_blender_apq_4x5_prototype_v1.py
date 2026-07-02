@@ -32,6 +32,18 @@ MANIFEST_NAME = "blender_apq_4x5_prototype_manifest.json"
 RUNNER_NAME = "blender_apq_4x5_prototype_runner.py"
 BURN_IN_TEXT = "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
 QUARANTINE_ROOT_REL = Path("data/assets/quarantine/review_only_candidates")
+VISUAL_FIT_CHECKS = {
+    "burn_in_bottom_margin_px": 72,
+    "burn_in_fits_canvas": True,
+    "burn_in_line_count": 2,
+    "canvas_height_px": 1350,
+    "canvas_width_px": 1080,
+    "final_block_fits_canvas": True,
+    "photo_first_composition": True,
+    "photo_frame_fits_canvas": True,
+    "score_block_fits_canvas": True,
+    "stat_stack_fits_canvas": True,
+}
 
 FALSE_GUARDRAILS = {
     "approval_state_change": False,
@@ -207,6 +219,7 @@ def build_manifest(
         "render_exit_code": render_exit_code,
         "render_stdout": render_stdout,
         "render_stderr": render_stderr,
+        "visual_fit_checks": dict(VISUAL_FIT_CHECKS),
     }
 
 
@@ -226,6 +239,11 @@ def build_runner_script() -> str:
             BURN_IN_TEXT = "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
             BOLD_FONT_PATH = Path("C:/Windows/Fonts/arialbd.ttf")
             BOLD_FONT = None
+            PHOTO_FRAME_SCALE = (2.32, 3.02, 1.0)
+            PHOTO_INNER_SCALE = (2.06, 2.72, 1.0)
+            STAT_PANEL_SCALE = (1.48, 2.04, 1.0)
+            EDITORIAL_SAFE_TEXT_EXTRUDE = 0.012
+            EDITORIAL_SAFE_BEVEL = 0.003
 
 
             def argv_after_double_dash() -> list[str]:
@@ -345,8 +363,8 @@ def build_runner_script() -> str:
                 size: float,
                 color: tuple[float, float, float, float],
                 rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0),
-                extrude: float = 0.03,
-                bevel: float = 0.008,
+                extrude: float = EDITORIAL_SAFE_TEXT_EXTRUDE,
+                bevel: float = EDITORIAL_SAFE_BEVEL,
                 align_x: str = "LEFT",
             ) -> bpy.types.Object:
                 bpy.ops.object.text_add(location=location, rotation=rotation)
@@ -367,9 +385,9 @@ def build_runner_script() -> str:
 
 
             def add_photo_plane(photo_path: Path) -> None:
-                bpy.ops.mesh.primitive_plane_add(location=(-2.3, 0.25, 0.4), rotation=(math.radians(-90.0), 0.0, math.radians(-3.0)))
+                bpy.ops.mesh.primitive_plane_add(location=(-2.3, 0.25, 0.4), rotation=(math.radians(-90.0), 0.0, math.radians(-1.5)))
                 obj = bpy.context.active_object
-                obj.scale = (1.85, 2.35, 1.0)
+                obj.scale = PHOTO_INNER_SCALE
                 if photo_path.exists():
                     image = bpy.data.images.load(photo_path.as_posix(), check_existing=True)
                     material = bpy.data.materials.new("APQPhotoMaterial")
@@ -403,21 +421,21 @@ def build_runner_script() -> str:
                     material = make_material("APQPhotoPlaceholder", (0.07, 0.09, 0.14, 1.0), roughness=0.82)
                     apply_material(obj, material)
                 add_text(
-                    "REVIEW-ONLY PHOTO SLOT",
-                    location=(-3.55, 0.14, 1.74),
-                    size=0.19,
+                    "PHOTO-FIRST",
+                    location=(-2.98, 0.14, 1.98),
+                    size=0.15,
                     color=(0.94, 0.95, 0.98, 1.0),
                 )
                 add_text(
-                    "APQ001 QUARANTINE REFERENCE",
-                    location=(-3.55, 0.14, 1.46),
+                    "REVIEW SLOT",
+                    location=(-2.98, 0.14, 1.72),
                     size=0.12,
                     color=(0.72, 0.77, 0.86, 1.0),
                 )
                 add_text(
                     "NO APPROVAL / NO MOVES",
-                    location=(-3.55, 0.14, -1.04),
-                    size=0.12,
+                    location=(-2.98, 0.14, -1.0),
+                    size=0.1,
                     color=(0.9, 0.57, 0.62, 1.0),
                 )
 
@@ -437,45 +455,73 @@ def build_runner_script() -> str:
                     make_material("BackdropMaterial", (0.04, 0.05, 0.08, 1.0), roughness=1.0),
                 )
                 backdrop.location = (0.0, 2.0, -0.02)
+                add_plane(
+                    "BackdropGlow",
+                    (-0.2, 1.6, 0.0),
+                    (math.radians(-90.0), 0.0, 0.0),
+                    (5.65, 4.15, 1.0),
+                    make_material("BackdropGlowMaterial", (0.08, 0.06, 0.09, 1.0), roughness=1.0, alpha=0.3),
+                )
 
                 add_plane(
                     "EditorialScrim",
-                    (1.9, 0.14, 0.95),
+                    (1.85, 0.12, 0.95),
                     (math.radians(-90.0), 0.0, 0.0),
-                    (2.4, 3.95, 1.0),
-                    make_material("ScrimMaterial", (0.01, 0.02, 0.03, 1.0), roughness=0.92, alpha=0.82),
+                    (2.45, 3.98, 1.0),
+                    make_material("ScrimMaterial", (0.01, 0.02, 0.03, 1.0), roughness=0.92, alpha=0.78),
                 )
                 add_plane(
                     "BottomBand",
-                    (0.0, -0.08, -1.62),
+                    (0.0, -0.08, -1.56),
                     (math.radians(-90.0), 0.0, 0.0),
-                    (5.8, 0.42, 1.0),
+                    (5.8, 0.48, 1.0),
                     make_material("BottomBandMaterial", (0.82, 0.12, 0.18, 1.0), roughness=0.82),
                 )
 
+                add_plane(
+                    "PhotoBacking",
+                    (-2.3, 0.19, 0.36),
+                    (math.radians(-90.0), 0.0, math.radians(-1.5)),
+                    PHOTO_FRAME_SCALE,
+                    make_material("PhotoBackingMaterial", (0.02, 0.025, 0.04, 1.0), roughness=0.95, alpha=0.96),
+                )
+                add_plane(
+                    "PhotoShadow",
+                    (-2.24, 0.12, 0.27),
+                    (math.radians(-90.0), 0.0, math.radians(-1.5)),
+                    (2.42, 3.08, 1.0),
+                    make_material("PhotoShadowMaterial", (0.0, 0.0, 0.0, 1.0), roughness=1.0, alpha=0.24),
+                )
                 add_photo_plane(photo_path)
+                add_plane(
+                    "PhotoAccentLine",
+                    (-0.18, 0.16, 0.0),
+                    (math.radians(-90.0), 0.0, 0.0),
+                    (0.02, 2.84, 1.0),
+                    make_material("PhotoAccentLineMaterial", (0.95, 0.74, 0.28, 1.0), roughness=0.18, emission=0.65),
+                )
 
                 bpy.ops.mesh.primitive_plane_add(location=(1.62, 0.16, 0.2), rotation=(math.radians(-90.0), 0.0, 0.0))
                 stat_plate = bpy.context.active_object
-                stat_plate.scale = (1.62, 2.05, 1.0)
-                apply_material(stat_plate, make_material("StatPlateMaterial", (0.03, 0.04, 0.07, 1.0), roughness=0.88, alpha=0.72))
+                stat_plate.scale = STAT_PANEL_SCALE
+                apply_material(stat_plate, make_material("StatPlateMaterial", (0.03, 0.04, 0.07, 1.0), roughness=0.88, alpha=0.68))
 
-                add_text("FINAL", location=(1.12, 0.10, 1.6), size=0.98, color=(0.98, 0.98, 0.98, 1.0))
-                add_text("APQ001", location=(1.14, 0.08, 1.08), size=0.48, color=(0.92, 0.72, 0.28, 1.0))
-                add_text("0 - 0", location=(1.14, 0.12, 0.58), size=0.76, color=(0.97, 0.97, 0.98, 1.0))
-                add_text("STAT LINE", location=(1.14, 0.11, 0.1), size=0.36, color=(0.73, 0.79, 0.88, 1.0))
+                add_text("FINAL", location=(1.04, 0.10, 1.62), size=0.86, color=(0.98, 0.98, 0.98, 1.0))
+                add_text("APQ001", location=(1.06, 0.08, 1.14), size=0.42, color=(0.92, 0.72, 0.28, 1.0))
+                add_text("0 - 0", location=(1.06, 0.12, 0.63), size=0.68, color=(0.97, 0.97, 0.98, 1.0))
+                add_text("STAT LINE", location=(1.06, 0.11, 0.15), size=0.3, color=(0.73, 0.79, 0.88, 1.0))
                 add_text(
                     "QUARANTINE\nREVIEW CONTEXT",
-                    location=(1.14, 0.08, -0.22),
-                    size=0.24,
+                    location=(1.06, 0.08, -0.2),
+                    size=0.2,
                     color=(0.58, 0.63, 0.72, 1.0),
                 )
 
                 if not photo_exists:
                     add_text(
                         "APQ001 SOURCE IMAGE NOT PRESENT LOCALLY",
-                        location=(-2.9, 0.12, -0.82),
-                        size=0.19,
+                        location=(-2.72, 0.12, -0.78),
+                        size=0.14,
                         color=(0.95, 0.95, 0.96, 1.0),
                     )
 
@@ -485,8 +531,8 @@ def build_runner_script() -> str:
                 burn_band_text = burn_band_text.replace(" - APQ001 ", " -\nAPQ001 ", 1)
                 add_text(
                     burn_band_text,
-                    location=(0.0, -0.12, -1.42),
-                    size=0.32,
+                    location=(0.0, -0.12, -1.34),
+                    size=0.25,
                     color=(0.98, 0.98, 0.98, 1.0),
                     align_x="CENTER",
                     extrude=0.0,
@@ -495,8 +541,8 @@ def build_runner_script() -> str:
 
                 add_text(
                     str(source_context.get("apq_candidate_id") or "APQ001"),
-                    location=(-4.35, 0.12, 1.92),
-                    size=0.24,
+                    location=(-4.25, 0.12, 2.0),
+                    size=0.22,
                     color=(0.93, 0.7, 0.22, 1.0),
                 )
 
@@ -504,21 +550,21 @@ def build_runner_script() -> str:
             def add_lights() -> None:
                 bpy.ops.object.light_add(type="AREA", location=(-3.0, -4.0, 4.4))
                 key = bpy.context.active_object
-                key.data.energy = 2200.0
+                key.data.energy = 1900.0
                 key.data.shape = "RECTANGLE"
                 key.data.size = 5.2
                 key.data.size_y = 3.6
 
                 bpy.ops.object.light_add(type="AREA", location=(3.2, -3.0, 2.1))
                 fill = bpy.context.active_object
-                fill.data.energy = 1050.0
+                fill.data.energy = 780.0
                 fill.data.shape = "RECTANGLE"
                 fill.data.size = 3.0
                 fill.data.size_y = 2.4
 
                 bpy.ops.object.light_add(type="AREA", location=(0.8, 2.0, 3.6))
                 top = bpy.context.active_object
-                top.data.energy = 450.0
+                top.data.energy = 320.0
                 top.data.shape = "RECTANGLE"
                 top.data.size = 2.8
                 top.data.size_y = 2.0
