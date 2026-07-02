@@ -4,6 +4,7 @@ import argparse
 import json
 import math
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -99,6 +100,10 @@ def output_png_path() -> Path:
     return resolve_output_dir() / PNG_NAME
 
 
+def temp_output_png_path() -> Path:
+    return resolve_output_dir() / f"{Path(PNG_NAME).stem}.pending{Path(PNG_NAME).suffix}"
+
+
 def manifest_path() -> Path:
     return resolve_output_dir() / MANIFEST_NAME
 
@@ -111,6 +116,11 @@ def write_json_file(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def remove_file_if_exists(path: Path) -> None:
+    if path.exists():
+        path.unlink()
 
 
 def make_scene_payload(scene_payload_path: Path) -> dict[str, Any]:
@@ -246,6 +256,20 @@ def build_runner_script() -> str:
                 else:
                     BOLD_FONT = bpy.data.fonts[0] if bpy.data.fonts else None
                 return BOLD_FONT
+
+
+            def choose_render_engine() -> str:
+                try:
+                    enum_items = bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items
+                    supported = {item.identifier for item in enum_items}
+                except Exception:
+                    supported = set()
+                for candidate in ("BLENDER_EEVEE", "CYCLES"):
+                    if candidate in supported:
+                        return candidate
+                if supported:
+                    return sorted(supported)[0]
+                return "CYCLES"
 
 
             def clear_scene() -> None:
@@ -504,7 +528,7 @@ def build_runner_script() -> str:
 
             def configure_render(output_png: Path) -> None:
                 scene = bpy.context.scene
-                scene.render.engine = "BLENDER_EEVEE_NEXT"
+                scene.render.engine = choose_render_engine()
                 scene.render.resolution_x = 1080
                 scene.render.resolution_y = 1350
                 scene.render.resolution_percentage = 100
@@ -656,6 +680,11 @@ def main(argv: list[str] | None = None) -> int:
         write_json_file(manifest_path(), manifest)
         return 1
 
+    final_output_png_path = output_png_path()
+    temp_output_png = temp_output_png_path()
+    remove_file_if_exists(final_output_png_path)
+    remove_file_if_exists(temp_output_png)
+
     blender_executable = resolve_blender_executable(args.blender_executable or None)
     if blender_executable is None:
         manifest = build_manifest(
@@ -695,14 +724,26 @@ def main(argv: list[str] | None = None) -> int:
             runner_file,
             scene_payload_path,
             quarantine_photo_path,
-            output_png_path(),
+            temp_output_png,
         )
-        if render_result.returncode != 0 or not output_png_path().exists():
+        traceback_in_stderr = "Traceback" in (render_result.stderr or "")
+        temp_png_exists = temp_output_png.exists()
+        png_size_ok = False
+        if temp_png_exists:
+            try:
+                png_width, png_height = verify_png_dimensions(temp_output_png)
+                png_size_ok = png_width == 1080 and png_height == 1350
+            except Exception:
+                png_size_ok = False
+        render_failed = render_result.returncode != 0 or traceback_in_stderr or not temp_png_exists or not png_size_ok
+        if render_failed:
+            remove_file_if_exists(temp_output_png)
+            remove_file_if_exists(final_output_png_path)
             manifest = build_manifest(
                 blender_executable=blender_executable,
                 blender_version=blender_version,
                 scene_payload_path=scene_payload_path,
-                output_png_path=output_png_path(),
+                output_png_path=final_output_png_path,
                 status="blender_apq_4x5_prototype_blocked_render_failed",
                 render_exit_code=render_result.returncode,
                 render_stdout=render_result.stdout,
@@ -711,26 +752,13 @@ def main(argv: list[str] | None = None) -> int:
             write_json_file(manifest_path(), manifest)
             return 1
 
-        png_width, png_height = verify_png_dimensions(output_png_path())
-        if png_width != 1080 or png_height != 1350:
-            manifest = build_manifest(
-                blender_executable=blender_executable,
-                blender_version=blender_version,
-                scene_payload_path=scene_payload_path,
-                output_png_path=output_png_path(),
-                status="blender_apq_4x5_prototype_blocked_unexpected_png_size",
-                render_exit_code=1,
-                render_stdout=render_result.stdout,
-                render_stderr=render_result.stderr,
-            )
-            write_json_file(manifest_path(), manifest)
-            return 1
+        temp_output_png.replace(final_output_png_path)
 
         manifest = build_manifest(
             blender_executable=blender_executable,
             blender_version=blender_version,
             scene_payload_path=scene_payload_path,
-            output_png_path=output_png_path(),
+            output_png_path=final_output_png_path,
             status="blender_apq_4x5_prototype_rendered",
             render_exit_code=render_result.returncode,
             render_stdout=render_result.stdout,
@@ -741,6 +769,7 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if runner_file is not None and runner_file.exists():
             runner_file.unlink()
+        remove_file_if_exists(temp_output_png)
 
 
 if __name__ == "__main__":

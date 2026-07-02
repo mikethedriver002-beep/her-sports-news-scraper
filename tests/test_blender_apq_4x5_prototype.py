@@ -151,7 +151,9 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert '--quarantine-photo-path' in script
     assert "arialbd.ttf" in script
     assert "obj.data.font = font" in script
-    assert 'scene.render.engine = "BLENDER_EEVEE_NEXT"' in script
+    assert "def choose_render_engine()" in script
+    assert 'for candidate in ("BLENDER_EEVEE", "CYCLES")' in script
+    assert 'scene.render.engine = choose_render_engine()' in script
     assert "rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0)" in script
     assert 'ShaderNodeMapping' in script
     assert 'mapping.inputs["Rotation"].default_value[2] = math.pi' in script
@@ -238,3 +240,55 @@ def test_main_writes_one_png_and_manifest_with_stubbed_blender(tmp_path: Path, m
     assert manifest["auto_publish"] is False
     assert manifest["auto_approval"] is False
     assert manifest["source_payload_schema_version"] == "blender_apq_scene_payload_contract.v1"
+
+
+def test_main_blocks_on_traceback_and_removes_stale_png(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    monkeypatch.chdir(tmp_path)
+    run_root = tmp_path / "outputs" / "local" / "tmp" / "blender_apq_4x5_prototype"
+    monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_root))
+
+    scene_payload = tmp_path / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    write_json(
+        scene_payload,
+        {
+            "schema_version": "blender_apq_scene_payload_contract.v1",
+            "canvas": {"width": 1080, "height": 1350, "aspect_ratio": "4:5"},
+            "source_context": {"source_family": "apq001_action_photo_composition_review", "apq_candidate_id": "APQ001", "quarantine_only": True, "quarantine_root": "data/assets/quarantine/review_only_candidates"},
+            "action_photo_slot": {"quarantine_path": "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/apq001_review_only_candidate.jpg", "asset_approved": False},
+            "blender_scene": {"renderer_invocation": "not_in_scope_contract_only", "render_engine_hint": "CYCLES"},
+            "burn_in": {"required": True, "text": "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE", "placement": "visible bottom-band or equivalent watermark on every review render"},
+        },
+    )
+
+    stale_png = run_root / "blender_apq_4x5_prototype_4x5.png"
+    stale_png.parent.mkdir(parents=True, exist_ok=True)
+    stale_png.write_bytes(b"stale")
+
+    fake_blender = tmp_path / "fake" / "blender.exe"
+    fake_blender.parent.mkdir(parents=True)
+    fake_blender.write_text("stub", encoding="utf-8")
+    quarantine_photo = tmp_path / "data" / "assets" / "quarantine" / "review_only_candidates" / "action_photo_candidates" / "wnba" / "apq001" / "apq001_review_only_candidate.jpg"
+    quarantine_photo.parent.mkdir(parents=True, exist_ok=True)
+    quarantine_photo.write_bytes(b"fake image")
+
+    monkeypatch.setattr(module, "resolve_scene_payload_path", lambda explicit=None: scene_payload)
+    monkeypatch.setattr(module, "resolve_blender_executable", lambda explicit=None: fake_blender)
+    monkeypatch.setattr(module, "probe_blender_version", lambda blender_executable: "Blender 5.1.0")
+    monkeypatch.setattr(module, "resolve_quarantine_photo_path", lambda scene_payload_path: quarantine_photo.resolve())
+
+    def fake_run_blender_render(blender_executable, runner_file, scene_payload_path, quarantine_photo_path, output_png_path):
+        assert output_png_path.name.endswith(".pending.png")
+        assert not stale_png.exists()
+        return type("Result", (), {"returncode": 0, "stdout": "render ok", "stderr": "Traceback (most recent call last): boom"})()
+
+    monkeypatch.setattr(module, "run_blender_render", fake_run_blender_render)
+
+    assert module.main([]) == 1
+
+    manifest = json.loads((run_root / "blender_apq_4x5_prototype_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "blender_apq_4x5_prototype_blocked_render_failed"
+    assert manifest["render_exit_code"] == 0
+    assert "Traceback" in manifest["render_stderr"]
+    assert not stale_png.exists()
+    assert not (run_root / "blender_apq_4x5_prototype.pending.png").exists()
