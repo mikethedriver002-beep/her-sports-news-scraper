@@ -1019,8 +1019,8 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                     )
                 add_text(
                     spec["variant_id"].replace("_", " ").upper(),
-                    location=(-4.2, 0.12, 2.05),
-                    size=0.18,
+                    location=(-1.88, 0.12, 2.02),
+                    size=0.13,
                     color=rgba(list(accent), 1.0),
                 )
                 burn_text = spec.get("burn_in_text") or "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
