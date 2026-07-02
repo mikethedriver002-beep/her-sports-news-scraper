@@ -142,21 +142,25 @@ def test_command_center_links_render_visual_qa_contact_sheet_refresh_artifacts(t
         else:
             source.write_bytes(b"seeded bytes")
     assert module.main(["--head-commit", "abc123"]) == 0
-    importlib.reload(command_center)
 
-    artifact_paths = {path for _, _, path in command_center.ARTIFACTS}
+    temp_spec = importlib.util.spec_from_file_location("command_center_temp_render_visual_qa_refresh", REPO / "generate_hsd_operator_command_center_v2.py")
+    assert temp_spec and temp_spec.loader
+    temp_command_center = importlib.util.module_from_spec(temp_spec)
+    temp_spec.loader.exec_module(temp_command_center)
+
+    artifact_paths = {path for _, _, path in temp_command_center.ARTIFACTS}
     packet_command = ".\\.venv\\Scripts\\python.exe scripts\\build_hsd_render_visual_qa_contact_sheet_refresh_v1.py"
 
     assert "render_visual_qa_contact_sheet_refresh/README.md" in artifact_paths
     assert "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md" in artifact_paths
     assert "render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv" in artifact_paths
     assert "render_visual_qa_contact_sheet_refresh/manifest.json" in artifact_paths
-    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/README.md"] == packet_command
-    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md"] == packet_command
-    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv"] == packet_command
-    assert command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/manifest.json"] == packet_command
+    assert temp_command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/README.md"] == packet_command
+    assert temp_command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.md"] == packet_command
+    assert temp_command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/render_visual_qa_contact_sheet_refresh.csv"] == packet_command
+    assert temp_command_center.RUN_COMMANDS["render_visual_qa_contact_sheet_refresh/manifest.json"] == packet_command
 
-    payload = command_center.build_payload()
+    payload = temp_command_center.build_payload()
     panel = payload["operator_decision_panel"]
     refresh_summary = panel["render_visual_qa_contact_sheet_refresh_summary"]
     assert refresh_summary["status"] == "render_visual_qa_contact_sheet_refresh_ready"
