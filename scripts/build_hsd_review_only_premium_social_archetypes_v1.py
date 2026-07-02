@@ -132,6 +132,11 @@ def build_archetype_specs() -> list[dict[str, Any]]:
             "archetype_name": "Score Final Editorial",
             "filename": "archetype_01_score_final_editorial.png",
             "composition_treatment_mode": "score_final_editorial_depth_stage",
+            "layout_polish_checks": {
+                "key_text_inside_canvas_intent": True,
+                "key_text_edge_clipping_allowed": False,
+                "secondary_text_on_dark_ground_intent": True,
+            },
             "accent_color": [231, 190, 92],
             "support_color": [180, 191, 209],
             "background_top": [8, 11, 18],
@@ -159,6 +164,11 @@ def build_archetype_specs() -> list[dict[str, Any]]:
             "archetype_name": "Stat / Player Spotlight Shell",
             "filename": "archetype_02_stat_player_spotlight_shell.png",
             "composition_treatment_mode": "stat_shell_safe_subject_stage",
+            "layout_polish_checks": {
+                "key_text_inside_canvas_intent": True,
+                "key_text_edge_clipping_allowed": False,
+                "secondary_text_on_dark_ground_intent": True,
+            },
             "accent_color": [255, 124, 144],
             "support_color": [189, 196, 214],
             "background_top": [17, 11, 20],
@@ -178,6 +188,11 @@ def build_archetype_specs() -> list[dict[str, Any]]:
             "archetype_name": "Breaking / News Card",
             "filename": "archetype_03_breaking_news_card.png",
             "composition_treatment_mode": "breaking_news_editorial_stage",
+            "layout_polish_checks": {
+                "key_text_inside_canvas_intent": True,
+                "key_text_edge_clipping_allowed": False,
+                "secondary_text_on_dark_ground_intent": True,
+            },
             "accent_color": [255, 91, 61],
             "support_color": [188, 196, 210],
             "background_top": [7, 10, 18],
@@ -208,6 +223,7 @@ def build_packet_specs(packet_dir: Path) -> list[dict[str, Any]]:
         row["prototype_only"] = True
         row["photo_dependency"] = False
         row["burn_in_text"] = BURN_IN
+        row["layout_polish_checks"] = dict(base.get("layout_polish_checks") or {})
         rows.append(row)
     return rows
 
@@ -280,10 +296,10 @@ def build_runner_script() -> str:
 
 
             def setup_camera() -> None:
-                bpy.ops.object.camera_add(location=(0.0, -10.8, 0.18), rotation=(math.radians(87.4), 0.0, 0.0))
+                bpy.ops.object.camera_add(location=(0.0, -8.8, 0.10), rotation=(math.radians(90.0), 0.0, 0.0))
                 camera = bpy.context.object
-                camera.data.type = "PERSP"
-                camera.data.lens = 58
+                camera.data.type = "ORTHO"
+                camera.data.ortho_scale = 9.8
                 bpy.context.scene.camera = camera
 
 
@@ -547,23 +563,23 @@ def build_runner_script() -> str:
             def build_score_final_editorial(spec: dict[str, object]) -> None:
                 accent = tuple(float(v) / 255.0 for v in spec["accent_color"]) + (1.0,)
                 support = tuple(float(v) / 255.0 for v in spec["support_color"]) + (1.0,)
-                add_panel("TopPill", (0.0, 0.55, 2.7), (3.25, 0.04, 0.22), (0.08, 0.10, 0.16, 1.0), roughness=0.18, bevel_ratio=0.012, bevel_segments=2)
-                add_text("Title", str(spec["title"]), (-2.55, 0.18, 2.7), 0.46, (0.95, 0.96, 0.99, 1.0), bold=True)
-                add_text("Kicker", str(spec["kicker"]), (2.62, 0.18, 2.72), 0.20, accent, bold=True, align_x="RIGHT")
-                add_panel("ScoreCoreBlade", (0.0, 1.08, 0.58), (1.15, 0.03, 2.18), (0.87, 0.80, 0.60, 1.0), roughness=0.34, rotation=(0.0, 0.0, math.radians(2.8)), bevel_ratio=0.01, bevel_segments=2)
-                add_panel("ScoreShadowBlade", (0.03, 1.32, 0.08), (1.28, 0.02, 2.78), (0.48, 0.57, 0.72, 1.0), roughness=0.6, rotation=(0.0, 0.0, math.radians(-1.0)), bevel_ratio=0.008, bevel_segments=2)
-                add_text("ScoreLeft", str(spec["score_left"]), (-2.35, 0.08, 1.22), 1.62, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("Dash", "-", (0.0, 0.02, 1.20), 1.10, accent, bold=True, align_x="CENTER")
-                add_text("ScoreRight", str(spec["score_right"]), (1.04, 0.08, 1.22), 1.62, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("TeamLeft", str(spec["team_left"]), (-2.35, 0.08, 0.05), 0.56, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("TeamRight", str(spec["team_right"]), (0.0, 0.08, 0.05), 0.56, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("SupportLeft", str(spec["support_left"]), (-2.35, 0.06, -0.38), 0.17, support, bold=False)
-                add_text("SupportRight", str(spec["support_right"]), (0.0, 0.06, -0.38), 0.17, support, bold=False)
-                add_panel("InsightPanel", (-0.12, 0.86, -1.42), (3.08, 0.05, 0.72), (0.06, 0.09, 0.14, 1.0), roughness=0.24, rotation=(0.0, 0.0, math.radians(-1.4)), bevel_ratio=0.012, bevel_segments=2)
-                add_text("PanelTitle", str(spec["panel_title"]), (-2.15, 0.16, -1.08), 0.28, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_panel("TopPill", (0.0, 0.55, 2.52), (3.05, 0.04, 0.18), (0.08, 0.10, 0.16, 1.0), roughness=0.18, bevel_ratio=0.012, bevel_segments=2)
+                add_text("Title", str(spec["title"]), (-2.30, 0.18, 2.52), 0.38, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Kicker", str(spec["kicker"]), (2.34, 0.18, 2.54), 0.16, accent, bold=True, align_x="RIGHT")
+                add_panel("ScoreCoreBlade", (0.0, 1.12, 0.36), (0.96, 0.03, 1.92), (0.62, 0.57, 0.44, 1.0), roughness=0.38, rotation=(0.0, 0.0, math.radians(1.6)), bevel_ratio=0.01, bevel_segments=2)
+                add_panel("ScoreShadowBlade", (0.04, 1.30, -0.06), (1.10, 0.02, 2.34), (0.35, 0.41, 0.50, 1.0), roughness=0.64, rotation=(0.0, 0.0, math.radians(-0.8)), bevel_ratio=0.008, bevel_segments=2)
+                add_text("ScoreLeft", str(spec["score_left"]), (-2.02, 0.08, 1.12), 1.28, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_text("Dash", "-", (0.0, 0.02, 1.08), 0.86, accent, bold=True, align_x="CENTER")
+                add_text("ScoreRight", str(spec["score_right"]), (1.24, 0.08, 1.12), 1.28, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_text("TeamLeft", str(spec["team_left"]), (-2.36, 0.08, 0.04), 0.38, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_text("TeamRight", str(spec["team_right"]), (1.54, 0.08, 0.04), 0.38, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_text("SupportLeft", str(spec["support_left"]), (-2.36, 0.06, -0.28), 0.13, support, bold=False)
+                add_text("SupportRight", str(spec["support_right"]), (1.54, 0.06, -0.28), 0.13, support, bold=False)
+                add_panel("InsightPanel", (0.0, 0.82, -1.34), (2.86, 0.05, 0.60), (0.06, 0.09, 0.14, 1.0), roughness=0.24, rotation=(0.0, 0.0, math.radians(-0.8)), bevel_ratio=0.012, bevel_segments=2)
+                add_text("PanelTitle", str(spec["panel_title"]), (-1.86, 0.16, -1.06), 0.24, (0.96, 0.97, 0.99, 1.0), bold=True)
                 panel_lines = list(spec["panel_lines"])
-                add_text("PanelLine1", str(panel_lines[0]), (-2.15, 0.15, -1.50), 0.19, (0.85, 0.88, 0.93, 1.0), bold=False)
-                add_text("PanelLine2", str(panel_lines[1]), (-2.15, 0.15, -1.82), 0.19, (0.85, 0.88, 0.93, 1.0), bold=False)
+                add_text("PanelLine1", str(panel_lines[0]), (-1.86, 0.15, -1.38), 0.15, (0.85, 0.88, 0.93, 1.0), bold=False)
+                add_text("PanelLine2", str(panel_lines[1]), (-1.86, 0.15, -1.64), 0.15, (0.85, 0.88, 0.93, 1.0), bold=False)
                 add_circle_arc("CourtArcOuter", (0.0, 1.35, -3.25), (4.2, 1.0, 1.7), accent, thickness=0.010)
                 add_circle_arc("CourtArcInner", (0.0, 1.24, -2.84), (1.7, 1.0, 1.2), (0.75, 0.79, 0.88, 1.0), thickness=0.009)
                 add_vertical_plane("CenterLine", (0.0, 1.10, -2.55), (0.01, 1.0, 1.2), create_emission_material("CenterLineMaterial", (1.0, 1.0, 1.0, 0.20), 0.25))
@@ -572,37 +588,37 @@ def build_runner_script() -> str:
             def build_stat_player_spotlight_shell(spec: dict[str, object]) -> None:
                 accent = tuple(float(v) / 255.0 for v in spec["accent_color"]) + (1.0,)
                 support = tuple(float(v) / 255.0 for v in spec["support_color"]) + (1.0,)
-                add_text("Title", str(spec["title"]), (-2.55, 0.10, 2.92), 0.23, accent, bold=True)
-                add_text("StatNumber", str(spec["stat_number"]), (-2.55, 0.04, 1.68), 2.18, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("StatLabel", str(spec["stat_label"]), (-2.46, 0.02, 0.86), 0.56, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("Support", str(spec["support_line"]), (-2.46, 0.02, 0.22), 0.15, support, bold=False)
-                add_panel("SubjectBackPlate", (0.82, 1.08, 0.62), (1.08, 0.03, 1.72), (0.88, 0.83, 0.90, 1.0), roughness=0.5, rotation=(0.0, 0.0, math.radians(-2.6)), bevel_ratio=0.008, bevel_segments=2)
-                add_panel("SubjectAccentPlate", (1.10, 0.96, 0.42), (1.22, 0.03, 1.18), (0.80, 0.60, 0.64, 1.0), roughness=0.42, rotation=(0.0, 0.0, math.radians(1.6)), bevel_ratio=0.008, bevel_segments=2)
-                add_panel("SafeAreaFrame", (1.82, 1.00, 0.06), (0.94, 0.05, 1.98), (0.88, 0.89, 0.94, 1.0), roughness=0.22, rotation=(0.0, 0.0, math.radians(1.2)), bevel_ratio=0.014, bevel_segments=2)
-                add_panel("SilhouetteOval", (1.92, 1.18, 0.22), (0.62, 0.02, 1.42), (0.40, 0.50, 0.68, 1.0), roughness=0.26, rotation=(0.0, 0.0, math.radians(4.6)), bevel_ratio=0.03, bevel_segments=3)
-                add_panel("SilhouetteCore", (1.84, 1.08, -0.02), (0.72, 0.03, 1.04), (0.85, 0.82, 0.79, 1.0), roughness=0.36, rotation=(0.0, 0.0, math.radians(-2.4)), bevel_ratio=0.012, bevel_segments=2)
-                add_panel("SubjectFootBlock", (2.38, 1.28, -1.66), (0.86, 0.03, 0.84), (0.62, 0.70, 0.82, 1.0), roughness=0.42, rotation=(0.0, 0.0, math.radians(-1.8)), bevel_ratio=0.008, bevel_segments=2)
-                add_text("SafeAreaLabel", str(spec["safe_area_label"]), (1.52, 0.16, -1.58), 0.22, (0.94, 0.95, 0.98, 1.0), bold=True, align_x="CENTER")
+                add_text("Title", str(spec["title"]), (-1.98, 0.10, 2.38), 0.16, accent, bold=True)
+                add_text("StatNumber", str(spec["stat_number"]), (-2.00, 0.04, 1.46), 1.46, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_text("StatLabel", str(spec["stat_label"]), (-1.88, 0.02, 0.62), 0.42, (0.96, 0.97, 0.99, 1.0), bold=True)
+                add_text("Support", str(spec["support_line"]), (-1.88, 0.02, -0.02), 0.12, support, bold=False)
+                add_panel("SubjectBackPlate", (1.42, 1.04, 0.58), (0.92, 0.03, 1.40), (0.88, 0.83, 0.90, 1.0), roughness=0.5, rotation=(0.0, 0.0, math.radians(-1.8)), bevel_ratio=0.008, bevel_segments=2)
+                add_panel("SubjectAccentPlate", (1.62, 0.94, 0.38), (0.98, 0.03, 1.00), (0.80, 0.60, 0.64, 1.0), roughness=0.42, rotation=(0.0, 0.0, math.radians(1.2)), bevel_ratio=0.008, bevel_segments=2)
+                add_panel("SafeAreaFrame", (2.28, 0.98, 0.02), (0.82, 0.05, 1.62), (0.88, 0.89, 0.94, 1.0), roughness=0.22, rotation=(0.0, 0.0, math.radians(0.8)), bevel_ratio=0.014, bevel_segments=2)
+                add_panel("SilhouetteOval", (2.30, 1.10, 0.16), (0.52, 0.02, 1.16), (0.40, 0.50, 0.68, 1.0), roughness=0.26, rotation=(0.0, 0.0, math.radians(3.4)), bevel_ratio=0.03, bevel_segments=3)
+                add_panel("SilhouetteCore", (2.24, 1.02, -0.04), (0.62, 0.03, 0.86), (0.85, 0.82, 0.79, 1.0), roughness=0.36, rotation=(0.0, 0.0, math.radians(-1.8)), bevel_ratio=0.012, bevel_segments=2)
+                add_panel("SubjectFootBlock", (2.54, 1.20, -1.60), (0.66, 0.03, 0.64), (0.62, 0.70, 0.82, 1.0), roughness=0.42, rotation=(0.0, 0.0, math.radians(-1.2)), bevel_ratio=0.008, bevel_segments=2)
+                add_text("SafeAreaLabel", str(spec["safe_area_label"]), (2.24, 0.16, -1.48), 0.15, (0.94, 0.95, 0.98, 1.0), bold=True, align_x="CENTER")
 
 
             def build_breaking_news_card(spec: dict[str, object]) -> None:
                 accent = tuple(float(v) / 255.0 for v in spec["accent_color"]) + (1.0,)
                 support = tuple(float(v) / 255.0 for v in spec["support_color"]) + (1.0,)
-                add_panel("Badge", (-2.20, 0.58, 2.82), (1.02, 0.04, 0.26), accent, roughness=0.16, bevel_ratio=0.012, bevel_segments=2)
-                add_text("BadgeText", str(spec["badge"]), (-2.20, 0.14, 2.82), 0.36, (1.0, 1.0, 1.0, 1.0), bold=True, align_x="CENTER")
-                add_panel("HeadlineCard", (0.38, 1.00, 0.82), (3.16, 0.05, 1.84), (0.05, 0.07, 0.11, 1.0), roughness=0.22, rotation=(0.0, 0.0, math.radians(-1.4)), bevel_ratio=0.012, bevel_segments=2)
-                add_panel("GlowCard", (0.60, 1.26, 0.92), (2.90, 0.02, 1.62), (0.62, 0.72, 0.88, 1.0), roughness=0.34, rotation=(0.0, 0.0, math.radians(1.2)), bevel_ratio=0.008, bevel_segments=2)
-                add_panel("AccentBar", (-2.78, 0.84, 0.78), (0.09, 0.03, 1.86), accent, roughness=0.26, bevel_ratio=0.008, bevel_segments=2)
+                add_panel("Badge", (-2.00, 0.58, 2.46), (0.82, 0.04, 0.22), accent, roughness=0.16, bevel_ratio=0.012, bevel_segments=2)
+                add_text("BadgeText", str(spec["badge"]), (-2.00, 0.14, 2.46), 0.26, (1.0, 1.0, 1.0, 1.0), bold=True, align_x="CENTER")
+                add_panel("HeadlineCard", (0.18, 1.00, 0.62), (2.82, 0.05, 1.58), (0.05, 0.07, 0.11, 1.0), roughness=0.22, rotation=(0.0, 0.0, math.radians(-0.8)), bevel_ratio=0.012, bevel_segments=2)
+                add_panel("GlowCard", (0.34, 1.18, 0.74), (2.54, 0.02, 1.40), (0.46, 0.56, 0.72, 1.0), roughness=0.40, rotation=(0.0, 0.0, math.radians(0.8)), bevel_ratio=0.008, bevel_segments=2)
+                add_panel("AccentBar", (-2.56, 0.84, 0.60), (0.07, 0.03, 1.58), accent, roughness=0.26, bevel_ratio=0.008, bevel_segments=2)
                 lines = list(spec["headline_lines"])
-                add_text("Headline1", str(lines[0]), (-1.86, 0.12, 1.56), 0.70, (0.95, 0.96, 0.99, 1.0), bold=True)
-                add_text("Headline2", str(lines[1]), (-1.86, 0.12, 0.96), 0.70, (0.95, 0.96, 0.99, 1.0), bold=True)
-                add_text("Headline3", str(lines[2]), (-1.86, 0.12, 0.36), 0.70, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Headline1", str(lines[0]), (-1.56, 0.12, 1.34), 0.54, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Headline2", str(lines[1]), (-1.56, 0.12, 0.86), 0.54, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Headline3", str(lines[2]), (-1.56, 0.12, 0.38), 0.54, (0.95, 0.96, 0.99, 1.0), bold=True)
                 body_lines = list(spec["body_lines"])
-                add_text("Body1", str(body_lines[0]), (-1.86, 0.10, -0.88), 0.24, support, bold=False)
-                add_text("Body2", str(body_lines[1]), (-1.86, 0.10, -1.22), 0.24, support, bold=False)
-                add_text("Body3", str(body_lines[2]), (-1.86, 0.10, -1.56), 0.24, support, bold=False)
-                add_panel("FooterPill", (0.08, 0.78, -2.94), (2.34, 0.04, 0.18), (0.96, 0.96, 0.96, 1.0), roughness=0.20, bevel_ratio=0.01, bevel_segments=2)
-                add_text("FooterLabel", str(spec["footer_label"]), (0.08, 0.14, -2.94), 0.14, (0.88, 0.75, 0.31, 1.0), bold=True, align_x="CENTER")
+                add_text("Body1", str(body_lines[0]), (-1.56, 0.10, -0.42), 0.17, support, bold=False)
+                add_text("Body2", str(body_lines[1]), (-1.56, 0.10, -0.66), 0.17, support, bold=False)
+                add_text("Body3", str(body_lines[2]), (-1.56, 0.10, -0.90), 0.17, support, bold=False)
+                add_panel("FooterPill", (0.06, 0.78, -2.86), (2.10, 0.04, 0.14), (0.96, 0.96, 0.96, 1.0), roughness=0.20, bevel_ratio=0.01, bevel_segments=2)
+                add_text("FooterLabel", str(spec["footer_label"]), (0.06, 0.14, -2.86), 0.11, (0.88, 0.75, 0.31, 1.0), bold=True, align_x="CENTER")
 
 
             def render_spec(spec: dict[str, object]) -> None:
@@ -849,6 +865,10 @@ def build_manifest(
         "readme_path": readme_path.as_posix(),
         "manual_review_csv_path": intake_path.as_posix(),
         "manual_review_questions": list(MANUAL_REVIEW_QUESTIONS),
+        "layout_safe_checks": {
+            row["archetype_id"]: row.get("layout_polish_checks") or {}
+            for row in rows
+        },
         "render_exit_code": render_result.returncode,
         "render_stdout": render_result.stdout,
         "render_stderr": render_result.stderr,

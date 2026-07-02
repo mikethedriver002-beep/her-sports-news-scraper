@@ -41,6 +41,8 @@ def test_build_archetype_specs_defines_three_blender_first_photo_free_routes() -
     ]
     assert all("composition_treatment_mode" in spec for spec in specs)
     assert all("self_critique" in spec for spec in specs)
+    assert all(spec["layout_polish_checks"]["key_text_inside_canvas_intent"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["key_text_edge_clipping_allowed"] is False for spec in specs)
 
 
 def test_build_runner_script_describes_blender_backed_render_pipeline() -> None:
@@ -52,8 +54,8 @@ def test_build_runner_script_describes_blender_backed_render_pipeline() -> None:
     assert 'scene.render.resolution_x = 1080' in runner
     assert 'scene.render.resolution_y = 1350' in runner
     assert 'add_area_light(' in runner
-    assert 'camera.data.type = "PERSP"' in runner
-    assert 'camera.data.lens = 58' in runner
+    assert 'camera.data.type = "ORTHO"' in runner
+    assert 'camera.data.ortho_scale = 9.8' in runner
     assert 'build_score_final_editorial(spec)' in runner
     assert 'build_stat_player_spotlight_shell(spec)' in runner
     assert 'build_breaking_news_card(spec)' in runner
@@ -109,6 +111,10 @@ def test_main_writes_review_only_blender_packet_with_stubbed_render(tmp_path: Pa
         "Which visual route should become the renderer baseline while photo sourcing is blocked?",
         "What is visually unacceptable before any publishing path?",
     ]
+    assert manifest["layout_safe_checks"]["score_final_editorial"]["key_text_inside_canvas_intent"] is True
+    assert manifest["layout_safe_checks"]["score_final_editorial"]["key_text_edge_clipping_allowed"] is False
+    assert manifest["layout_safe_checks"]["stat_player_spotlight_shell"]["key_text_edge_clipping_allowed"] is False
+    assert manifest["layout_safe_checks"]["breaking_news_card"]["secondary_text_on_dark_ground_intent"] is True
     assert "weakest commercial card" in next(
         item["self_critique"] for item in manifest["archetype_rows"] if item["archetype_id"] == "stat_player_spotlight_shell"
     )
