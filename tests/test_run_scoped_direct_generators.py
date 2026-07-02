@@ -118,6 +118,7 @@ def test_direct_run_generators_are_wired_to_shared_run_io() -> None:
         "generate_hsd_tonight_preview_bridge_v1.py": ["from hsd_run_io import", 'write_json("studio_preview_build_v2.json"', 'write_csv("studio_bundle_queue.csv"'],
         "generate_hsd_preview_quality_gate_v1.py": ["from hsd_run_io import", "write_text(\"preview_bundle_quality.md\""],
         "scripts/build_hsd_render_visual_qa_contact_sheet_refresh_v1.py": ["from hsd_run_io import", 'OUT_DIR_REL = Path("render_visual_qa_contact_sheet_refresh")', "write_json(out_json"],
+        "scripts/build_hsd_blender_apq_visual_qa_packet_v1.py": ["from hsd_run_io import", "write_csv(", "write_json("],
         "publish_hsd_guard_v1.py": ["from hsd_run_io import", "OUT_JSON = output_path("],
         "generate_hsd_operator_status_v1.py": ["from hsd_run_io import", 'output_path("operator_status.csv")'],
         "generate_hsd_bebe_daily_ops_plan_v2.py": ["from hsd_run_io import", "OUT_MD = output_path("],
