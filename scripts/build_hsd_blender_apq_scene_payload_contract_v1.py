@@ -340,7 +340,11 @@ def infer_canvas(blender_payload: Mapping[str, Any]) -> dict[str, Any]:
 def infer_quarantine_path(apq_manifest: Mapping[str, Any]) -> str:
     candidate = clean(apq_manifest.get("candidate_path"))
     if candidate:
-        return candidate
+        normalized = candidate.replace("\\", "/")
+        quarantine_marker = f"{QUARANTINE_ROOT}/"
+        if quarantine_marker in normalized:
+            return normalized[normalized.index(quarantine_marker) :]
+        return normalized
     return DEFAULT_APQ001_QUARANTINE_PATH
 
 

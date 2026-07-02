@@ -276,3 +276,16 @@ def test_sample_validator_rejects_renderer_or_asset_escalation() -> None:
     assert ("action_photo_slot.asset_approved", "must_be_false") in issue_pairs
     assert ("guardrails.publishing", "guardrail_must_remain_false") in issue_pairs
     assert ("blender_scene.renderer_invocation", "renderer_must_not_be_invoked") in issue_pairs
+
+
+def test_infer_quarantine_path_writes_repo_relative_path_for_absolute_source() -> None:
+    module = load_module()
+    absolute_path = (
+        "D:/HSD Github Repo CLone/her-sports-news-scraper/data/assets/quarantine/review_only_candidates/"
+        "action_photo_candidates/wnba/apq001/apq001_review_only_candidate.jpg"
+    )
+
+    assert module.infer_quarantine_path({"candidate_path": absolute_path}) == (
+        "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/"
+        "apq001_review_only_candidate.jpg"
+    )
