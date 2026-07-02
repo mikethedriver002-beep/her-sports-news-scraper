@@ -5,7 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -33,6 +33,14 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 def write_png(path: Path, color: tuple[int, int, int]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     Image.new("RGBA", (1080, 1350), color + (255,)).save(path, "PNG")
+
+
+def write_right_focus_source_image(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image = Image.new("RGB", (1600, 900), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((1000, 200, 1550, 800), fill=(220, 40, 50))
+    image.save(path, "PNG")
 
 
 def test_load_scene_context_degrades_without_sample_payload(tmp_path: Path, monkeypatch) -> None:
@@ -69,6 +77,18 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["source_image_texture_attempted"] is False for spec in specs)
     assert all(spec["source_image_texture_loaded"] is False for spec in specs)
     assert all(spec["source_image_texture_mode"] == "pending" for spec in specs)
+    assert [spec["burn_in_position_mode"] for spec in specs] == ["lower_safe_band", "lower_safe_band", "lower_safe_band"]
+    assert all(spec["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for spec in specs)
+    assert all(spec["source_photo_focus_region"]["y"] == 0.5 for spec in specs)
+    assert all(spec["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for spec in specs)
+    assert all(spec["review_only_derived_crop"] is False for spec in specs)
+    assert all(spec["render_source_image_path"].endswith("apq001_review_only_candidate.jpg") for spec in specs)
+    assert all(spec["layout_polish_checks"]["burn_in_inside_canvas"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["frame_clutter_reduced"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
+    assert specs[0]["layout_polish_checks"]["photo_is_hero"] is True
+    assert specs[0]["use_score_plate"] is False
+    assert specs[1]["use_editorial_scrim"] is True
 
 
 def test_build_runner_script_bakes_texture_loading_contract(tmp_path: Path, monkeypatch) -> None:
@@ -143,6 +163,9 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert manifest["source_image_texture_attempted"] is False
     assert manifest["source_image_texture_loaded"] is False
     assert manifest["source_image_texture_mode"] == "placeholder"
+    assert manifest["review_only_derived_crop"] is False
+    assert manifest["review_only_derived_crop_paths"] == []
+    assert all(row["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for row in manifest["variant_rows"])
     assert manifest["review_only"] is True
     assert manifest["artifact_only"] is True
     assert manifest["apq001_quarantine_only"] is True
@@ -168,6 +191,14 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["source_image_texture_loaded"] is False for row in manifest["variant_rows"])
     assert all(row["source_image_texture_mode"] == "placeholder_missing_source" for row in manifest["variant_rows"])
     assert all(row["placeholder_used"] is True for row in manifest["variant_rows"])
+    assert all(row["burn_in_position_mode"] == "lower_safe_band" for row in manifest["variant_rows"])
+    assert all(row["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for row in manifest["variant_rows"])
+    assert all(row["source_photo_focus_region"]["x"] >= 0.64 for row in manifest["variant_rows"])
+    assert all(row["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for row in manifest["variant_rows"])
+    assert all(row["review_only_derived_crop"] is False for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["burn_in_inside_canvas"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["frame_clutter_reduced"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
 
     for variant_id in ["variant_01_photo_anchor", "variant_02_score_drama", "variant_03_clean_editorial"]:
         assert (out_dir / f"{variant_id}.png").exists()
@@ -179,6 +210,8 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert "photo-first hero" in report
     assert "pause_for_external_visual_qa" in report
     assert "source image is missing" in report.lower()
+    assert "Review-only derived crop mode" in report
+    assert "Layout polish checks" in report
     assert [row["variant_id"] for row in rows] == [
         "variant_01_photo_anchor",
         "variant_02_score_drama",
@@ -186,3 +219,30 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     ]
     assert all(row["operator_decision"] == "" for row in rows)
     assert all(row["operator_notes"] == "" for row in rows)
+
+
+def test_derive_review_only_crop_path_creates_run_scoped_right_focus_crop(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    source = tmp_path / "source.png"
+    write_right_focus_source_image(source)
+
+    out_dir = tmp_path / "outputs" / "local" / "tmp" / "blender_apq_composition_variants"
+    spec = {
+        "variant_id": "variant_01_photo_anchor",
+        "source_photo_crop_mode": "fit_1080x1350_right_focus",
+        "source_photo_focus_region": {"x": 0.82, "y": 0.5},
+    }
+
+    crop_path, metadata = module.derive_review_only_crop_path(source, out_dir, spec)
+
+    assert crop_path.parent == out_dir / "review_only_derived_crops"
+    assert crop_path.exists()
+    assert metadata["review_only_derived_crop"] is True
+    assert metadata["source_photo_crop_mode"] == "fit_1080x1350_right_focus"
+    assert metadata["source_photo_focus_region"] == {"x": 0.82, "y": 0.5}
+    assert metadata["render_source_image_path"] == crop_path.as_posix()
+    with Image.open(crop_path) as cropped:
+        assert cropped.size == (1080, 1350)
