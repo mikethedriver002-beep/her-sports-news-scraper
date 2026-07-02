@@ -176,6 +176,7 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert 'ShaderNodeEmission' in script
     assert 'texture.interpolation = "Cubic"' in script
     assert 'mapping.inputs["Rotation"].default_value[2] = math.pi' in script
+    assert 'location=(-2.3, 0.06, 0.4)' in script
     assert "PHOTO_FRAME_SCALE = (2.32, 3.02, 1.0)" in script
     assert "STAT_PANEL_SCALE = (1.48, 2.04, 1.0)" in script
     assert 'add_text("FINAL", location=(1.04, 0.10, 1.62), size=0.86' in script
@@ -185,6 +186,7 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert 'size=0.25' in script
     assert "PhotoBacking" in script
     assert 'PhotoAccentLineMaterial' in script
+    assert '(-2.28, 0.22, 0.35)' in script
     assert 'emission.inputs["Strength"].default_value = 1.1' in script
     assert 'EDITORIAL_SAFE_TEXT_EXTRUDE = 0.0' in script
     assert 'EDITORIAL_SAFE_BEVEL = 0.0' in script

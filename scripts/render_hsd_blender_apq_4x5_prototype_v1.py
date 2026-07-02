@@ -409,7 +409,7 @@ def build_runner_script() -> str:
 
 
             def add_photo_plane(photo_path: Path) -> None:
-                bpy.ops.mesh.primitive_plane_add(location=(-2.3, 0.25, 0.4), rotation=(math.radians(-90.0), 0.0, math.radians(-1.5)))
+                bpy.ops.mesh.primitive_plane_add(location=(-2.3, 0.06, 0.4), rotation=(math.radians(-90.0), 0.0, math.radians(-1.5)))
                 obj = bpy.context.active_object
                 obj.scale = PHOTO_INNER_SCALE
                 if photo_path.exists():
@@ -499,22 +499,22 @@ def build_runner_script() -> str:
 
                 add_plane(
                     "PhotoBacking",
-                    (-2.28, 0.19, 0.35),
+                    (-2.28, 0.22, 0.35),
                     (math.radians(-90.0), 0.0, math.radians(-1.5)),
                     (2.28, 2.98, 1.0),
-                    make_material("PhotoBackingMaterial", (0.03, 0.035, 0.05, 1.0), roughness=1.0),
+                    make_material("PhotoBackingMaterial", (0.03, 0.035, 0.05, 1.0), roughness=1.0, alpha=0.28),
                 )
                 add_plane(
                     "PhotoShadow",
-                    (-2.22, 0.11, 0.26),
+                    (-2.22, 0.28, 0.26),
                     (math.radians(-90.0), 0.0, math.radians(-1.5)),
                     (2.38, 3.0, 1.0),
-                    make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0),
+                    make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0, alpha=0.16),
                 )
                 add_photo_plane(photo_path)
                 add_plane(
                     "PhotoAccentLine",
-                    (-0.1, 0.16, 0.0),
+                    (-0.1, 0.08, 0.0),
                     (math.radians(-90.0), 0.0, 0.0),
                     (0.02, 2.84, 1.0),
                     make_material("PhotoAccentLineMaterial", (0.95, 0.74, 0.28, 1.0), roughness=0.18, emission=0.9),
