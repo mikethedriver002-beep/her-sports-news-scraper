@@ -114,6 +114,7 @@ def test_build_manifest_contains_required_review_only_false_fields(tmp_path: Pat
     assert manifest["publishing"] is False
     assert manifest["auto_publish"] is False
     assert manifest["auto_approval"] is False
+    assert manifest["visual_fit_checks"]["photo_visibility_intent"] is True
     assert manifest["visual_fit_checks"]["burn_in_fits_canvas"] is True
     assert manifest["visual_fit_checks"]["photo_first_composition"] is True
     assert manifest["visual_fit_checks"]["stat_stack_fits_canvas"] is True
@@ -169,6 +170,7 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert 'size=0.25' in script
     assert "PhotoBacking" in script
     assert 'PhotoAccentLineMaterial' in script
+    assert 'principled.inputs["Emission Strength"].default_value = 0.32' in script
 
 
 def test_resolve_quarantine_photo_path_rejects_paths_outside_quarantine_root(tmp_path: Path, monkeypatch) -> None:
@@ -259,6 +261,7 @@ def test_main_writes_one_png_and_manifest_with_stubbed_blender(tmp_path: Path, m
         "canvas_height_px": 1350,
         "canvas_width_px": 1080,
         "final_block_fits_canvas": True,
+        "photo_visibility_intent": True,
         "photo_first_composition": True,
         "photo_frame_fits_canvas": True,
         "score_block_fits_canvas": True,

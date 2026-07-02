@@ -39,6 +39,7 @@ VISUAL_FIT_CHECKS = {
     "canvas_height_px": 1350,
     "canvas_width_px": 1080,
     "final_block_fits_canvas": True,
+    "photo_visibility_intent": True,
     "photo_first_composition": True,
     "photo_frame_fits_canvas": True,
     "score_block_fits_canvas": True,
@@ -412,6 +413,10 @@ def build_runner_script() -> str:
                     links.new(texture.outputs["Alpha"], principled.inputs["Alpha"])
                     links.new(principled.outputs["BSDF"], output.inputs["Surface"])
                     principled.inputs["Roughness"].default_value = 0.35
+                    if "Emission Strength" in principled.inputs:
+                        principled.inputs["Emission Strength"].default_value = 0.32
+                    elif "Emission" in principled.inputs:
+                        principled.inputs["Emission"].default_value = (0.32, 0.32, 0.32, 1.0)
                     if "Specular IOR Level" in principled.inputs:
                         principled.inputs["Specular IOR Level"].default_value = 0.35
                     elif "Specular" in principled.inputs:
@@ -480,22 +485,22 @@ def build_runner_script() -> str:
 
                 add_plane(
                     "PhotoBacking",
-                    (-2.3, 0.19, 0.36),
+                    (-2.28, 0.19, 0.35),
                     (math.radians(-90.0), 0.0, math.radians(-1.5)),
-                    PHOTO_FRAME_SCALE,
-                    make_material("PhotoBackingMaterial", (0.02, 0.025, 0.04, 1.0), roughness=0.95, alpha=0.96),
+                    (2.28, 2.98, 1.0),
+                    make_material("PhotoBackingMaterial", (0.02, 0.025, 0.04, 1.0), roughness=0.95, alpha=0.08),
                 )
                 add_plane(
                     "PhotoShadow",
-                    (-2.24, 0.12, 0.27),
+                    (-2.22, 0.11, 0.26),
                     (math.radians(-90.0), 0.0, math.radians(-1.5)),
-                    (2.42, 3.08, 1.0),
-                    make_material("PhotoShadowMaterial", (0.0, 0.0, 0.0, 1.0), roughness=1.0, alpha=0.24),
+                    (2.38, 3.0, 1.0),
+                    make_material("PhotoShadowMaterial", (0.0, 0.0, 0.0, 1.0), roughness=1.0, alpha=0.03),
                 )
                 add_photo_plane(photo_path)
                 add_plane(
                     "PhotoAccentLine",
-                    (-0.18, 0.16, 0.0),
+                    (-0.1, 0.16, 0.0),
                     (math.radians(-90.0), 0.0, 0.0),
                     (0.02, 2.84, 1.0),
                     make_material("PhotoAccentLineMaterial", (0.95, 0.74, 0.28, 1.0), roughness=0.18, emission=0.65),
