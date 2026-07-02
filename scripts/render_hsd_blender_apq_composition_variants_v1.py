@@ -42,6 +42,7 @@ REPORT_NAME = "variant_comparison_report.md"
 CSV_NAME = "manual_variant_review_intake.csv"
 CONTACT_SHEET_NAME = "contact_sheet.png"
 SOURCE_BURN_IN_TEXT = "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
+TEXTURE_STATUS_PREFIX = "HSD_TEXTURE_STATUS:"
 
 FALSE_GUARDRAILS = {
     "approval_state_change": False,
@@ -190,6 +191,56 @@ def resolve_quarantine_image_path(scene_payload: dict[str, Any]) -> Path:
     return resolved
 
 
+def parse_texture_status(stdout: str, source_image_present: bool) -> dict[str, Any]:
+    fallback_mode = "placeholder_missing_source" if not source_image_present else "placeholder_texture_status_unavailable"
+    fallback = {
+        "source_image_texture_attempted": bool(source_image_present),
+        "source_image_texture_loaded": False,
+        "source_image_texture_mode": fallback_mode,
+        "source_image_texture_error": "",
+    }
+    for line in reversed(stdout.splitlines()):
+        if not line.startswith(TEXTURE_STATUS_PREFIX):
+            continue
+        payload = line[len(TEXTURE_STATUS_PREFIX) :].strip()
+        try:
+            parsed = json.loads(payload)
+        except Exception:
+            return fallback
+        if not isinstance(parsed, dict):
+            return fallback
+        merged = {**fallback, **parsed}
+        merged["source_image_texture_attempted"] = bool(merged.get("source_image_texture_attempted"))
+        merged["source_image_texture_loaded"] = bool(merged.get("source_image_texture_loaded"))
+        merged["source_image_texture_mode"] = str(merged.get("source_image_texture_mode") or fallback_mode)
+        merged["source_image_texture_error"] = str(merged.get("source_image_texture_error") or "")
+        return merged
+    return fallback
+
+
+def read_texture_status_file(output_png_path: Path) -> dict[str, Any] | None:
+    texture_status_path = output_png_path.with_suffix(".texture_status.json")
+    if not texture_status_path.exists():
+        return None
+    try:
+        payload = json.loads(texture_status_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    finally:
+        try:
+            texture_status_path.unlink()
+        except Exception:
+            pass
+    if not isinstance(payload, dict):
+        return None
+    return {
+        "source_image_texture_attempted": bool(payload.get("source_image_texture_attempted")),
+        "source_image_texture_loaded": bool(payload.get("source_image_texture_loaded")),
+        "source_image_texture_mode": str(payload.get("source_image_texture_mode") or ""),
+        "source_image_texture_error": str(payload.get("source_image_texture_error") or ""),
+    }
+
+
 def write_json_file(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
@@ -245,6 +296,10 @@ def build_variant_specs(scene_context: dict[str, Any]) -> list[dict[str, Any]]:
                 "render_stdout": "",
                 "render_stderr": "",
                 "output_png_path": "",
+                "source_image_texture_attempted": source_image_present,
+                "source_image_texture_loaded": False,
+                "source_image_texture_mode": "pending",
+                "source_image_texture_error": "",
                 "placeholder_used": not source_image_present,
             }
         )
@@ -283,6 +338,7 @@ def build_report(payload: dict[str, Any]) -> str:
         ]
     )
     source_status = "present" if payload["source_image_present"] else "missing"
+    texture_status = "loaded" if payload.get("source_image_texture_loaded") else "placeholder"
     recommendation = (
         "The photo-anchor variant should usually drive the next lane if the source image is usable, because it tests the most useful first-step composition."
         if payload["source_image_present"]
@@ -302,6 +358,9 @@ This packet is review-only, artifact-only, and quarantine-only. It creates exact
 - Scene payload status: `{payload['scene_payload_status']}`
 - Source image present: `{payload['source_image_present']}`
 - Source image path: `{payload['source_image_path']}`
+- Source image texture attempted: `{payload['source_image_texture_attempted']}`
+- Source image texture loaded: `{payload['source_image_texture_loaded']}`
+- Source image texture mode: `{payload['source_image_texture_mode']}`
 - Blender version: `{payload['blender_version']}`
 
 ## Comparison
@@ -335,6 +394,7 @@ Use the manual intake CSV to record the next decision with one of:
 - The burn-in remains visible in-canvas for every variant.
 - The variants intentionally explore photo-first, score-led, and editorial directions while staying review-only.
 - Source image status for this run: `{source_status}`.
+- Texture status for this run: `{texture_status}`.
 """
 
 
@@ -412,6 +472,8 @@ def build_manifest(
     source_image_present = bool(scene_context["source_image_present"])
     source_payload_present = bool(scene_context["scene_payload_present"])
     render_exit_codes = {row["variant_id"]: row["render_exit_code"] for row in variant_rows}
+    source_image_texture_attempted = any(bool(row.get("source_image_texture_attempted")) for row in variant_rows)
+    source_image_texture_loaded = all(bool(row.get("source_image_texture_loaded")) for row in variant_rows) if source_image_present else False
     return {
         "version": VERSION,
         "status": "blender_apq_composition_variants_ready" if all(code == 0 for code in render_exit_codes.values()) else "blender_apq_composition_variants_ready_with_render_warnings",
@@ -424,6 +486,9 @@ def build_manifest(
         "scene_payload_status": scene_context["scene_payload_status"],
         "source_image_path": scene_context["source_image_path"].as_posix(),
         "source_image_present": source_image_present,
+        "source_image_texture_attempted": source_image_texture_attempted,
+        "source_image_texture_loaded": source_image_texture_loaded,
+        "source_image_texture_mode": "loaded" if source_image_texture_loaded else "placeholder",
         "source_auto_enabled": False,
         "output_dir": resolve_output_dir().as_posix(),
         "manifest_path": (resolve_output_dir() / MANIFEST_NAME).as_posix(),
@@ -458,7 +523,7 @@ def build_manifest(
 
 
 def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
-    baked_specs = json.dumps(variant_specs, indent=2, sort_keys=True)
+    baked_specs = textwrap.indent(json.dumps(variant_specs, indent=2, sort_keys=True), "            ")
     return (
         textwrap.dedent(
             f'''
@@ -474,6 +539,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
 
             BOLD_FONT_PATH = Path("C:/Windows/Fonts/arialbd.ttf")
             BOLD_FONT = None
+            TEXTURE_STATUS_PREFIX = {json.dumps(TEXTURE_STATUS_PREFIX)}
             BAKED_SPECS = json.loads(r"""{baked_specs}""")
 
 
@@ -585,6 +651,37 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 return material
 
 
+            def make_photo_texture_material(name: str, image: bpy.types.Image) -> bpy.types.Material:
+                material = bpy.data.materials.new(name)
+                material.use_nodes = True
+                material.blend_method = "BLEND"
+                if hasattr(material, "shadow_method"):
+                    material.shadow_method = "HASHED"
+                nodes = material.node_tree.nodes
+                links = material.node_tree.links
+                for node in list(nodes):
+                    nodes.remove(node)
+                tex_coord = nodes.new("ShaderNodeTexCoord")
+                mapping = nodes.new("ShaderNodeMapping")
+                texture = nodes.new("ShaderNodeTexImage")
+                principled = nodes.new("ShaderNodeBsdfPrincipled")
+                output = nodes.new("ShaderNodeOutputMaterial")
+                texture.image = image
+                texture.interpolation = "Cubic"
+                mapping.inputs["Rotation"].default_value[2] = math.pi
+                links.new(tex_coord.outputs["UV"], mapping.inputs["Vector"])
+                links.new(mapping.outputs["Vector"], texture.inputs["Vector"])
+                links.new(texture.outputs["Color"], principled.inputs["Base Color"])
+                if "Alpha" in texture.outputs and "Alpha" in principled.inputs:
+                    links.new(texture.outputs["Alpha"], principled.inputs["Alpha"])
+                if "Roughness" in principled.inputs:
+                    principled.inputs["Roughness"].default_value = 0.78
+                if "Specular IOR Level" in principled.inputs:
+                    principled.inputs["Specular IOR Level"].default_value = 0.18
+                links.new(principled.outputs["BSDF"], output.inputs["Surface"])
+                return material
+
+
             def apply_material(obj: bpy.types.Object, material: bpy.types.Material) -> None:
                 if obj.data and hasattr(obj.data, "materials"):
                     obj.data.materials.clear()
@@ -628,11 +725,17 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 return obj
 
 
-            def add_photo_or_placeholder(spec: dict[str, object], source_photo_path: Path, source_image_present: bool) -> None:
+            def add_photo_or_placeholder(spec: dict[str, object], source_photo_path: Path, source_image_present: bool) -> dict[str, object]:
                 photo_frame = spec.get("photo_frame", {{}}) if isinstance(spec.get("photo_frame"), dict) else {{}}
                 location = tuple(photo_frame.get("location") or (-2.3, 0.16, 0.32))
                 scale = tuple(photo_frame.get("scale") or (2.2, 2.8, 1.0))
                 rotation_z = math.radians(float(photo_frame.get("rotation_z") or -1.0))
+                texture_status = {{
+                    "source_image_texture_attempted": bool(source_image_present),
+                    "source_image_texture_loaded": False,
+                    "source_image_texture_mode": "placeholder_missing_source" if not source_image_present else "placeholder_texture_load_failed",
+                    "source_image_texture_error": "",
+                }}
                 frame = add_plane(
                     "PhotoFrame",
                     location,
@@ -642,28 +745,37 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 )
                 frame.location = location
                 if source_image_present and source_photo_path.exists():
-                    image = bpy.data.images.load(source_photo_path.as_posix(), check_existing=True)
-                    material = bpy.data.materials.new("APQSourcePhotoMaterial")
-                    material.use_nodes = True
-                    material.blend_method = "OPAQUE"
-                    nodes = material.node_tree.nodes
-                    links = material.node_tree.links
-                    for node in list(nodes):
-                        nodes.remove(node)
-                    coords = nodes.new("ShaderNodeTexCoord")
-                    mapping = nodes.new("ShaderNodeMapping")
-                    texture = nodes.new("ShaderNodeTexImage")
-                    texture.image = image
-                    texture.interpolation = "Cubic"
-                    emission = nodes.new("ShaderNodeEmission")
-                    output = nodes.new("ShaderNodeOutputMaterial")
-                    mapping.inputs["Rotation"].default_value[2] = math.pi
-                    links.new(coords.outputs["UV"], mapping.inputs["Vector"])
-                    links.new(mapping.outputs["Vector"], texture.inputs["Vector"])
-                    links.new(texture.outputs["Color"], emission.inputs["Color"])
-                    emission.inputs["Strength"].default_value = 1.1
-                    links.new(emission.outputs["Emission"], output.inputs["Surface"])
-                    apply_material(frame, material)
+                    try:
+                        image = bpy.data.images.load(source_photo_path.as_posix(), check_existing=True)
+                        image_size = tuple(getattr(image, "size", (0, 0)))
+                        if not image_size[0] or not image_size[1]:
+                            raise RuntimeError("loaded_image_has_no_dimensions")
+                        photo_plane = add_plane(
+                            "PhotoTexture",
+                            (location[0], location[1] - 0.014, location[2]),
+                            (math.radians(-90.0), 0.0, rotation_z),
+                            (scale[0] * 0.92, scale[1] * 0.92, 1.0),
+                            make_photo_texture_material("APQSourcePhotoMaterial", image),
+                        )
+                        photo_plane.location = (location[0], location[1] - 0.014, location[2])
+                        texture_status["source_image_texture_loaded"] = True
+                        texture_status["source_image_texture_mode"] = "loaded"
+                    except Exception as exc:
+                        texture_status["source_image_texture_error"] = str(exc)
+                        placeholder = make_material("APQSourcePlaceholder", tuple(spec.get("accent_color") or [220, 120, 90]) + (1.0,), roughness=0.84, alpha=0.94)
+                        apply_material(frame, placeholder)
+                        add_text(
+                            "SOURCE IMAGE\\nFAILED TO LOAD",
+                            location=(location[0] - 0.62, location[1] + 0.1, location[2] + 0.95),
+                            size=0.16,
+                            color=(0.98, 0.97, 0.95, 1.0),
+                        )
+                        add_text(
+                            "PLACEHOLDER ONLY",
+                            location=(location[0] - 0.62, location[1] + 0.1, location[2] - 0.08),
+                            size=0.12,
+                            color=(0.98, 0.91, 0.79, 1.0),
+                        )
                 else:
                     placeholder = make_material("APQSourcePlaceholder", tuple(spec.get("accent_color") or [220, 120, 90]) + (1.0,), roughness=0.84, alpha=0.94)
                     apply_material(frame, placeholder)
@@ -679,9 +791,10 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                         size=0.12,
                         color=(0.98, 0.91, 0.79, 1.0),
                     )
+                return texture_status
 
 
-            def add_scene(spec: dict[str, object], source_photo_path: Path, source_image_present: bool) -> None:
+            def add_scene(spec: dict[str, object], source_photo_path: Path, source_image_present: bool) -> dict[str, object]:
                 background = tuple(spec.get("background_color") or [13, 17, 24])
                 accent = tuple(spec.get("accent_color") or [235, 189, 72])
                 subtle = tuple(spec.get("subtle_color") or [201, 209, 222])
@@ -713,7 +826,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                     (2.44, 3.02, 1.0),
                     make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0, alpha=0.16),
                 )
-                add_photo_or_placeholder(spec, source_photo_path, source_image_present)
+                texture_status = add_photo_or_placeholder(spec, source_photo_path, source_image_present)
                 add_plane(
                     "AccentLine",
                     (-0.08, 0.08, 0.0),
@@ -758,6 +871,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                     color=(0.98, 0.98, 0.98, 1.0),
                     align_x="CENTER",
                 )
+                return texture_status
 
 
             def add_lights(spec: dict[str, object]) -> None:
@@ -845,9 +959,12 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 clear_scene()
                 set_world(list(variant.get("background_color") or [13, 17, 24]))
                 setup_camera(variant)
-                add_scene(variant, source_image_path, source_image_present)
+                texture_status = add_scene(variant, source_image_path, source_image_present)
                 add_lights(variant)
                 configure_render(Path(args.output_png))
+                texture_status_path = Path(args.output_png).with_suffix(".texture_status.json")
+                texture_status_path.write_text(json.dumps(texture_status, indent=2, sort_keys=True), encoding="utf-8")
+                print(f"{TEXTURE_STATUS_PREFIX}{{json.dumps(texture_status, sort_keys=True)}}")
                 bpy.ops.render.render(write_still=True)
                 return 0
 
@@ -1004,10 +1121,12 @@ def main(argv: list[str] | None = None) -> int:
             render_exit_code = 0
             render_stdout = ""
             render_stderr = "blender_unavailable_or_skipped"
+            texture_status = parse_texture_status(render_stdout, bool(scene_context["source_image_present"]))
         else:
             render_exit_code = int(result.returncode)
             render_stdout = result.stdout
             render_stderr = result.stderr
+            texture_status = read_texture_status_file(output_png_path) or parse_texture_status(render_stdout, bool(scene_context["source_image_present"]))
             if render_exit_code != 0 or not output_png_path.exists():
                 finalize_png(output_png_path, spec, bool(scene_context["source_image_present"]))
         spec = {
@@ -1016,6 +1135,8 @@ def main(argv: list[str] | None = None) -> int:
             "render_exit_code": render_exit_code,
             "render_stdout": render_stdout,
             "render_stderr": render_stderr,
+            **texture_status,
+            "placeholder_used": not bool(texture_status.get("source_image_texture_loaded")),
         }
         variant_rows.append(spec)
 

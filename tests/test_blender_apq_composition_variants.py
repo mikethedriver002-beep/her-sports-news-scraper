@@ -66,6 +66,26 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["source_image_present"] is False for spec in specs)
     assert all(spec["canvas"] == {"width": 1080, "height": 1350} for spec in specs)
     assert all(spec["burn_in_text"] == "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE" for spec in specs)
+    assert all(spec["source_image_texture_attempted"] is False for spec in specs)
+    assert all(spec["source_image_texture_loaded"] is False for spec in specs)
+    assert all(spec["source_image_texture_mode"] == "pending" for spec in specs)
+
+
+def test_build_runner_script_bakes_texture_loading_contract(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    scene_payload = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    context = module.load_scene_context(scene_payload)
+    specs = module.build_variant_specs(context)
+    runner = module.build_runner_script(specs)
+
+    assert "bpy.data.images.load" in runner
+    assert "ShaderNodeTexImage" in runner
+    assert "ShaderNodeBsdfPrincipled" in runner
+    assert module.TEXTURE_STATUS_PREFIX in runner
+    assert ".texture_status.json" in runner
 
 
 def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp_path: Path, monkeypatch) -> None:
@@ -94,7 +114,14 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
             "variant_03_clean_editorial": (26, 30, 36),
         }
         write_png(output_png_path, colors[variant_id])
-        return type("Result", (), {"returncode": 0, "stdout": f"{variant_id} ok", "stderr": ""})()
+        status = {
+            "source_image_texture_attempted": False,
+            "source_image_texture_loaded": False,
+            "source_image_texture_mode": "placeholder_missing_source",
+            "source_image_texture_error": "",
+        }
+        stdout = f"variant={variant_id}\n{module.TEXTURE_STATUS_PREFIX}{json.dumps(status, sort_keys=True)}\n"
+        return type("Result", (), {"returncode": 0, "stdout": stdout, "stderr": ""})()
 
     monkeypatch.setattr(module, "resolve_blender_executable", lambda explicit=None: fake_blender)
     monkeypatch.setattr(module, "probe_blender_version", fake_probe_blender_version)
@@ -113,6 +140,9 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert manifest["output_dimensions"] == {"width": 1080, "height": 1350}
     assert manifest["scene_payload_present"] is False
     assert manifest["source_image_present"] is False
+    assert manifest["source_image_texture_attempted"] is False
+    assert manifest["source_image_texture_loaded"] is False
+    assert manifest["source_image_texture_mode"] == "placeholder"
     assert manifest["review_only"] is True
     assert manifest["artifact_only"] is True
     assert manifest["apq001_quarantine_only"] is True
@@ -134,6 +164,10 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert manifest["contact_sheet_created"] is True
     assert manifest["contact_sheet_path"].endswith("contact_sheet.png")
     assert manifest["contact_sheet_source_count"] == 3
+    assert all(row["source_image_texture_attempted"] is False for row in manifest["variant_rows"])
+    assert all(row["source_image_texture_loaded"] is False for row in manifest["variant_rows"])
+    assert all(row["source_image_texture_mode"] == "placeholder_missing_source" for row in manifest["variant_rows"])
+    assert all(row["placeholder_used"] is True for row in manifest["variant_rows"])
 
     for variant_id in ["variant_01_photo_anchor", "variant_02_score_drama", "variant_03_clean_editorial"]:
         assert (out_dir / f"{variant_id}.png").exists()
