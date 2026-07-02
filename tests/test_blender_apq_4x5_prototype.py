@@ -77,6 +77,11 @@ def test_make_scene_payload_reflects_contract_sample_and_review_only_context(tmp
     assert payload["blender_scene"]["renderer_invocation"] == "not_in_scope_contract_only"
     assert payload["burn_in"]["required"] is True
     assert payload["burn_in"]["text"] == "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
+    assert payload["render_quality_checks"]["engine_preference"] == "CYCLES_FIRST"
+    assert payload["render_quality_checks"]["cycles_samples"] == 128
+    assert payload["render_quality_checks"]["cycles_denoise_enabled"] is True
+    assert payload["render_quality_checks"]["photo_material_kind"] == "image_emission_unlit"
+    assert payload["render_quality_checks"]["text_crisp_intent"] is True
     assert payload["review_only_guardrails"]["publish_ready"] is False
     assert payload["review_only_guardrails"]["auto_publish"] is False
     assert payload["review_only_guardrails"]["production_renderer_replacement"] is False
@@ -114,6 +119,11 @@ def test_build_manifest_contains_required_review_only_false_fields(tmp_path: Pat
     assert manifest["publishing"] is False
     assert manifest["auto_publish"] is False
     assert manifest["auto_approval"] is False
+    assert manifest["render_quality_checks"]["engine_preference"] == "CYCLES_FIRST"
+    assert manifest["render_quality_checks"]["cycles_samples"] == 128
+    assert manifest["render_quality_checks"]["cycles_denoise_enabled"] is True
+    assert manifest["render_quality_checks"]["photo_material_kind"] == "image_emission_unlit"
+    assert manifest["render_quality_checks"]["text_crisp_intent"] is True
     assert manifest["visual_fit_checks"]["photo_visibility_intent"] is True
     assert manifest["visual_fit_checks"]["burn_in_fits_canvas"] is True
     assert manifest["visual_fit_checks"]["photo_first_composition"] is True
@@ -156,10 +166,15 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert "arialbd.ttf" in script
     assert "obj.data.font = font" in script
     assert "def choose_render_engine()" in script
-    assert 'for candidate in ("BLENDER_EEVEE", "CYCLES")' in script
+    assert 'for candidate in ("CYCLES", "BLENDER_EEVEE")' in script
+    assert "def choose_cycles_denoiser(scene: bpy.types.Scene) -> str:" in script
     assert 'scene.render.engine = choose_render_engine()' in script
+    assert 'scene.cycles.samples = 128' in script
+    assert 'scene.cycles.use_denoising = True' in script
     assert "rotation: tuple[float, float, float] = (math.radians(90.0), 0.0, 0.0)" in script
     assert 'ShaderNodeMapping' in script
+    assert 'ShaderNodeEmission' in script
+    assert 'texture.interpolation = "Cubic"' in script
     assert 'mapping.inputs["Rotation"].default_value[2] = math.pi' in script
     assert "PHOTO_FRAME_SCALE = (2.32, 3.02, 1.0)" in script
     assert "STAT_PANEL_SCALE = (1.48, 2.04, 1.0)" in script
@@ -170,7 +185,9 @@ def test_build_runner_script_uses_orthographic_camera_and_uv_rotation() -> None:
     assert 'size=0.25' in script
     assert "PhotoBacking" in script
     assert 'PhotoAccentLineMaterial' in script
-    assert 'principled.inputs["Emission Strength"].default_value = 0.32' in script
+    assert 'emission.inputs["Strength"].default_value = 1.1' in script
+    assert 'EDITORIAL_SAFE_TEXT_EXTRUDE = 0.0' in script
+    assert 'EDITORIAL_SAFE_BEVEL = 0.0' in script
 
 
 def test_resolve_quarantine_photo_path_rejects_paths_outside_quarantine_root(tmp_path: Path, monkeypatch) -> None:
@@ -254,6 +271,11 @@ def test_main_writes_one_png_and_manifest_with_stubbed_blender(tmp_path: Path, m
     assert manifest["auto_publish"] is False
     assert manifest["auto_approval"] is False
     assert manifest["source_payload_schema_version"] == "blender_apq_scene_payload_contract.v1"
+    assert manifest["render_quality_checks"]["engine_preference"] == "CYCLES_FIRST"
+    assert manifest["render_quality_checks"]["cycles_samples"] == 128
+    assert manifest["render_quality_checks"]["cycles_denoise_enabled"] is True
+    assert manifest["render_quality_checks"]["photo_material_kind"] == "image_emission_unlit"
+    assert manifest["render_quality_checks"]["text_crisp_intent"] is True
     assert manifest["visual_fit_checks"] == {
         "burn_in_bottom_margin_px": 72,
         "burn_in_fits_canvas": True,

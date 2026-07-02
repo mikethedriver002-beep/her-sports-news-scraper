@@ -46,6 +46,15 @@ VISUAL_FIT_CHECKS = {
     "stat_stack_fits_canvas": True,
 }
 
+RENDER_QUALITY_CHECKS = {
+    "engine_preference": "CYCLES_FIRST",
+    "cycles_samples": 128,
+    "cycles_denoise_enabled": True,
+    "photo_material_kind": "image_emission_unlit",
+    "text_crisp_intent": True,
+    "noise_reduction_intent": "flat_poster_layers_plus_cycles_denoise",
+}
+
 FALSE_GUARDRAILS = {
     "approval_state_change": False,
     "asset_downloads": False,
@@ -180,6 +189,7 @@ def make_scene_payload(scene_payload_path: Path) -> dict[str, Any]:
             "text": str(burn_in.get("text") or BURN_IN_TEXT),
             "placement": str(burn_in.get("placement") or "bottom band watermark"),
         },
+        "render_quality_checks": dict(RENDER_QUALITY_CHECKS),
         "review_only_guardrails": dict(FALSE_GUARDRAILS),
     }
 
@@ -217,6 +227,7 @@ def build_manifest(
         "publishing": False,
         "auto_publish": False,
         "auto_approval": False,
+        "render_quality_checks": dict(RENDER_QUALITY_CHECKS),
         "render_exit_code": render_exit_code,
         "render_stdout": render_stdout,
         "render_stderr": render_stderr,
@@ -243,8 +254,8 @@ def build_runner_script() -> str:
             PHOTO_FRAME_SCALE = (2.32, 3.02, 1.0)
             PHOTO_INNER_SCALE = (2.06, 2.72, 1.0)
             STAT_PANEL_SCALE = (1.48, 2.04, 1.0)
-            EDITORIAL_SAFE_TEXT_EXTRUDE = 0.012
-            EDITORIAL_SAFE_BEVEL = 0.003
+            EDITORIAL_SAFE_TEXT_EXTRUDE = 0.0
+            EDITORIAL_SAFE_BEVEL = 0.0
 
 
             def argv_after_double_dash() -> list[str]:
@@ -283,12 +294,24 @@ def build_runner_script() -> str:
                     supported = {item.identifier for item in enum_items}
                 except Exception:
                     supported = set()
-                for candidate in ("BLENDER_EEVEE", "CYCLES"):
+                for candidate in ("CYCLES", "BLENDER_EEVEE"):
                     if candidate in supported:
                         return candidate
                 if supported:
                     return sorted(supported)[0]
                 return "CYCLES"
+
+
+            def choose_cycles_denoiser(scene: bpy.types.Scene) -> str:
+                try:
+                    enum_items = scene.cycles.bl_rna.properties["denoiser"].enum_items
+                    supported = {item.identifier for item in enum_items}
+                except Exception:
+                    supported = set()
+                for candidate in ("OPENIMAGEDENOISE", "OPTIX", "NLM"):
+                    if candidate in supported:
+                        return candidate
+                return ""
 
 
             def clear_scene() -> None:
@@ -402,25 +425,16 @@ def build_runner_script() -> str:
                     mapping = nodes.new("ShaderNodeMapping")
                     texture = nodes.new("ShaderNodeTexImage")
                     texture.image = image
-                    texture.interpolation = "Smart"
+                    texture.interpolation = "Cubic"
                     texture.projection = "FLAT"
-                    principled = nodes.new("ShaderNodeBsdfPrincipled")
+                    emission = nodes.new("ShaderNodeEmission")
                     output = nodes.new("ShaderNodeOutputMaterial")
                     mapping.inputs["Rotation"].default_value[2] = math.pi
                     links.new(coords.outputs["UV"], mapping.inputs["Vector"])
                     links.new(mapping.outputs["Vector"], texture.inputs["Vector"])
-                    links.new(texture.outputs["Color"], principled.inputs["Base Color"])
-                    links.new(texture.outputs["Alpha"], principled.inputs["Alpha"])
-                    links.new(principled.outputs["BSDF"], output.inputs["Surface"])
-                    principled.inputs["Roughness"].default_value = 0.35
-                    if "Emission Strength" in principled.inputs:
-                        principled.inputs["Emission Strength"].default_value = 0.32
-                    elif "Emission" in principled.inputs:
-                        principled.inputs["Emission"].default_value = (0.32, 0.32, 0.32, 1.0)
-                    if "Specular IOR Level" in principled.inputs:
-                        principled.inputs["Specular IOR Level"].default_value = 0.35
-                    elif "Specular" in principled.inputs:
-                        principled.inputs["Specular"].default_value = 0.35
+                    links.new(texture.outputs["Color"], emission.inputs["Color"])
+                    emission.inputs["Strength"].default_value = 1.1
+                    links.new(emission.outputs["Emission"], output.inputs["Surface"])
                     apply_material(obj, material)
                 else:
                     material = make_material("APQPhotoPlaceholder", (0.07, 0.09, 0.14, 1.0), roughness=0.82)
@@ -488,14 +502,14 @@ def build_runner_script() -> str:
                     (-2.28, 0.19, 0.35),
                     (math.radians(-90.0), 0.0, math.radians(-1.5)),
                     (2.28, 2.98, 1.0),
-                    make_material("PhotoBackingMaterial", (0.02, 0.025, 0.04, 1.0), roughness=0.95, alpha=0.08),
+                    make_material("PhotoBackingMaterial", (0.03, 0.035, 0.05, 1.0), roughness=1.0),
                 )
                 add_plane(
                     "PhotoShadow",
                     (-2.22, 0.11, 0.26),
                     (math.radians(-90.0), 0.0, math.radians(-1.5)),
                     (2.38, 3.0, 1.0),
-                    make_material("PhotoShadowMaterial", (0.0, 0.0, 0.0, 1.0), roughness=1.0, alpha=0.03),
+                    make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0),
                 )
                 add_photo_plane(photo_path)
                 add_plane(
@@ -503,7 +517,7 @@ def build_runner_script() -> str:
                     (-0.1, 0.16, 0.0),
                     (math.radians(-90.0), 0.0, 0.0),
                     (0.02, 2.84, 1.0),
-                    make_material("PhotoAccentLineMaterial", (0.95, 0.74, 0.28, 1.0), roughness=0.18, emission=0.65),
+                    make_material("PhotoAccentLineMaterial", (0.95, 0.74, 0.28, 1.0), roughness=0.18, emission=0.9),
                 )
 
                 bpy.ops.mesh.primitive_plane_add(location=(1.62, 0.16, 0.2), rotation=(math.radians(-90.0), 0.0, 0.0))
@@ -589,15 +603,39 @@ def build_runner_script() -> str:
                 scene.render.filepath = output_png.as_posix()
                 scene.render.image_settings.file_format = "PNG"
                 scene.render.image_settings.color_mode = "RGBA"
+                if hasattr(scene, "cycles"):
+                    if hasattr(scene.cycles, "samples"):
+                        scene.cycles.samples = 128
+                    if hasattr(scene.cycles, "preview_samples"):
+                        scene.cycles.preview_samples = 32
+                    if hasattr(scene.cycles, "use_adaptive_sampling"):
+                        scene.cycles.use_adaptive_sampling = True
+                    if hasattr(scene.cycles, "adaptive_threshold"):
+                        scene.cycles.adaptive_threshold = 0.01
+                    if hasattr(scene.cycles, "use_denoising"):
+                        scene.cycles.use_denoising = True
+                    if hasattr(scene.cycles, "use_preview_denoising"):
+                        scene.cycles.use_preview_denoising = True
+                    denoiser = choose_cycles_denoiser(scene)
+                    if denoiser and hasattr(scene.cycles, "denoiser"):
+                        scene.cycles.denoiser = denoiser
+                    if hasattr(scene.cycles, "max_bounces"):
+                        scene.cycles.max_bounces = 6
+                    if hasattr(scene.cycles, "diffuse_bounces"):
+                        scene.cycles.diffuse_bounces = 2
+                    if hasattr(scene.cycles, "glossy_bounces"):
+                        scene.cycles.glossy_bounces = 2
                 if hasattr(scene, "eevee"):
                     if hasattr(scene.eevee, "taa_render_samples"):
-                        scene.eevee.taa_render_samples = 1
+                        scene.eevee.taa_render_samples = 32
                     if hasattr(scene.eevee, "taa_samples"):
-                        scene.eevee.taa_samples = 1
+                        scene.eevee.taa_samples = 32
                     if hasattr(scene.eevee, "use_gtao"):
                         scene.eevee.use_gtao = False
                     if hasattr(scene.eevee, "use_bloom"):
                         scene.eevee.use_bloom = False
+                if hasattr(scene.render, "dither_intensity"):
+                    scene.render.dither_intensity = 0.0
                 scene.render.film_transparent = False
 
 
