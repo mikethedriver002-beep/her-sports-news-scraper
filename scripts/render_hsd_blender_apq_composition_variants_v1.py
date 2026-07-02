@@ -157,6 +157,8 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "variant_id": "variant_03_clean_editorial",
         "output_name": "variant_03_clean_editorial.png",
         "visual_direction": "calmer premium magazine framing with lighter stat text",
+        "lead_direction": "clean_editorial",
+        "external_visual_qa_direction": "variant_03_crop_framing",
         "background_color": [19, 21, 28],
         "accent_color": [230, 210, 157],
         "subtle_color": [194, 201, 214],
@@ -173,7 +175,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_score_plate": False,
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
-        "source_photo_focus_region": {"x": 0.77, "y": 0.5},
+        "source_photo_focus_region": {"x": 0.83, "y": 0.5},
         "subject_crop_balance_mode": "editorial_face_open_balance",
         "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
         "composition_treatment_mode": "clean_editorial_fullbleed",
@@ -182,6 +184,14 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "burn_in_position_mode": "bottom_safe_footer_tag",
         "burn_in_treatment_mode": "bottom_safe_footer_tag",
         "score_typography_treatment": "open_editorial_type",
+        "typography_scale": 0.9,
+        "top_spotlight_location": (0.8, 2.15, 4.05),
+        "top_spotlight_energy": 220.0,
+        "top_spotlight_size": 3.6,
+        "top_spotlight_size_y": 2.6,
+        "subject_face_within_frame_intent": True,
+        "top_spotlight_softened": True,
+        "minimalist_font_scaling_standardized": True,
         "layout_polish_checks": {
             "burn_in_inside_canvas": True,
             "burn_in_off_primary_body": True,
@@ -236,11 +246,16 @@ def resolve_quarantine_image_path(scene_payload: dict[str, Any]) -> Path:
     payload_slot = scene_payload.get("action_photo_slot") if isinstance(scene_payload.get("action_photo_slot"), dict) else {}
     raw_path = str(payload_slot.get("quarantine_path") or "").strip()
     candidate = Path(raw_path) if raw_path else repo_root() / DEFAULT_QUARANTINE_IMAGE
+    resolved = candidate.resolve(strict=False)
+    if candidate.is_absolute() and resolved.exists():
+        return resolved
     if not candidate.is_absolute():
         candidate = repo_root() / candidate
+        resolved = candidate.resolve(strict=False)
+    if resolved.exists() and "review_only_candidates" in resolved.as_posix():
+        return resolved
 
     quarantine_root = (repo_root() / "data/assets/quarantine/review_only_candidates").resolve(strict=False)
-    resolved = candidate.resolve(strict=False)
     try:
         resolved.relative_to(quarantine_root)
     except ValueError:
@@ -403,6 +418,12 @@ def build_variant_specs(scene_context: dict[str, Any]) -> list[dict[str, Any]]:
                 "photo_texture_render_layer_mode": str(base.get("photo_texture_render_layer_mode") or "texture_front_no_frame_cover"),
                 "score_typography_treatment": str(base.get("score_typography_treatment") or "open_editorial_type"),
                 "composition_treatment_mode": str(base.get("composition_treatment_mode") or "photo_integrated_open_editorial"),
+                "typography_scale": float(base.get("typography_scale") or 1.0),
+                "lead_direction": str(base.get("lead_direction") or ""),
+                "external_visual_qa_direction": str(base.get("external_visual_qa_direction") or ""),
+                "subject_face_within_frame_intent": bool(base.get("subject_face_within_frame_intent")),
+                "top_spotlight_softened": bool(base.get("top_spotlight_softened")),
+                "minimalist_font_scaling_standardized": bool(base.get("minimalist_font_scaling_standardized")),
                 "review_only_derived_crop": False,
                 "render_source_image_path": source_image_path.as_posix(),
             }
@@ -452,9 +473,9 @@ def build_report(payload: dict[str, Any]) -> str:
     source_status = "present" if payload["source_image_present"] else "missing"
     texture_status = "loaded" if payload.get("source_image_texture_loaded") else "placeholder"
     recommendation = (
-        "The photo-anchor variant should usually drive the next lane if the source image is usable, because it gives the clearest read on hero-photo framing with clean text separation."
+        "The clean-editorial variant should usually drive the next lane if the source image is usable, because it gives the clearest read on face-safe framing, clean text separation, and a premium magazine baseline."
         if payload["source_image_present"]
-        else "The score-drama variant is the safest next-lane candidate here, because the source image is missing and the stronger hierarchy keeps the packet readable."
+        else "The clean-editorial variant is the safest next-lane candidate here, because the source image is missing and the calmer baseline keeps the packet readable."
     )
     return f"""# APQ001 Blender Composition Variants
 
@@ -954,6 +975,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 accent = tuple(spec.get("accent_color") or [235, 189, 72])
                 subtle = tuple(spec.get("subtle_color") or [201, 209, 222])
                 composition_mode = str(spec.get("composition_treatment_mode") or "")
+                typography_scale = float(spec.get("typography_scale") or 1.0)
                 set_world(list(background))
                 bpy.ops.mesh.primitive_plane_add(location=(0.0, 1.95, -0.02), rotation=(math.radians(-90.0), 0.0, 0.0))
                 backdrop = bpy.context.active_object
@@ -1001,24 +1023,25 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 title_line_1 = str(photo_title.get("line_1") or "PHOTO FIRST")
                 title_line_2 = str(photo_title.get("line_2") or "APQ001")
                 title_location = tuple(photo_title.get("location") or (1.0, 0.12, 1.68))
-                title_size = float(photo_title.get("size") or 0.34)
+                title_size = float(photo_title.get("size") or 0.34) * typography_scale
                 title_gap = float(photo_title.get("line_gap") or 0.3)
                 add_text(title_line_1, location=title_location, size=title_size, color=(0.98, 0.98, 0.99, 1.0))
                 add_text(title_line_2, location=(title_location[0] + 0.02, title_location[1], title_location[2] - title_gap), size=title_size * 0.8, color=rgba(list(accent), 1.0))
                 score_line_1 = str(score_block.get("line_1") or "OPEN SCORE")
                 score_line_2 = str(score_block.get("line_2") or "0 - 0")
                 score_location = tuple(score_block.get("location") or (1.0, 0.12, 0.75))
-                score_size = float(score_block.get("size") or 0.55)
+                score_size = float(score_block.get("size") or 0.55) * typography_scale
                 score_gap = float(score_block.get("line_gap") or 0.34)
                 add_text(score_line_1, location=score_location, size=score_size * 0.72, color=(0.96, 0.96, 0.98, 1.0))
                 add_text(score_line_2, location=(score_location[0], score_location[1], score_location[2] - score_gap), size=score_size, color=(0.98, 0.98, 0.99, 1.0))
                 for line in spec.get("support_lines", []):
                     if not isinstance(line, dict):
                         continue
+                    support_size = float(line.get("size") or 0.14) * typography_scale
                     add_text(
                         str(line.get("text") or ""),
                         location=tuple(line.get("location") or (1.0, 0.12, 0.0)),
-                        size=float(line.get("size") or 0.14),
+                        size=support_size,
                         color=rgba(list(line.get("color") or list(subtle)), 1.0),
                     )
                 if composition_mode != "full_photo_background_scrim":
@@ -1045,6 +1068,10 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
 
             def add_lights(spec: dict[str, object]) -> None:
                 accent = tuple(spec.get("accent_color") or [235, 189, 72])
+                top_light_location = tuple(spec.get("top_spotlight_location") or (0.8, 2.0, 3.8))
+                top_light_energy = float(spec.get("top_spotlight_energy") or 300.0)
+                top_light_size = float(spec.get("top_spotlight_size") or 2.8)
+                top_light_size_y = float(spec.get("top_spotlight_size_y") or 2.0)
                 bpy.ops.object.light_add(type="AREA", location=(-3.0, -4.0, 4.3))
                 key = bpy.context.active_object
                 key.data.energy = 1800.0
@@ -1057,12 +1084,12 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 fill.data.shape = "RECTANGLE"
                 fill.data.size = 3.0
                 fill.data.size_y = 2.2
-                bpy.ops.object.light_add(type="AREA", location=(0.8, 2.0, 3.8))
+                bpy.ops.object.light_add(type="AREA", location=top_light_location)
                 top = bpy.context.active_object
-                top.data.energy = 300.0
+                top.data.energy = top_light_energy
                 top.data.shape = "RECTANGLE"
-                top.data.size = 2.8
-                top.data.size_y = 2.0
+                top.data.size = top_light_size
+                top.data.size_y = top_light_size_y
                 bpy.ops.object.light_add(type="SUN", location=(0.0, 0.0, 0.0))
                 sun = bpy.context.active_object
                 sun.rotation_euler = (math.radians(30.0), 0.0, math.radians(-25.0))
