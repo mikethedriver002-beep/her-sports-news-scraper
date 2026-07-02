@@ -20,9 +20,9 @@ def load_module():
     return module
 
 
-def write_png(path: Path, color: tuple[int, int, int]) -> None:
+def write_png(path: Path, size: tuple[int, int], color: tuple[int, int, int]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    Image.new("RGB", (900, 1125), color).save(path, "PNG")
+    Image.new("RGB", size, color).save(path, "PNG")
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -30,7 +30,39 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def write_csv_file(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
 def read_csv(path: Path) -> list[dict[str, str]]:
+    with path.open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def seed_sources(run_dir: Path, module) -> None:
+    seeded = {
+        "outputs/local/latest/files/blender_apq_composition_variants/contact_sheet.png": ((1080, 562), (18, 32, 48)),
+        "outputs/local/latest/files/blender_apq_composition_variants/variant_01_photo_anchor.png": ((1080, 1350), (28, 34, 48)),
+        "outputs/local/latest/files/blender_apq_composition_variants/variant_02_score_drama.png": ((1080, 1350), (40, 18, 22)),
+        "outputs/local/latest/files/blender_apq_composition_variants/variant_03_clean_editorial.png": ((1080, 1350), (26, 30, 36)),
+    }
+    for rel, (size, color) in seeded.items():
+        write_png(run_dir / rel, size, color)
+
+    write_json(
+        run_dir / "outputs" / "local" / "latest" / "files" / "blender_apq_composition_variants" / "manifest.json",
+        {"status": "review_only_ready", "render_exit_codes": {"variant_01_photo_anchor": 0, "variant_02_score_drama": 0, "variant_03_clean_editorial": 0}},
+    )
+    write_csv_file(
+        run_dir / "outputs" / "local" / "latest" / "files" / "blender_apq_composition_variants" / "manual_variant_review_intake.csv",
+        "row_kind,row_id,display_name,artifact_path,source_exists,source_status,review_question,decision_options,operator_decision,operator_notes,review_only,artifact_only,apq001_quarantine_only,asset_downloads,download_performed,image_edits,generated_contact_sheet_allowed,approval_state_change,asset_approved,move_files,protected_asset_moves,renderer_behavior_change,production_renderer_replacement,publish_ready,publishing,auto_publish,auto_approval\n"
+        "source_artifact,APQBVQ001,Current Blender/APQ contact sheet,outputs/local/latest/files/blender_apq_composition_variants/contact_sheet.png,True,present,Open this contact sheet first and judge the current post-#471 direction at a glance.,,,,,True,True,True,False,False,False,False,False,False,False,False,False,False,False,False,False\n"
+        "question,APQBVQQ001,Does variant_01_photo_anchor now feel worth continuing as the lead Blender/APQ direction?,,,,,,yes|mostly|no|unclear,,,,True,True,True,False,False,False,False,False,False,False,False,False,False,False,False\n",
+    )
+
+
+def read_packet_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
 
@@ -43,13 +75,7 @@ def test_builds_review_only_packet_with_contact_sheet(tmp_path: Path, monkeypatc
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
     monkeypatch.setattr(module, "repo_root", lambda: repo_root)
 
-    current_image = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_4x5_prototype" / "blender_apq_4x5_prototype_4x5.png"
-    current_manifest = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_4x5_prototype" / "blender_apq_4x5_prototype_manifest.json"
-    prior_image = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_4x5_prototype_v2" / "blender_apq_4x5_prototype_4x5.png"
-
-    write_png(current_image, (18, 32, 48))
-    write_png(prior_image, (42, 56, 72))
-    write_json(current_manifest, {"status": "prototype_ready_for_review"})
+    seed_sources(run_dir, module)
 
     assert module.main(["--head-commit", "abc123"]) == 0
 
@@ -57,18 +83,20 @@ def test_builds_review_only_packet_with_contact_sheet(tmp_path: Path, monkeypatc
     manifest = json.loads((packet / "manifest.json").read_text(encoding="utf-8"))
     report = (packet / "visual_qa_report.md").read_text(encoding="utf-8")
     readme = (packet / "README.md").read_text(encoding="utf-8")
-    rows = read_csv(packet / "manual_visual_review_intake.csv")
+    rows = read_packet_csv(packet / "manual_visual_review_intake.csv")
 
     assert manifest["version"] == "hsd-blender-apq-visual-qa-packet-v1-review-only"
     assert manifest["status"] == "blender_apq_visual_qa_packet_ready"
     assert manifest["repo_head"] == "abc123"
-    assert manifest["current_prototype_image_present"] is True
-    assert manifest["current_prototype_manifest_present"] is True
+    assert manifest["current_contact_sheet_present"] is True
+    assert manifest["current_manifest_present"] is True
+    assert manifest["current_manual_review_intake_present"] is True
+    assert manifest["current_variant_image_count"] == 3
     assert manifest["generated_contact_sheet_allowed"] is True
     assert manifest["contact_sheet_created"] is True
     assert manifest["contact_sheet_path"].endswith("visual_qa_contact_sheet.png")
-    assert manifest["contact_sheet_source_count"] == 2
-    assert manifest["reference_image_count"] == 2
+    assert manifest["contact_sheet_source_count"] == 3
+    assert manifest["reference_image_count"] == 3
     assert manifest["missing_primary_artifact_paths"] == []
     assert manifest["review_only"] is True
     assert manifest["artifact_only"] is True
@@ -88,20 +116,24 @@ def test_builds_review_only_packet_with_contact_sheet(tmp_path: Path, monkeypatc
     assert manifest["auto_approval"] is False
 
     assert (packet / "visual_qa_contact_sheet.png").exists()
-    assert "Does v3 materially reduce noise" in report
-    assert "continue_blender_composition_polish" in report
-    assert "try_different_crop_framing" in report
+    assert "variant_01_photo_anchor now feel worth continuing" in report
+    assert "full-photo scrim direction" in report
     assert "pause_for_external_visual_qa" in report
+    assert "current post-#471 Blender/APQ composition variants" in readme
     assert "review-only and artifact-only" in readme
 
-    artifact_rows = [row for row in rows if row["row_kind"] != "question"]
+    artifact_rows = [row for row in rows if row["row_kind"] == "source_artifact"]
+    generated_rows = [row for row in rows if row["row_kind"] == "generated_artifact"]
     question_rows = [row for row in rows if row["row_kind"] == "question"]
-    assert len(artifact_rows) == 4
-    assert len(question_rows) == 4
-    assert any(row["row_kind"] == "generated_artifact" for row in artifact_rows)
-    assert any(row["display_name"] == "Current APQ001 Blender 4:5 prototype image" for row in artifact_rows)
-    assert any(row["display_name"] == "Current APQ001 Blender prototype manifest" for row in artifact_rows)
-    assert any("Reference prototype image" in row["display_name"] for row in artifact_rows)
+    assert len(artifact_rows) == 6
+    assert len(generated_rows) == 1
+    assert len(question_rows) == 3
+    assert any(row["display_name"] == "Current Blender/APQ contact sheet" for row in artifact_rows)
+    assert any(row["display_name"] == "variant_01_photo_anchor" for row in artifact_rows)
+    assert any(row["display_name"] == "variant_02_score_drama" for row in artifact_rows)
+    assert any(row["display_name"] == "variant_03_clean_editorial" for row in artifact_rows)
+    assert any(row["display_name"] == "Current Blender/APQ manifest" for row in artifact_rows)
+    assert any(row["display_name"] == "Current manual review intake" for row in artifact_rows)
     assert all(row["review_only"] == "True" for row in rows if row["row_kind"] == "question")
 
 
@@ -118,20 +150,25 @@ def test_builds_missing_sources_packet_without_contact_sheet(tmp_path: Path, mon
     packet = run_dir
     manifest = json.loads((packet / "manifest.json").read_text(encoding="utf-8"))
     report = (packet / "visual_qa_report.md").read_text(encoding="utf-8")
-    rows = read_csv(packet / "manual_visual_review_intake.csv")
+    rows = read_packet_csv(packet / "manual_visual_review_intake.csv")
 
     assert manifest["status"] == "blender_apq_visual_qa_packet_missing_sources"
-    assert manifest["current_prototype_image_present"] is False
-    assert manifest["current_prototype_manifest_present"] is False
+    assert manifest["current_contact_sheet_present"] is False
+    assert manifest["current_manifest_present"] is False
+    assert manifest["current_manual_review_intake_present"] is False
     assert manifest["contact_sheet_created"] is False
     assert manifest["generated_contact_sheet_allowed"] is False
     assert manifest["contact_sheet_path"] == ""
     assert manifest["contact_sheet_source_count"] == 0
     assert manifest["missing_primary_artifact_paths"] == [
-        "outputs/local/latest/files/blender_apq_4x5_prototype/blender_apq_4x5_prototype_4x5.png",
-        "outputs/local/latest/files/blender_apq_4x5_prototype/blender_apq_4x5_prototype_manifest.json",
+        "outputs/local/latest/files/blender_apq_composition_variants/contact_sheet.png",
+        "outputs/local/latest/files/blender_apq_composition_variants/variant_01_photo_anchor.png",
+        "outputs/local/latest/files/blender_apq_composition_variants/variant_02_score_drama.png",
+        "outputs/local/latest/files/blender_apq_composition_variants/variant_03_clean_editorial.png",
+        "outputs/local/latest/files/blender_apq_composition_variants/manifest.json",
+        "outputs/local/latest/files/blender_apq_composition_variants/manual_variant_review_intake.csv",
     ]
     assert "No contact sheet was generated" in report
-    assert len([row for row in rows if row["row_kind"] == "question"]) == 4
-    assert len([row for row in rows if row["row_kind"] == "source_artifact"]) == 2
+    assert len([row for row in rows if row["row_kind"] == "question"]) == 3
+    assert len([row for row in rows if row["row_kind"] == "source_artifact"]) == 6
     assert all(row["source_status"] == "missing" for row in rows if row["row_kind"] == "source_artifact")
