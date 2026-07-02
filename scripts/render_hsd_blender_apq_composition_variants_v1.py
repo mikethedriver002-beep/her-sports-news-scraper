@@ -84,6 +84,8 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         ],
         "use_score_plate": False,
         "use_editorial_scrim": True,
+        "source_photo_crop_mode": "fit_1080x1350_right_focus",
+        "source_photo_focus_region": {"x": 0.82, "y": 0.5},
         "burn_in": {"location": (0.0, -0.2, -1.58), "size": 0.16, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
@@ -112,6 +114,8 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         ],
         "use_score_plate": False,
         "use_editorial_scrim": True,
+        "source_photo_crop_mode": "fit_1080x1350_right_focus",
+        "source_photo_focus_region": {"x": 0.76, "y": 0.5},
         "burn_in": {"location": (0.0, -0.2, -1.62), "size": 0.14, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
@@ -140,6 +144,8 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         ],
         "use_score_plate": False,
         "use_editorial_scrim": True,
+        "source_photo_crop_mode": "fit_1080x1350_right_focus",
+        "source_photo_focus_region": {"x": 0.8, "y": 0.5},
         "burn_in": {"location": (0.0, -0.2, -1.64), "size": 0.14, "align_x": "CENTER"},
         "burn_in_position_mode": "lower_safe_band",
         "layout_polish_checks": {
@@ -274,6 +280,42 @@ def write_csv_file(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]
     return path
 
 
+def variant_focus_region(spec: dict[str, Any]) -> tuple[float, float]:
+    focus = spec.get("source_photo_focus_region") if isinstance(spec.get("source_photo_focus_region"), dict) else {}
+    x = float(focus.get("x") or 0.66)
+    y = float(focus.get("y") or 0.5)
+    return (max(0.0, min(1.0, x)), max(0.0, min(1.0, y)))
+
+
+def derive_review_only_crop_path(source_photo_path: Path, output_dir: Path, spec: dict[str, Any]) -> tuple[Path, dict[str, Any]]:
+    crop_dir = output_dir / "review_only_derived_crops"
+    crop_dir.mkdir(parents=True, exist_ok=True)
+    crop_path = crop_dir / f"{spec['variant_id']}_apq001_review_only_crop.png"
+    focus_x, focus_y = variant_focus_region(spec)
+    crop_mode = str(spec.get("source_photo_crop_mode") or "fit_1080x1350_right_focus")
+    metadata = {
+        "review_only_derived_crop": False,
+        "source_photo_crop_mode": crop_mode,
+        "source_photo_focus_region": {"x": focus_x, "y": focus_y},
+        "render_source_image_path": source_photo_path.as_posix(),
+        "review_only_derived_crop_path": "",
+    }
+    if Image is None or ImageOps is None or not source_photo_path.exists():
+        return source_photo_path, metadata
+
+    try:
+        with Image.open(source_photo_path) as image:
+            fitted = ImageOps.fit(image.convert("RGB"), (OUTPUT_DIMENSIONS["width"], OUTPUT_DIMENSIONS["height"]), method=getattr(getattr(Image, "Resampling", Image), "LANCZOS", 1), centering=(focus_x, focus_y))
+            fitted.save(crop_path, "PNG")
+    except Exception:
+        return source_photo_path, metadata
+
+    metadata["review_only_derived_crop"] = True
+    metadata["review_only_derived_crop_path"] = crop_path.as_posix()
+    metadata["render_source_image_path"] = crop_path.as_posix()
+    return crop_path, metadata
+
+
 def load_scene_context(scene_payload_path: Path) -> dict[str, Any]:
     payload_present = scene_payload_path.exists()
     payload = safe_load_json(scene_payload_path)
@@ -315,6 +357,10 @@ def build_variant_specs(scene_context: dict[str, Any]) -> list[dict[str, Any]]:
                 "placeholder_used": not source_image_present,
                 "layout_polish_checks": dict(base.get("layout_polish_checks") or {}),
                 "burn_in_position_mode": str(base.get("burn_in_position_mode") or "lower_safe_band"),
+                "source_photo_crop_mode": str(base.get("source_photo_crop_mode") or "fit_1080x1350_right_focus"),
+                "source_photo_focus_region": dict(base.get("source_photo_focus_region") or {"x": 0.66, "y": 0.5}),
+                "review_only_derived_crop": False,
+                "render_source_image_path": source_image_path.as_posix(),
             }
         )
     return specs
@@ -331,6 +377,9 @@ def build_manual_rows(variant_specs: list[dict[str, Any]]) -> list[dict[str, str
                 "score_readability": "",
                 "premium_editorial_feel": "",
                 "burn_in_legibility": "",
+                "source_photo_crop_mode": str(spec.get("source_photo_crop_mode") or ""),
+                "source_photo_focus_region": json.dumps(spec.get("source_photo_focus_region") or {}, sort_keys=True),
+                "review_only_derived_crop": str(bool(spec.get("review_only_derived_crop"))).lower(),
                 "operator_decision": "",
                 "operator_notes": "",
             }
@@ -407,6 +456,7 @@ Use the manual intake CSV to record the next decision with one of:
 - When the source image is missing locally, the renders use a clearly labeled placeholder instead of downloading or substituting another asset.
 - The burn-in remains visible in-canvas for every variant.
 - The variants intentionally explore photo-first, score-led, and editorial directions while staying review-only.
+- Review-only derived crop mode: `{payload.get('review_only_derived_crop')}`.
 - Layout polish checks: `{[row.get('layout_polish_checks') for row in payload['variant_rows']]}`
 - Source image status for this run: `{source_status}`.
 - Texture status for this run: `{texture_status}`.
@@ -491,6 +541,8 @@ def build_manifest(
     render_exit_codes = {row["variant_id"]: row["render_exit_code"] for row in variant_rows}
     source_image_texture_attempted = any(bool(row.get("source_image_texture_attempted")) for row in variant_rows)
     source_image_texture_loaded = all(bool(row.get("source_image_texture_loaded")) for row in variant_rows) if source_image_present else False
+    review_only_derived_crop = any(bool(row.get("review_only_derived_crop")) for row in variant_rows)
+    review_only_derived_crop_paths = [str(row.get("review_only_derived_crop_path") or "") for row in variant_rows if row.get("review_only_derived_crop_path")]
     return {
         "version": VERSION,
         "status": "blender_apq_composition_variants_ready" if all(code == 0 for code in render_exit_codes.values()) else "blender_apq_composition_variants_ready_with_render_warnings",
@@ -506,6 +558,8 @@ def build_manifest(
         "source_image_texture_attempted": source_image_texture_attempted,
         "source_image_texture_loaded": source_image_texture_loaded,
         "source_image_texture_mode": "loaded" if source_image_texture_loaded else "placeholder",
+        "review_only_derived_crop": review_only_derived_crop,
+        "review_only_derived_crop_paths": review_only_derived_crop_paths,
         "source_auto_enabled": False,
         "output_dir": resolve_output_dir().as_posix(),
         "manifest_path": (resolve_output_dir() / MANIFEST_NAME).as_posix(),
@@ -979,7 +1033,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 if variant is None:
                     raise RuntimeError(f"Unknown variant id: {{args.variant_id}}")
                 scene_payload = json.loads(payload_path.read_text(encoding="utf-8")) if payload_path.exists() else {{}}
-                source_image_path = Path(str(variant.get("source_image_path") or ""))
+                source_image_path = Path(str(variant.get("render_source_image_path") or variant.get("source_image_path") or ""))
                 source_image_present = bool(variant.get("source_image_present")) and source_image_path.exists()
 
                 clear_scene()
@@ -1125,6 +1179,10 @@ def main(argv: list[str] | None = None) -> int:
     source_photo_path = scene_context["source_image_path"]
     variant_specs = build_variant_specs(scene_context)
     runner_path = output_dir / RUNNER_NAME
+    for spec in variant_specs:
+        render_source_image_path, crop_metadata = derive_review_only_crop_path(source_photo_path, output_dir, spec)
+        spec.update(crop_metadata)
+        spec["render_source_image_path"] = render_source_image_path.as_posix()
     write_runner_script(runner_path, variant_specs)
 
     blender_executable = resolve_blender_executable(args.blender_executable or None)
@@ -1182,6 +1240,9 @@ def main(argv: list[str] | None = None) -> int:
             "score_readability",
             "premium_editorial_feel",
             "burn_in_legibility",
+            "source_photo_crop_mode",
+            "source_photo_focus_region",
+            "review_only_derived_crop",
             "operator_decision",
             "operator_notes",
         ],
