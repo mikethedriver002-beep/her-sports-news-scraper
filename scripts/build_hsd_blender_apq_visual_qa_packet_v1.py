@@ -26,8 +26,13 @@ VERSION = "hsd-blender-apq-visual-qa-packet-v1-review-only"
 GENERATED_BY = "scripts/build_hsd_blender_apq_visual_qa_packet_v1.py"
 LATEST_FILES_ROOT = Path("outputs/local/latest/files")
 OUT_DIR_REL = Path("blender_apq_visual_qa_packet")
-CURRENT_PROTO_IMAGE_REL = LATEST_FILES_ROOT / "blender_apq_4x5_prototype" / "blender_apq_4x5_prototype_4x5.png"
-CURRENT_PROTO_MANIFEST_REL = LATEST_FILES_ROOT / "blender_apq_4x5_prototype" / "blender_apq_4x5_prototype_manifest.json"
+CURRENT_VARIANTS_ROOT = LATEST_FILES_ROOT / "blender_apq_composition_variants"
+CURRENT_CONTACT_SHEET_REL = CURRENT_VARIANTS_ROOT / "contact_sheet.png"
+CURRENT_VARIANT_01_REL = CURRENT_VARIANTS_ROOT / "variant_01_photo_anchor.png"
+CURRENT_VARIANT_02_REL = CURRENT_VARIANTS_ROOT / "variant_02_score_drama.png"
+CURRENT_VARIANT_03_REL = CURRENT_VARIANTS_ROOT / "variant_03_clean_editorial.png"
+CURRENT_MANIFEST_REL = CURRENT_VARIANTS_ROOT / "manifest.json"
+CURRENT_MANUAL_REVIEW_INTAKE_REL = CURRENT_VARIANTS_ROOT / "manual_variant_review_intake.csv"
 REPORT_NAME = "visual_qa_report.md"
 README_NAME = "README.md"
 MANIFEST_NAME = "manifest.json"
@@ -37,22 +42,17 @@ CONTACT_SHEET_NAME = "visual_qa_contact_sheet.png"
 MANUAL_REVIEW_QUESTIONS = [
     {
         "row_id": "APQBVQQ001",
-        "question": "Does v3 materially reduce noise, grain, or blockiness compared with the prior APQ Blender prototype direction?",
-        "decision_options": "materially_improved|about_the_same|worse|unclear",
+        "question": "Does variant_01_photo_anchor now feel worth continuing as the lead Blender/APQ direction?",
+        "decision_options": "yes|mostly|no|unclear",
     },
     {
         "row_id": "APQBVQQ002",
-        "question": "Does APQ001 read as a useful photo-first visual anchor?",
+        "question": "Is the full-photo scrim direction better than the earlier card/panel direction?",
         "decision_options": "yes|mostly|no|unclear",
     },
     {
         "row_id": "APQBVQQ003",
-        "question": "Is the review-only burn-in legible and appropriately prominent?",
-        "decision_options": "yes|mostly|no|unclear",
-    },
-    {
-        "row_id": "APQBVQQ004",
-        "question": "Should the next lane continue Blender composition polish, try a different crop or framing, or pause for external visual QA?",
+        "question": "Should the next lane continue Blender polish, try different crop/framing, or pause for external visual QA?",
         "decision_options": "continue_blender_composition_polish|try_different_crop_framing|pause_for_external_visual_qa",
     },
 ]
@@ -61,18 +61,50 @@ PRIMARY_ARTIFACTS = [
     {
         "row_id": "APQBVQ001",
         "row_kind": "source_artifact",
-        "display_name": "Current APQ001 Blender 4:5 prototype image",
-        "artifact_path": CURRENT_PROTO_IMAGE_REL.as_posix(),
-        "source_role": "current_prototype_image",
-        "review_question": "Open this image first and judge the current v3 prototype visually.",
+        "display_name": "Current Blender/APQ contact sheet",
+        "artifact_path": CURRENT_CONTACT_SHEET_REL.as_posix(),
+        "source_role": "current_contact_sheet",
+        "review_question": "Open this contact sheet first and judge the current post-#471 direction at a glance.",
     },
     {
         "row_id": "APQBVQ002",
         "row_kind": "source_artifact",
-        "display_name": "Current APQ001 Blender prototype manifest",
-        "artifact_path": CURRENT_PROTO_MANIFEST_REL.as_posix(),
-        "source_role": "current_prototype_manifest",
-        "review_question": "Use this companion manifest to confirm the current review-only guardrails.",
+        "display_name": "variant_01_photo_anchor",
+        "artifact_path": CURRENT_VARIANT_01_REL.as_posix(),
+        "source_role": "current_variant_image",
+        "review_question": "Use this variant to decide whether the full-photo scrim direction is the right lead.",
+    },
+    {
+        "row_id": "APQBVQ003",
+        "row_kind": "source_artifact",
+        "display_name": "variant_02_score_drama",
+        "artifact_path": CURRENT_VARIANT_02_REL.as_posix(),
+        "source_role": "current_variant_image",
+        "review_question": "Use this variant to compare the score-forward rhythm against the lead direction.",
+    },
+    {
+        "row_id": "APQBVQ004",
+        "row_kind": "source_artifact",
+        "display_name": "variant_03_clean_editorial",
+        "artifact_path": CURRENT_VARIANT_03_REL.as_posix(),
+        "source_role": "current_variant_image",
+        "review_question": "Use this variant to compare the calmer editorial option against the lead direction.",
+    },
+    {
+        "row_id": "APQBVQ005",
+        "row_kind": "source_artifact",
+        "display_name": "Current Blender/APQ manifest",
+        "artifact_path": CURRENT_MANIFEST_REL.as_posix(),
+        "source_role": "current_manifest",
+        "review_question": "Use this manifest to confirm the review-only guardrails and texture evidence.",
+    },
+    {
+        "row_id": "APQBVQ006",
+        "row_kind": "source_artifact",
+        "display_name": "Current manual review intake",
+        "artifact_path": CURRENT_MANUAL_REVIEW_INTAKE_REL.as_posix(),
+        "source_role": "current_manual_review_intake",
+        "review_question": "Use this intake to compare the packet questions with the current review-only decision surface.",
     },
 ]
 
@@ -157,8 +189,15 @@ def find_existing_input(path: Path) -> Path | None:
     return None
 
 
-def current_proto_candidates() -> list[Path]:
-    return [candidate.resolve(strict=False) for candidate in source_candidates(CURRENT_PROTO_IMAGE_REL)]
+def current_variant_candidates() -> list[Path]:
+    return [
+        candidate.resolve(strict=False)
+        for candidate in (
+            source_candidates(CURRENT_VARIANT_01_REL)[0],
+            source_candidates(CURRENT_VARIANT_02_REL)[0],
+            source_candidates(CURRENT_VARIANT_03_REL)[0],
+        )
+    ]
 
 
 def clean(value: Any) -> str:
@@ -169,108 +208,15 @@ def normalize_question_options(options: str) -> str:
     return clean(options)
 
 
-def discovered_reference_images() -> list[dict[str, Any]]:
-    patterns = [
-        "outputs/local/latest/files/blender_apq_4x5_prototype*/*.png",
-        "outputs/local/latest/files/blender_apq_4x5_prototype*/**/*.png",
-        "outputs/local/latest/files/blender_apq_4x5_prototype*/*.jpg",
-        "outputs/local/latest/files/blender_apq_4x5_prototype*/**/*.jpg",
-        "outputs/local/latest/files/blender_apq_4x5_prototype*/*.jpeg",
-        "outputs/local/latest/files/blender_apq_4x5_prototype*/**/*.jpeg",
-    ]
-    roots = [repo_root()]
-    run_root = run_output_dir()
-    if run_root:
-        roots.insert(0, run_root)
-
-    current_images = {candidate for candidate in current_proto_candidates()}
-    seen: set[Path] = set()
-    matches: list[dict[str, Any]] = []
-
-    for base in roots:
-        for pattern in patterns:
-            for candidate in sorted(base.glob(pattern)):
-                if not candidate.is_file():
-                    continue
-                resolved = candidate.resolve()
-                if resolved in seen:
-                    continue
-                seen.add(resolved)
-                status = "present"
-                role = "current_latest_prototype_image" if resolved in current_images else "reference_prototype_image"
-                matches.append(
-                    {
-                        "path": resolved,
-                        "artifact_path": resolved.as_posix(),
-                        "display_name": (
-                            "Current prototype image"
-                            if role == "current_latest_prototype_image"
-                            else f"Reference prototype image: {resolved.parent.name}"
-                        ),
-                        "row_kind": "source_artifact",
-                        "row_id": "APQBVQ001" if role == "current_latest_prototype_image" else f"APQBVQREF{len(matches) + 1:03d}",
-                        "source_role": role,
-                        "source_exists": True,
-                        "source_status": status,
-                        "review_question": (
-                            "Open the current prototype image first."
-                            if role == "current_latest_prototype_image"
-                            else "Use this local reference image only for comparison; do not edit or approve it."
-                        ),
-                    }
-                )
-    return matches
-
-
 def make_artifact_rows() -> list[dict[str, Any]]:
-    current_image = find_existing_input(CURRENT_PROTO_IMAGE_REL)
-    current_manifest = find_existing_input(CURRENT_PROTO_MANIFEST_REL)
-    reference_images = discovered_reference_images()
-    reference_image_rows = [row for row in reference_images if row["source_role"] != "current_latest_prototype_image"]
-    current_image_present = current_image is not None
-    current_manifest_present = current_manifest is not None
-
     rows: list[dict[str, Any]] = []
     for base_row in PRIMARY_ARTIFACTS:
-        exists = current_image_present if base_row["row_id"] == "APQBVQ001" else current_manifest_present
+        exists = find_existing_input(Path(base_row["artifact_path"])) is not None
         rows.append(
             {
                 **base_row,
                 "source_exists": exists,
                 "source_status": "present" if exists else "missing",
-                "decision_options": "",
-                "operator_decision": "",
-                "operator_notes": "",
-                "review_only": True,
-                "artifact_only": True,
-                "apq001_quarantine_only": True,
-                "asset_downloads": False,
-                "download_performed": False,
-                "image_edits": False,
-                "generated_contact_sheet_allowed": False,
-                "approval_state_change": False,
-                "asset_approved": False,
-                "move_files": False,
-                "protected_asset_moves": False,
-                "renderer_behavior_change": False,
-                "production_renderer_replacement": False,
-                "publish_ready": False,
-                "publishing": False,
-                "auto_publish": False,
-                "auto_approval": False,
-            }
-        )
-
-    for index, row in enumerate(reference_image_rows, start=1):
-        rows.append(
-            {
-                "row_kind": "source_artifact",
-                "row_id": f"APQBVQREF{index:03d}",
-                "display_name": row["display_name"],
-                "artifact_path": row["artifact_path"],
-                "source_exists": True,
-                "source_status": "present",
-                "review_question": row["review_question"],
                 "decision_options": "",
                 "operator_decision": "",
                 "operator_notes": "",
@@ -353,7 +299,7 @@ def build_contact_sheet(image_rows: list[dict[str, Any]], packet_dir: Path) -> d
 
     images: list[dict[str, Any]] = []
     for row in image_rows:
-        path = Path(row["artifact_path"])
+        path = find_existing_input(Path(row["artifact_path"])) or Path(row["artifact_path"])
         try:
             image = Image.open(path).convert("RGB")
         except Exception as exc:  # pragma: no cover - defensive on unreadable local files
@@ -387,7 +333,7 @@ def build_contact_sheet(image_rows: list[dict[str, Any]], packet_dir: Path) -> d
     draw.text((margin, 18), "APQ001 Blender Visual QA Contact Sheet", fill=(22, 28, 38), font=title_font)
     draw.text(
         (margin, 48),
-        "Review-only, artifact-only, no approvals. Compare the current prototype with any local references.",
+        "Review-only, artifact-only, no approvals. Compare the current post-#471 variants with any local Blender/APQ references.",
         fill=(50, 58, 69),
         font=body_font,
     )
@@ -446,13 +392,13 @@ Status: `{payload['status']}`
 Version: `{payload['version']}`
 Generated: `{payload['generated_at_utc']}`
 
-This packet is review-only and artifact-only. It does not change renderer behavior, edit source images, download assets, approve assets, move files, or publish anything.
+This packet is review-only and artifact-only. It packages the current post-#471 Blender/APQ composition variants for manual visual QA. It does not change renderer behavior, edit source images, download assets, approve assets, move files, or publish anything.
 
 ## Open In Order
 
 1. `visual_qa_report.md`
 2. `manual_visual_review_intake.csv`
-3. The current prototype image if it is present locally
+3. The current contact sheet and current variant images if they are present locally
 4. `{CONTACT_SHEET_NAME}` if it was generated
 
 ## Local Review Targets
@@ -516,12 +462,13 @@ Status: `{payload['status']}`
 Version: `{payload['version']}`
 Generated: `{payload['generated_at_utc']}`
 
-This is a review-only artifact packet for the APQ001 Blender 4:5 prototype progression. It is meant to help a human compare the current prototype against any local prior references before deciding the next lane.
+This is a review-only artifact packet for the APQ001 Blender/APQ composition variants progression. It is meant to help a human compare the current post-#471 variants against any local prior references before deciding the next lane.
 
 ## What To Review
 
-- Current prototype image path: `{payload['current_prototype_image_path']}`
-- Current prototype manifest path: `{payload['current_prototype_manifest_path']}`
+- Current contact sheet path: `{payload['current_contact_sheet_path']}`
+- Current manifest path: `{payload['current_manifest_path']}`
+- Current manual review intake path: `{payload['current_manual_review_intake_path']}`
 {contact_sheet_line}
 
 ## Source Artifacts
@@ -556,27 +503,17 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
 
     artifact_rows = make_artifact_rows()
     question_rows = make_question_rows()
-    current_image_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ001"), None)
-    current_manifest_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ002"), None)
-    current_image_present = bool(current_image_row and current_image_row["source_exists"])
+    current_contact_sheet_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ001"), None)
+    variant_image_rows = [row for row in artifact_rows if row["row_id"] in {"APQBVQ002", "APQBVQ003", "APQBVQ004"}]
+    current_manifest_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ005"), None)
+    current_intake_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ006"), None)
+    current_contact_sheet_present = bool(current_contact_sheet_row and current_contact_sheet_row["source_exists"])
     current_manifest_present = bool(current_manifest_row and current_manifest_row["source_exists"])
+    current_intake_present = bool(current_intake_row and current_intake_row["source_exists"])
+    reference_image_paths = [row["artifact_path"] for row in variant_image_rows]
+    missing_primary_artifact_paths = [row["artifact_path"] for row in artifact_rows if not row["source_exists"]]
 
-    discovered_images = discovered_reference_images()
-    current_image_candidates = set(current_proto_candidates())
-    reference_image_paths = [row["artifact_path"] for row in discovered_images]
-    missing_primary_artifact_paths = [
-        path
-        for path, present in [
-            (CURRENT_PROTO_IMAGE_REL.as_posix(), current_image_present),
-            (CURRENT_PROTO_MANIFEST_REL.as_posix(), current_manifest_present),
-        ]
-        if not present
-    ]
-
-    contact_sheet_rows = [row for row in discovered_images if row["path"] not in current_image_candidates]
-    if current_image_present:
-        current_discovered_rows = [row for row in discovered_images if row["path"] in current_image_candidates]
-        contact_sheet_rows = [*current_discovered_rows, *contact_sheet_rows]
+    contact_sheet_rows = [row for row in variant_image_rows if row["source_exists"]]
     contact_sheet_info = build_contact_sheet(contact_sheet_rows, packet_dir)
     contact_sheet_created = bool(contact_sheet_info["created"])
     if contact_sheet_created:
@@ -588,7 +525,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
                 "artifact_path": contact_sheet_info["path"],
                 "source_exists": True,
                 "source_status": "present",
-                "review_question": "Use this generated contact sheet for quick comparison between the current prototype and any local references.",
+                "review_question": "Use this generated contact sheet for quick comparison between the three current variants.",
                 "decision_options": "",
                 "operator_decision": "",
                 "operator_notes": "",
@@ -612,11 +549,12 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
+    any_source_present = any(row["source_exists"] for row in artifact_rows if row["row_kind"] == "source_artifact")
     status = (
         "blender_apq_visual_qa_packet_ready"
-        if current_image_present
+        if current_contact_sheet_present
         else "blender_apq_visual_qa_packet_reference_only"
-        if discovered_images
+        if any_source_present
         else "blender_apq_visual_qa_packet_missing_sources"
     )
 
@@ -644,10 +582,14 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "contact_sheet_created": contact_sheet_created,
         "contact_sheet_source_count": contact_sheet_info["source_count"] if contact_sheet_created else 0,
         "generated_contact_sheet_allowed": contact_sheet_created,
-        "current_prototype_image_path": CURRENT_PROTO_IMAGE_REL.as_posix(),
-        "current_prototype_manifest_path": CURRENT_PROTO_MANIFEST_REL.as_posix(),
-        "current_prototype_image_present": current_image_present,
-        "current_prototype_manifest_present": current_manifest_present,
+        "current_contact_sheet_path": CURRENT_CONTACT_SHEET_REL.as_posix(),
+        "current_contact_sheet_present": current_contact_sheet_present,
+        "current_variant_image_paths": reference_image_paths,
+        "current_variant_image_count": len(reference_image_paths),
+        "current_manifest_path": CURRENT_MANIFEST_REL.as_posix(),
+        "current_manifest_present": current_manifest_present,
+        "current_manual_review_intake_path": CURRENT_MANUAL_REVIEW_INTAKE_REL.as_posix(),
+        "current_manual_review_intake_present": current_intake_present,
         "source_artifacts": artifact_rows,
         "artifact_rows": artifact_rows,
         "artifact_row_count": len(artifact_rows),
@@ -675,8 +617,9 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "publishing": False,
         "auto_publish": False,
         "auto_approval": False,
-        "current_prototype_manifest_status": "present" if current_manifest_present else "missing",
-        "current_prototype_image_status": "present" if current_image_present else "missing",
+        "current_contact_sheet_status": "present" if current_contact_sheet_present else "missing",
+        "current_manifest_status": "present" if current_manifest_present else "missing",
+        "current_manual_review_intake_status": "present" if current_intake_present else "missing",
         "contact_sheet_reason": contact_sheet_info["reason"],
     }
 
@@ -705,8 +648,8 @@ def main(argv: list[str] | None = None) -> int:
                 "review_question_count": payload["review_question_count"],
                 "contact_sheet_created": payload["contact_sheet_created"],
                 "generated_contact_sheet_allowed": payload["generated_contact_sheet_allowed"],
-                "current_prototype_image_present": payload["current_prototype_image_present"],
-                "current_prototype_manifest_present": payload["current_prototype_manifest_present"],
+                "current_contact_sheet_present": payload["current_contact_sheet_present"],
+                "current_manifest_present": payload["current_manifest_present"],
                 "review_only": True,
                 "artifact_only": True,
                 "apq001_quarantine_only": True,
