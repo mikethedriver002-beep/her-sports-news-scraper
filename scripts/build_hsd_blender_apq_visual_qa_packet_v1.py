@@ -22,10 +22,15 @@ except Exception:  # pragma: no cover - runtime fallback
     ImageOps = None  # type: ignore[assignment]
 
 
-VERSION = "hsd-blender-apq-visual-qa-packet-v1-review-only"
+VERSION = "hsd-blender-apq-before-after-decision-packet-v1-review-only"
 GENERATED_BY = "scripts/build_hsd_blender_apq_visual_qa_packet_v1.py"
 LATEST_FILES_ROOT = Path("outputs/local/latest/files")
-OUT_DIR_REL = Path("blender_apq_visual_qa_packet")
+OUT_DIR_REL = Path("blender_apq_before_after_decision_packet")
+PREVIOUS_VARIANTS_ROOT = LATEST_FILES_ROOT / "blender_apq_visual_qa_packet"
+PREVIOUS_CONTACT_SHEET_REL = PREVIOUS_VARIANTS_ROOT / "visual_qa_contact_sheet.png"
+PREVIOUS_REPORT_REL = PREVIOUS_VARIANTS_ROOT / "visual_qa_report.md"
+PREVIOUS_MANUAL_REVIEW_INTAKE_REL = PREVIOUS_VARIANTS_ROOT / "manual_visual_review_intake.csv"
+PREVIOUS_MANIFEST_REL = PREVIOUS_VARIANTS_ROOT / "manifest.json"
 CURRENT_VARIANTS_ROOT = LATEST_FILES_ROOT / "blender_apq_composition_variants"
 CURRENT_CONTACT_SHEET_REL = CURRENT_VARIANTS_ROOT / "contact_sheet.png"
 CURRENT_VARIANT_01_REL = CURRENT_VARIANTS_ROOT / "variant_01_photo_anchor.png"
@@ -33,6 +38,10 @@ CURRENT_VARIANT_02_REL = CURRENT_VARIANTS_ROOT / "variant_02_score_drama.png"
 CURRENT_VARIANT_03_REL = CURRENT_VARIANTS_ROOT / "variant_03_clean_editorial.png"
 CURRENT_MANIFEST_REL = CURRENT_VARIANTS_ROOT / "manifest.json"
 CURRENT_MANUAL_REVIEW_INTAKE_REL = CURRENT_VARIANTS_ROOT / "manual_variant_review_intake.csv"
+LEGACY_REFERENCE_ROOTS = [
+    Path("outputs/local/tmp/blender_apq_visual_qa_refresh_v9"),
+    Path("outputs/local/tmp/blender_apq_clean_editorial_crop_v10"),
+]
 REPORT_NAME = "visual_qa_report.md"
 README_NAME = "README.md"
 MANIFEST_NAME = "manifest.json"
@@ -41,76 +50,119 @@ CONTACT_SHEET_NAME = "visual_qa_contact_sheet.png"
 
 MANUAL_REVIEW_QUESTIONS = [
     {
-        "row_id": "APQBVQQ001",
-        "question": "Does variant_01_photo_anchor now feel worth continuing as the lead Blender/APQ direction?",
+        "row_id": "APQBQQ001",
+        "question": "Accept variant_03_clean_editorial as the lead direction despite the current face-crop limitation?",
+        "decision_options": "accept_baseline|revise_if_better_review_only_crop_exists|pause_for_manual_acceptance_qa",
+    },
+    {
+        "row_id": "APQBQQ002",
+        "question": "Does the post-v10 after surface feel meaningfully better than the pre-v10 before surface?",
         "decision_options": "yes|mostly|no|unclear",
     },
     {
-        "row_id": "APQBVQQ002",
-        "question": "Is the full-photo scrim direction better than the earlier card/panel direction?",
-        "decision_options": "yes|mostly|no|unclear",
-    },
-    {
-        "row_id": "APQBVQQ003",
-        "question": "Should the next lane continue Blender polish, try different crop/framing, or pause for external visual QA?",
-        "decision_options": "continue_blender_composition_polish|try_different_crop_framing|pause_for_external_visual_qa",
+        "row_id": "APQBQQ003",
+        "question": "Should the next lane continue Blender polish, try a different crop/framing, or pause for manual QA?",
+        "decision_options": "continue_blender_composition_polish|try_different_crop_framing|pause_for_manual_acceptance_qa",
     },
 ]
 
-PRIMARY_ARTIFACTS = [
+SOURCE_ARTIFACTS = [
     {
-        "row_id": "APQBVQ001",
+        "row_id": "APQBFR001",
+        "comparison_surface": "before_pre_v10",
         "row_kind": "source_artifact",
-        "display_name": "Current Blender/APQ contact sheet",
+        "display_name": "Before: pre-v10 visual QA contact sheet",
+        "artifact_path": PREVIOUS_CONTACT_SHEET_REL.as_posix(),
+        "source_role": "before_contact_sheet",
+        "review_question": "Open this first and judge the earlier pre-v10 visual QA surface at a glance.",
+    },
+    {
+        "row_id": "APQBFR002",
+        "comparison_surface": "before_pre_v10",
+        "row_kind": "source_artifact",
+        "display_name": "Before: pre-v10 visual QA report",
+        "artifact_path": PREVIOUS_REPORT_REL.as_posix(),
+        "source_role": "before_report",
+        "review_question": "Use this to compare the earlier decision questions and summary against the current packet.",
+    },
+    {
+        "row_id": "APQBFR003",
+        "comparison_surface": "before_pre_v10",
+        "row_kind": "source_artifact",
+        "display_name": "Before: pre-v10 manual review intake",
+        "artifact_path": PREVIOUS_MANUAL_REVIEW_INTAKE_REL.as_posix(),
+        "source_role": "before_manual_review_intake",
+        "review_question": "Use this intake to compare the earlier prompts against the current decision packet.",
+    },
+    {
+        "row_id": "APQBFR004",
+        "comparison_surface": "before_pre_v10",
+        "row_kind": "source_artifact",
+        "display_name": "Before: pre-v10 manifest",
+        "artifact_path": PREVIOUS_MANIFEST_REL.as_posix(),
+        "source_role": "before_manifest",
+        "review_question": "Use this manifest to confirm the earlier guardrail posture and surface evidence.",
+    },
+    {
+        "row_id": "APQBAR001",
+        "comparison_surface": "after_post_v10",
+        "row_kind": "source_artifact",
+        "display_name": "After: post-v10 current contact sheet",
         "artifact_path": CURRENT_CONTACT_SHEET_REL.as_posix(),
-        "source_role": "current_contact_sheet",
-        "review_question": "Open this contact sheet first and judge the current post-#471 direction at a glance.",
+        "source_role": "after_contact_sheet",
+        "review_question": "Open this second and judge the current post-v10 composition variants at a glance.",
     },
     {
-        "row_id": "APQBVQ002",
+        "row_id": "APQBAR002",
+        "comparison_surface": "after_post_v10",
         "row_kind": "source_artifact",
-        "display_name": "variant_01_photo_anchor",
+        "display_name": "After: post-v10 variant_01_photo_anchor",
         "artifact_path": CURRENT_VARIANT_01_REL.as_posix(),
-        "source_role": "current_variant_image",
-        "review_question": "Use this variant to decide whether the full-photo scrim direction is the right lead.",
+        "source_role": "after_variant_image",
+        "review_question": "Use this variant to decide whether the full-photo direction deserves to remain in the packet.",
     },
     {
-        "row_id": "APQBVQ003",
+        "row_id": "APQBAR003",
+        "comparison_surface": "after_post_v10",
         "row_kind": "source_artifact",
-        "display_name": "variant_02_score_drama",
+        "display_name": "After: post-v10 variant_02_score_drama",
         "artifact_path": CURRENT_VARIANT_02_REL.as_posix(),
-        "source_role": "current_variant_image",
+        "source_role": "after_variant_image",
         "review_question": "Use this variant to compare the score-forward rhythm against the lead direction.",
     },
     {
-        "row_id": "APQBVQ004",
+        "row_id": "APQBAR004",
+        "comparison_surface": "after_post_v10",
         "row_kind": "source_artifact",
-        "display_name": "variant_03_clean_editorial",
+        "display_name": "After: post-v10 variant_03_clean_editorial",
         "artifact_path": CURRENT_VARIANT_03_REL.as_posix(),
-        "source_role": "current_variant_image",
-        "review_question": "Use this variant to compare the calmer editorial option against the lead direction.",
+        "source_role": "after_variant_image",
+        "review_question": "Use this variant to judge the calmer baseline that Gemini treated as strongest.",
     },
     {
-        "row_id": "APQBVQ005",
+        "row_id": "APQBAR005",
+        "comparison_surface": "after_post_v10",
         "row_kind": "source_artifact",
-        "display_name": "Current Blender/APQ manifest",
+        "display_name": "After: post-v10 current manifest",
         "artifact_path": CURRENT_MANIFEST_REL.as_posix(),
-        "source_role": "current_manifest",
+        "source_role": "after_manifest",
         "review_question": "Use this manifest to confirm the review-only guardrails and texture evidence.",
     },
     {
-        "row_id": "APQBVQ006",
+        "row_id": "APQBAR006",
+        "comparison_surface": "after_post_v10",
         "row_kind": "source_artifact",
-        "display_name": "Current manual review intake",
+        "display_name": "After: post-v10 current manual review intake",
         "artifact_path": CURRENT_MANUAL_REVIEW_INTAKE_REL.as_posix(),
-        "source_role": "current_manual_review_intake",
-        "review_question": "Use this intake to compare the packet questions with the current review-only decision surface.",
+        "source_role": "after_manual_review_intake",
+        "review_question": "Use this intake to compare the current prompts with the before/after decision packet.",
     },
 ]
 
 CSV_FIELDS = [
     "row_kind",
     "row_id",
+    "comparison_surface",
     "display_name",
     "artifact_path",
     "source_exists",
@@ -179,6 +231,13 @@ def source_candidates(path: Path) -> list[Path]:
         candidates.append(run_root / path)
     candidates.append(repo_root() / path)
     candidates.append(Path.cwd() / path)
+    try:
+        suffix = path.relative_to(LATEST_FILES_ROOT)
+    except ValueError:
+        suffix = None
+    if suffix is not None:
+        for legacy_root in LEGACY_REFERENCE_ROOTS:
+            candidates.append(repo_root() / legacy_root / path.name)
     return candidates
 
 
@@ -210,13 +269,14 @@ def normalize_question_options(options: str) -> str:
 
 def make_artifact_rows() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for base_row in PRIMARY_ARTIFACTS:
+    for base_row in SOURCE_ARTIFACTS:
         exists = find_existing_input(Path(base_row["artifact_path"])) is not None
         rows.append(
             {
                 **base_row,
                 "source_exists": exists,
                 "source_status": "present" if exists else "missing",
+                "comparison_surface": str(base_row.get("comparison_surface") or ""),
                 "decision_options": "",
                 "operator_decision": "",
                 "operator_notes": "",
@@ -250,6 +310,7 @@ def make_question_rows() -> list[dict[str, Any]]:
             {
                 "row_kind": "question",
                 "row_id": question["row_id"],
+                "comparison_surface": "",
                 "display_name": question["question"],
                 "artifact_path": "",
                 "source_exists": "",
@@ -330,10 +391,10 @@ def build_contact_sheet(image_rows: list[dict[str, Any]], packet_dir: Path) -> d
     body_font = ImageFont.load_default()
 
     draw.rectangle((0, 0, sheet_w, title_h), fill=(232, 236, 242))
-    draw.text((margin, 18), "APQ001 Blender Visual QA Contact Sheet", fill=(22, 28, 38), font=title_font)
+    draw.text((margin, 18), "APQ001 Blender Before/After Decision Packet", fill=(22, 28, 38), font=title_font)
     draw.text(
         (margin, 48),
-        "Review-only, artifact-only, no approvals. Compare the current post-#471 variants with any local Blender/APQ references.",
+        "Review-only, artifact-only, no approvals. Compare the pre-v10 visual QA surface with the post-v10 composition variants.",
         fill=(50, 58, 69),
         font=body_font,
     )
@@ -378,13 +439,18 @@ def build_contact_sheet(image_rows: list[dict[str, Any]], packet_dir: Path) -> d
 
 
 def render_readme(payload: dict[str, Any]) -> str:
-    reference_lines = "\n".join(
+    before_lines = "\n".join(
         f"- `{row['display_name']}` -> `{row['artifact_path']}` ({row['source_status']})"
         for row in payload["artifact_rows"]
-        if row["row_kind"] == "source_artifact"
+        if row["row_kind"] == "source_artifact" and row.get("comparison_surface") == "before_pre_v10"
+    )
+    after_lines = "\n".join(
+        f"- `{row['display_name']}` -> `{row['artifact_path']}` ({row['source_status']})"
+        for row in payload["artifact_rows"]
+        if row["row_kind"] == "source_artifact" and row.get("comparison_surface") == "after_post_v10"
     )
     contact_sheet_line = (
-        f"- Contact sheet: `{payload['contact_sheet_path']}`" if payload["contact_sheet_created"] else "- Contact sheet: not generated locally"
+        f"- Comparison sheet: `{payload['contact_sheet_path']}`" if payload["contact_sheet_created"] else "- Comparison sheet: not generated locally"
     )
     return f"""# Blender/APQ Visual QA Packet v1
 
@@ -392,18 +458,22 @@ Status: `{payload['status']}`
 Version: `{payload['version']}`
 Generated: `{payload['generated_at_utc']}`
 
-This packet is review-only and artifact-only. It packages the current post-#471 Blender/APQ composition variants for manual visual QA. It does not change renderer behavior, edit source images, download assets, approve assets, move files, or publish anything.
+This packet is review-only and artifact-only. It packages the pre-v10 visual QA surface and the current post-v10 Blender/APQ composition variants for manual visual QA. It does not change renderer behavior, edit source images, download assets, approve assets, move files, or publish anything.
 
 ## Open In Order
 
 1. `visual_qa_report.md`
 2. `manual_visual_review_intake.csv`
-3. The current contact sheet and current variant images if they are present locally
+3. The before and after contact sheets if they are present locally
 4. `{CONTACT_SHEET_NAME}` if it was generated
 
-## Local Review Targets
+## Before Surface
 
-{reference_lines}
+{before_lines}
+
+## After Surface
+
+{after_lines}
 
 {contact_sheet_line}
 
@@ -434,27 +504,32 @@ This packet is review-only and artifact-only. It packages the current post-#471 
 
 
 def render_report(payload: dict[str, Any]) -> str:
-    source_lines = "\n".join(
+    before_lines = "\n".join(
         f"- `{row['display_name']}` -> `{row['artifact_path']}` ({row['source_status']})"
         for row in payload["artifact_rows"]
-        if row["row_kind"] == "source_artifact"
+        if row["row_kind"] == "source_artifact" and row.get("comparison_surface") == "before_pre_v10"
+    )
+    after_lines = "\n".join(
+        f"- `{row['display_name']}` -> `{row['artifact_path']}` ({row['source_status']})"
+        for row in payload["artifact_rows"]
+        if row["row_kind"] == "source_artifact" and row.get("comparison_surface") == "after_post_v10"
     )
     missing_lines = "\n".join(f"- `{path}`" for path in payload["missing_primary_artifact_paths"]) or "- None"
-    reference_lines = "\n".join(f"- `{path}`" for path in payload["reference_image_paths"]) or "- None"
+    reference_lines = "\n".join(f"- `{path}`" for path in payload["reference_artifact_paths"]) or "- None"
     question_lines = "\n".join(
         f"- {row['review_question']}  \n  Options: `{row['decision_options']}`" for row in payload["review_question_rows"]
     )
     next_lane_lines = "\n".join(
         [
-            "- Continue Blender composition polish if the image is strong but still needs small cleanup.",
-            "- Try a different crop or framing if the current composition feels close but not quite right.",
-            "- Pause for external visual QA if the result needs a second set of eyes before another renderer pass.",
+            "- Accept the current clean-editorial baseline if the after surface is the clearest lead direction.",
+            "- Revise only if a better review-only source crop exists locally.",
+            "- Pause Blender polish and move to manual QA if the current source candidate stays too tight on the face.",
         ]
     )
     contact_sheet_line = (
-        f"- Contact sheet created at `{payload['contact_sheet_path']}` with `{payload['contact_sheet_source_count']}` source image(s)."
+        f"- Comparison sheet created at `{payload['contact_sheet_path']}` with `{payload['contact_sheet_source_count']}` source image(s)."
         if payload["contact_sheet_created"]
-        else "- No contact sheet was generated because no readable source images were found locally."
+        else "- No comparison sheet was generated because no readable source images were found locally."
     )
     return f"""# Blender/APQ Visual QA Report
 
@@ -462,18 +537,27 @@ Status: `{payload['status']}`
 Version: `{payload['version']}`
 Generated: `{payload['generated_at_utc']}`
 
-This is a review-only artifact packet for the APQ001 Blender/APQ composition variants progression. It is meant to help a human compare the current post-#471 variants against any local prior references before deciding the next lane.
+This is a review-only artifact packet for the APQ001 Blender/APQ before/after decision surface. It is meant to help a human compare the earlier pre-v10 visual QA packet against the current post-v10 composition variants before deciding the next lane.
 
 ## What To Review
 
-- Current contact sheet path: `{payload['current_contact_sheet_path']}`
+- Before contact sheet path: `{payload['previous_contact_sheet_path']}`
+- After contact sheet path: `{payload['current_contact_sheet_path']}`
 - Current manifest path: `{payload['current_manifest_path']}`
 - Current manual review intake path: `{payload['current_manual_review_intake_path']}`
 {contact_sheet_line}
 
-## Source Artifacts
+## Before Surface
 
-{source_lines}
+{before_lines}
+
+## After Surface
+
+{after_lines}
+
+## Reference Artifacts
+
+{reference_lines}
 
 ## Missing Primary Artifacts
 
@@ -503,29 +587,34 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
 
     artifact_rows = make_artifact_rows()
     question_rows = make_question_rows()
-    current_contact_sheet_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ001"), None)
-    variant_image_rows = [row for row in artifact_rows if row["row_id"] in {"APQBVQ002", "APQBVQ003", "APQBVQ004"}]
-    current_manifest_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ005"), None)
-    current_intake_row = next((row for row in artifact_rows if row["row_id"] == "APQBVQ006"), None)
+    previous_contact_sheet_row = next((row for row in artifact_rows if row["row_id"] == "APQBFR001"), None)
+    previous_manifest_row = next((row for row in artifact_rows if row["row_id"] == "APQBFR004"), None)
+    current_contact_sheet_row = next((row for row in artifact_rows if row["row_id"] == "APQBAR001"), None)
+    current_manifest_row = next((row for row in artifact_rows if row["row_id"] == "APQBAR005"), None)
+    current_intake_row = next((row for row in artifact_rows if row["row_id"] == "APQBAR006"), None)
+    previous_contact_sheet_present = bool(previous_contact_sheet_row and previous_contact_sheet_row["source_exists"])
     current_contact_sheet_present = bool(current_contact_sheet_row and current_contact_sheet_row["source_exists"])
+    previous_manifest_present = bool(previous_manifest_row and previous_manifest_row["source_exists"])
     current_manifest_present = bool(current_manifest_row and current_manifest_row["source_exists"])
     current_intake_present = bool(current_intake_row and current_intake_row["source_exists"])
-    reference_image_paths = [row["artifact_path"] for row in variant_image_rows]
+    reference_artifact_paths = [row["artifact_path"] for row in artifact_rows if row["row_kind"] == "source_artifact"]
+    comparison_sheet_rows = [row for row in artifact_rows if row["row_kind"] == "source_artifact" and row.get("display_name", "").startswith(("Before: pre-v10 visual QA contact sheet", "After: post-v10 current contact sheet"))]
     missing_primary_artifact_paths = [row["artifact_path"] for row in artifact_rows if not row["source_exists"]]
 
-    contact_sheet_rows = [row for row in variant_image_rows if row["source_exists"]]
+    contact_sheet_rows = [row for row in comparison_sheet_rows if row["source_exists"]]
     contact_sheet_info = build_contact_sheet(contact_sheet_rows, packet_dir)
     contact_sheet_created = bool(contact_sheet_info["created"])
     if contact_sheet_created:
         artifact_rows.append(
             {
                 "row_kind": "generated_artifact",
-                "row_id": "APQBVQCS001",
-                "display_name": "Generated APQ001 visual QA contact sheet",
+                "row_id": "APQBGC001",
+                "comparison_surface": "generated_before_after",
+                "display_name": "Generated APQ001 before/after decision sheet",
                 "artifact_path": contact_sheet_info["path"],
                 "source_exists": True,
                 "source_status": "present",
-                "review_question": "Use this generated contact sheet for quick comparison between the three current variants.",
+                "review_question": "Use this generated comparison sheet to compare the before and after surfaces quickly.",
                 "decision_options": "",
                 "operator_decision": "",
                 "operator_notes": "",
@@ -551,11 +640,11 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
 
     any_source_present = any(row["source_exists"] for row in artifact_rows if row["row_kind"] == "source_artifact")
     status = (
-        "blender_apq_visual_qa_packet_ready"
-        if current_contact_sheet_present
-        else "blender_apq_visual_qa_packet_reference_only"
+        "blender_apq_before_after_decision_packet_ready"
+        if previous_contact_sheet_present and current_contact_sheet_present
+        else "blender_apq_before_after_decision_packet_reference_only"
         if any_source_present
-        else "blender_apq_visual_qa_packet_missing_sources"
+        else "blender_apq_before_after_decision_packet_missing_sources"
     )
 
     readme_path = packet_dir / README_NAME
@@ -582,10 +671,18 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "contact_sheet_created": contact_sheet_created,
         "contact_sheet_source_count": contact_sheet_info["source_count"] if contact_sheet_created else 0,
         "generated_contact_sheet_allowed": contact_sheet_created,
+        "previous_contact_sheet_path": PREVIOUS_CONTACT_SHEET_REL.as_posix(),
+        "previous_contact_sheet_present": previous_contact_sheet_present,
+        "previous_manifest_path": PREVIOUS_MANIFEST_REL.as_posix(),
+        "previous_manifest_present": previous_manifest_present,
         "current_contact_sheet_path": CURRENT_CONTACT_SHEET_REL.as_posix(),
         "current_contact_sheet_present": current_contact_sheet_present,
-        "current_variant_image_paths": reference_image_paths,
-        "current_variant_image_count": len(reference_image_paths),
+        "current_variant_image_paths": [
+            CURRENT_VARIANT_01_REL.as_posix(),
+            CURRENT_VARIANT_02_REL.as_posix(),
+            CURRENT_VARIANT_03_REL.as_posix(),
+        ],
+        "current_variant_image_count": 3,
         "current_manifest_path": CURRENT_MANIFEST_REL.as_posix(),
         "current_manifest_present": current_manifest_present,
         "current_manual_review_intake_path": CURRENT_MANUAL_REVIEW_INTAKE_REL.as_posix(),
@@ -597,8 +694,10 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "review_question_count": len(question_rows),
         "manual_review_questions": [row["review_question"] for row in question_rows],
         "manual_review_decision_vocabulary": [row["decision_options"] for row in question_rows],
-        "reference_image_paths": reference_image_paths,
-        "reference_image_count": len(reference_image_paths),
+        "reference_artifact_paths": reference_artifact_paths,
+        "reference_artifact_count": len(reference_artifact_paths),
+        "reference_image_paths": [row["artifact_path"] for row in comparison_sheet_rows if row["source_exists"]],
+        "reference_image_count": len([row for row in comparison_sheet_rows if row["source_exists"]]),
         "missing_primary_artifact_paths": missing_primary_artifact_paths,
         "guardrails": guardrails,
         "review_only": True,
@@ -617,6 +716,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "publishing": False,
         "auto_publish": False,
         "auto_approval": False,
+        "previous_contact_sheet_status": "present" if previous_contact_sheet_present else "missing",
+        "previous_manifest_status": "present" if previous_manifest_present else "missing",
         "current_contact_sheet_status": "present" if current_contact_sheet_present else "missing",
         "current_manifest_status": "present" if current_manifest_present else "missing",
         "current_manual_review_intake_status": "present" if current_intake_present else "missing",
