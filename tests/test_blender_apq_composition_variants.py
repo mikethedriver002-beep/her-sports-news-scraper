@@ -83,6 +83,32 @@ def test_load_scene_context_accepts_absolute_review_only_candidate_path(tmp_path
     assert context["source_image_path"] == candidate
 
 
+def test_load_scene_context_rejects_absolute_out_of_scope_path(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    outside = tmp_path / "not_review_only" / "apq001_review_only_candidate.jpg"
+    write_right_focus_source_image(outside)
+    scene_payload = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    write_json(
+        scene_payload,
+        {
+            "action_photo_slot": {
+                "quarantine_path": outside.as_posix(),
+                "asset_approved": False,
+            }
+        },
+    )
+
+    context = module.load_scene_context(scene_payload)
+
+    assert context["scene_payload_present"] is True
+    assert context["source_image_present"] is False
+    assert context["scene_payload_status"] == "present"
+    assert str(context["source_image_path"]).endswith("apq001_review_only_candidate.jpg")
+
+
 def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, monkeypatch) -> None:
     module = load_module()
     repo_root = tmp_path / "repo"

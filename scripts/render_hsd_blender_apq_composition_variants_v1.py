@@ -247,7 +247,7 @@ def resolve_quarantine_image_path(scene_payload: dict[str, Any]) -> Path:
     raw_path = str(payload_slot.get("quarantine_path") or "").strip()
     candidate = Path(raw_path) if raw_path else repo_root() / DEFAULT_QUARANTINE_IMAGE
     resolved = candidate.resolve(strict=False)
-    if candidate.is_absolute() and resolved.exists():
+    if candidate.is_absolute() and resolved.exists() and "review_only_candidates" in resolved.as_posix():
         return resolved
     if not candidate.is_absolute():
         candidate = repo_root() / candidate
