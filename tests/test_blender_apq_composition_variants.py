@@ -57,6 +57,59 @@ def test_load_scene_context_degrades_without_sample_payload(tmp_path: Path, monk
     assert str(context["source_image_path"]).endswith("apq001_review_only_candidate.jpg")
 
 
+def test_load_scene_context_accepts_absolute_review_only_candidate_path(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    candidate = tmp_path / "review_only_candidates" / "action_photo_candidates" / "wnba" / "apq001" / "apq001_review_only_candidate.jpg"
+    write_right_focus_source_image(candidate)
+    scene_payload = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    write_json(
+        scene_payload,
+        {
+            "action_photo_slot": {
+                "quarantine_path": candidate.as_posix(),
+                "asset_approved": False,
+            }
+        },
+    )
+
+    context = module.load_scene_context(scene_payload)
+
+    assert context["scene_payload_present"] is True
+    assert context["source_image_present"] is True
+    assert context["scene_payload_status"] == "present"
+    assert context["source_image_path"] == candidate
+
+
+def test_load_scene_context_rejects_absolute_not_review_only_candidate_path(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    outside = tmp_path / "not_review_only_candidates" / "apq001_review_only_candidate.jpg"
+    write_right_focus_source_image(outside)
+    scene_payload = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    write_json(
+        scene_payload,
+        {
+            "action_photo_slot": {
+                "quarantine_path": outside.as_posix(),
+                "asset_approved": False,
+            }
+        },
+    )
+
+    context = module.load_scene_context(scene_payload)
+
+    assert context["scene_payload_present"] is True
+    assert context["source_image_present"] is False
+    assert context["scene_payload_status"] == "present"
+    assert str(context["source_image_path"]).endswith("apq001_review_only_candidate.jpg")
+    assert "not_review_only_candidates" not in context["source_image_path"].as_posix()
+
+
 def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, monkeypatch) -> None:
     module = load_module()
     repo_root = tmp_path / "repo"
@@ -79,7 +132,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["source_image_texture_mode"] == "pending" for spec in specs)
     assert [spec["burn_in_position_mode"] for spec in specs] == ["bottom_safe_footer_tag", "bottom_safe_footer_tag", "bottom_safe_footer_tag"]
     assert all(spec["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for spec in specs)
-    assert [spec["source_photo_focus_region"]["x"] for spec in specs] == [0.76, 0.75, 0.77]
+    assert [spec["source_photo_focus_region"]["x"] for spec in specs] == [0.76, 0.75, 0.9]
     assert all(spec["source_photo_focus_region"]["y"] == 0.5 for spec in specs)
     assert [spec["subject_crop_balance_mode"] for spec in specs] == [
         "face_safe_open_balance",
@@ -97,6 +150,16 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
         "score_drama_open_type",
         "open_editorial_type",
     ]
+    assert [spec["lead_direction"] for spec in specs] == ["", "", "clean_editorial"]
+    assert [spec["external_visual_qa_direction"] for spec in specs] == ["", "", "variant_03_crop_framing"]
+    assert [spec["typography_scale"] for spec in specs] == [1.0, 1.0, 0.9]
+    assert [spec["subject_face_within_frame_intent"] for spec in specs] == [False, False, False]
+    assert [spec["top_spotlight_softened"] for spec in specs] == [False, False, True]
+    assert [spec["minimalist_font_scaling_standardized"] for spec in specs] == [False, False, True]
+    assert specs[2]["top_spotlight_location"] == (0.8, 2.15, 4.05)
+    assert specs[2]["top_spotlight_energy"] == 220.0
+    assert specs[2]["top_spotlight_size"] == 3.6
+    assert specs[2]["top_spotlight_size_y"] == 2.6
     assert specs[0]["photo_anchor_type_treatment_mode"] == "open_scrim_hierarchy"
     assert specs[0]["photo_anchor_scrim_treatment_mode"] == "soft_editorial_scrim_v2"
     assert all(spec["photo_texture_render_layer_mode"] == "texture_front_no_frame_cover" for spec in specs)
@@ -108,7 +171,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["layout_polish_checks"]["score_panel_softened"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["split_panel_softened"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["photo_type_integration_improved"] is True for spec in specs)
-    assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is False for spec in specs[2:])
     assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
     assert specs[0]["layout_polish_checks"]["typography_hierarchy_improved"] is True
     assert specs[0]["layout_polish_checks"]["scrim_softness_improved"] is True
@@ -225,7 +288,17 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for row in manifest["variant_rows"])
     assert manifest["variant_rows"][0]["photo_anchor_type_treatment_mode"] == "open_scrim_hierarchy"
     assert manifest["variant_rows"][0]["photo_anchor_scrim_treatment_mode"] == "soft_editorial_scrim_v2"
-    assert [row["source_photo_focus_region"]["x"] for row in manifest["variant_rows"]] == [0.76, 0.75, 0.77]
+    assert [row["source_photo_focus_region"]["x"] for row in manifest["variant_rows"]] == [0.76, 0.75, 0.9]
+    assert [row["lead_direction"] for row in manifest["variant_rows"]] == ["", "", "clean_editorial"]
+    assert [row["external_visual_qa_direction"] for row in manifest["variant_rows"]] == ["", "", "variant_03_crop_framing"]
+    assert [row["typography_scale"] for row in manifest["variant_rows"]] == [1.0, 1.0, 0.9]
+    assert [row["subject_face_within_frame_intent"] for row in manifest["variant_rows"]] == [False, False, False]
+    assert [row["top_spotlight_softened"] for row in manifest["variant_rows"]] == [False, False, True]
+    assert [row["minimalist_font_scaling_standardized"] for row in manifest["variant_rows"]] == [False, False, True]
+    assert manifest["variant_rows"][2]["top_spotlight_location"] == [0.8, 2.15, 4.05]
+    assert manifest["variant_rows"][2]["top_spotlight_energy"] == 220.0
+    assert manifest["variant_rows"][2]["top_spotlight_size"] == 3.6
+    assert manifest["variant_rows"][2]["top_spotlight_size_y"] == 2.6
     assert [row["subject_crop_balance_mode"] for row in manifest["variant_rows"]] == [
         "face_safe_open_balance",
         "score_weighted_center_balance",
@@ -249,10 +322,14 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["layout_polish_checks"]["score_panel_softened"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["split_panel_softened"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["photo_type_integration_improved"] is True for row in manifest["variant_rows"])
-    assert all(row["layout_polish_checks"]["face_edge_clipping_reduced"] is True for row in manifest["variant_rows"])
+    assert manifest["variant_rows"][2]["layout_polish_checks"]["face_edge_clipping_reduced"] is False
     assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
     assert manifest["variant_rows"][0]["layout_polish_checks"]["split_panel_removed_or_minimized"] is True
     assert manifest["variant_rows"][0]["layout_polish_checks"]["full_photo_background_layer"] is True
+    assert manifest["variant_rows"][2]["source_photo_focus_region"] == {"x": 0.9, "y": 0.5}
+    assert manifest["variant_rows"][2]["typography_scale"] == 0.9
+    assert manifest["variant_rows"][2]["lead_direction"] == "clean_editorial"
+    assert manifest["variant_rows"][2]["external_visual_qa_direction"] == "variant_03_crop_framing"
 
     for variant_id in ["variant_01_photo_anchor", "variant_02_score_drama", "variant_03_clean_editorial"]:
         assert (out_dir / f"{variant_id}.png").exists()
@@ -266,6 +343,7 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert "source image is missing" in report.lower()
     assert "Review-only derived crop mode" in report
     assert "Layout polish checks" in report
+    assert "The clean-editorial variant is the safest next-lane candidate here" in report
     assert [row["variant_id"] for row in rows] == [
         "variant_01_photo_anchor",
         "variant_02_score_drama",
