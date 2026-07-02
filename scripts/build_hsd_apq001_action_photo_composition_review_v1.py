@@ -265,6 +265,7 @@ def make_sheet_card(
     image: Any | None,
     note: str,
     size: tuple[int, int] = (920, 690),
+    placeholder_title: str | None = None,
 ) -> Any:
     if Image is None or ImageDraw is None or ImageOps is None:
         raise RuntimeError("Pillow is unavailable")
@@ -280,7 +281,8 @@ def make_sheet_card(
         card.paste(fitted, (image_box[0], image_box[1]))
         draw.rounded_rectangle(image_box, radius=18, outline=(255, 255, 255), width=1)
     else:
-        draw_placeholder(draw, image_box, "Missing input" if not source_exists else "Unreadable input", note)
+        fallback_title = placeholder_title or ("Missing input" if not source_exists else "Unreadable input")
+        draw_placeholder(draw, image_box, fallback_title, note)
     draw.text((24, size[1] - 52), note, font=font(16, bold=False), fill=(210, 216, 224))
     return card
 
@@ -306,14 +308,51 @@ def render_contact_sheet(payload: Mapping[str, Any]) -> Any | None:
         fill=(160, 169, 181),
     )
     card_specs = [
-        ("Current 4:5 headshot bridge", "Baseline to compare against", payload["current_headshot_path"], payload["current_headshot_present"], payload["current_headshot_readable"], payload["current_headshot_note"]),
-        ("APQ001 quarantine candidate", "Review-only source asset", payload["candidate_path"], payload["candidate_present"], payload["candidate_readable"], payload["candidate_note"]),
-        ("APQ001 quarantine sandbox", "Optional sandbox render", payload["sandbox_path"], payload["sandbox_present"], payload["sandbox_readable"], payload["sandbox_note"]),
-        ("Prototype plan manifest", "Review-only composition direction", payload["prototype_plan_path"], payload["prototype_plan_present"], True, payload["prototype_plan_note"]),
+        (
+            "Current 4:5 headshot bridge",
+            "Baseline to compare against",
+            payload["current_headshot_path"],
+            payload["current_headshot_present"],
+            payload["current_headshot_readable"],
+            payload["current_headshot_note"],
+            None,
+        ),
+        (
+            "APQ001 quarantine candidate",
+            "Review-only source asset",
+            payload["candidate_path"],
+            payload["candidate_present"],
+            payload["candidate_readable"],
+            payload["candidate_note"],
+            None,
+        ),
+        (
+            "APQ001 quarantine sandbox",
+            "Optional sandbox render",
+            payload["sandbox_path"],
+            payload["sandbox_present"],
+            payload["sandbox_readable"],
+            payload["sandbox_note"],
+            None,
+        ),
+        (
+            "Prototype plan manifest",
+            "Review-only composition direction",
+            payload["prototype_plan_path"],
+            payload["prototype_plan_present"],
+            True,
+            payload["prototype_plan_note"],
+            "Reference manifest",
+        ),
     ]
     positions = [(30, 160), (970, 160), (30, 900), (970, 900)]
     sizes = [(900, 700), (900, 700), (900, 560), (900, 560)]
-    for (title, subtitle, artifact_path, source_exists, source_readable, note), (x, y), size in zip(card_specs, positions, sizes, strict=True):
+    for (title, subtitle, artifact_path, source_exists, source_readable, note, placeholder_title), (x, y), size in zip(
+        card_specs,
+        positions,
+        sizes,
+        strict=True,
+    ):
         card = make_sheet_card(
             title=title,
             subtitle=subtitle,
@@ -323,6 +362,7 @@ def render_contact_sheet(payload: Mapping[str, Any]) -> Any | None:
             image=payload["image_map"].get(artifact_path),
             note=note,
             size=size,
+            placeholder_title=placeholder_title,
         )
         canvas.paste(card, (x, y))
     draw.text(
