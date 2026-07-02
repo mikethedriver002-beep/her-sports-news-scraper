@@ -13,6 +13,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from hsd_run_io import output_path, write_json, write_text
 
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except Exception:  # pragma: no cover - runtime fallback
+    Image = None  # type: ignore[assignment]
+    ImageDraw = None  # type: ignore[assignment]
+    ImageFont = None  # type: ignore[assignment]
+
 
 VERSION = "hsd-blender-renderer-smoke-v1-review-only"
 DEFAULT_BLENDER_EXECUTABLE = Path(r"C:\Program Files\Blender Foundation\Blender 5.1\blender.exe")
@@ -86,7 +93,7 @@ def make_scene_payload() -> dict[str, Any]:
             {"type": "cube", "name": "LeftBlock", "location": [-1.95, 0.15, -0.15], "scale": [0.86, 0.46, 0.92]},
             {"type": "sphere", "name": "CenterOrb", "location": [0.0, 0.0, 0.2], "scale": [0.72, 0.72, 0.72]},
             {"type": "cylinder", "name": "RightColumn", "location": [1.95, -0.05, 0.25], "scale": [0.42, 0.42, 1.28]},
-            {"type": "text", "name": "BurnIn", "body": SMOKE_BURN_IN_TEXT, "location": [0.0, 0.83, 2.15], "rotation_degrees": [90.0, 0.0, 0.0], "scale": [1.02, 1.02, 1.02]},
+            {"type": "text", "name": "BurnIn", "body": SMOKE_BURN_IN_TEXT, "location": [0.0, 0.83, 2.15], "rotation_degrees": [90.0, 0.0, 0.0], "scale": [0.34, 0.34, 0.34]},
         ],
         "camera": {
             "location": [0.0, -7.9, 2.8],
@@ -359,6 +366,43 @@ def run_blender_render(blender_executable: Path, runner_path: Path, scene_payloa
     return CommandResult(result.returncode, result.stdout, result.stderr)
 
 
+def burn_in_font(size: int):
+    if ImageFont is None:
+        raise RuntimeError("Pillow is unavailable for burn-in text")
+    for candidate in [Path("C:/Windows/Fonts/arialbd.ttf"), Path("C:/Windows/Fonts/calibrib.ttf")]:
+        if candidate.exists():
+            try:
+                return ImageFont.truetype(candidate.as_posix(), size=size)
+            except Exception:
+                continue
+    return ImageFont.load_default()
+
+
+def apply_visible_burn_in(path: Path) -> None:
+    if Image is None or ImageDraw is None:
+        raise RuntimeError("Pillow is unavailable for burn-in text")
+    with Image.open(path) as source:
+        image = source.convert("RGBA")
+    draw = ImageDraw.Draw(image, "RGBA")
+    width, height = image.size
+    banner_h = max(72, int(height * 0.06))
+    draw.rectangle((0, height - banner_h, width, height), fill=(186, 24, 48, 235))
+    draw.rectangle((0, 0, width, 8), fill=(186, 24, 48, 235))
+    text_font = burn_in_font(max(30, int(height * 0.032)))
+    bbox = draw.textbbox((0, 0), SMOKE_BURN_IN_TEXT, font=text_font, stroke_width=2)
+    text_w = bbox[2] - bbox[0]
+    text_h = bbox[3] - bbox[1]
+    draw.text(
+        ((width - text_w) / 2, height - banner_h + (banner_h - text_h) / 2 - 3),
+        SMOKE_BURN_IN_TEXT,
+        font=text_font,
+        fill=(255, 255, 255, 255),
+        stroke_width=2,
+        stroke_fill=(27, 32, 43, 255),
+    )
+    image.save(path, "PNG")
+
+
 def write_report(status: str, message: str, manifest_path: Path, render_result: CommandResult | None = None) -> Path:
     lines = [
         "# HSD Blender Renderer Smoke Test v1",
@@ -452,6 +496,22 @@ def main(argv: list[str] | None = None) -> int:
         )
         write_json(manifest_path(), manifest, sort_keys=True)
         write_report("blocked", "Blender render did not complete successfully.", manifest_path(), render_result)
+        return 1
+    try:
+        apply_visible_burn_in(out_png)
+    except Exception as exc:
+        manifest = build_manifest(
+            blender_executable=blender_executable,
+            blender_version=blender_version,
+            scene_payload_path=scene_payload_path,
+            output_png_path=out_png,
+            status="blender_renderer_smoke_blocked_burn_in_failed",
+            render_exit_code=1,
+            render_stdout=render_result.stdout,
+            render_stderr=f"{render_result.stderr}\nBurn-in failed: {exc}".strip(),
+        )
+        write_json(manifest_path(), manifest, sort_keys=True)
+        write_report("blocked", f"Blender render completed but burn-in failed: {exc}", manifest_path(), render_result)
         return 1
 
     manifest = build_manifest(
