@@ -175,7 +175,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "use_score_plate": False,
         "use_editorial_scrim": True,
         "source_photo_crop_mode": "fit_1080x1350_right_focus",
-        "source_photo_focus_region": {"x": 0.83, "y": 0.5},
+        "source_photo_focus_region": {"x": 0.9, "y": 0.5},
         "subject_crop_balance_mode": "editorial_face_open_balance",
         "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
         "composition_treatment_mode": "clean_editorial_fullbleed",
@@ -189,7 +189,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "top_spotlight_energy": 220.0,
         "top_spotlight_size": 3.6,
         "top_spotlight_size_y": 2.6,
-        "subject_face_within_frame_intent": True,
+        "subject_face_within_frame_intent": False,
         "top_spotlight_softened": True,
         "minimalist_font_scaling_standardized": True,
         "layout_polish_checks": {
@@ -199,7 +199,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
             "score_panel_softened": True,
             "split_panel_softened": True,
             "photo_type_integration_improved": True,
-            "face_edge_clipping_reduced": True,
+            "face_edge_clipping_reduced": False,
             "photo_is_hero": False,
             "text_kept_off_face": True,
         },
@@ -473,7 +473,7 @@ def build_report(payload: dict[str, Any]) -> str:
     source_status = "present" if payload["source_image_present"] else "missing"
     texture_status = "loaded" if payload.get("source_image_texture_loaded") else "placeholder"
     recommendation = (
-        "The clean-editorial variant should usually drive the next lane if the source image is usable, because it gives the clearest read on face-safe framing, clean text separation, and a premium magazine baseline."
+        "The clean-editorial variant is still the safest baseline, but the current review-only source candidate keeps the athlete face too tight; use a different source crop before treating it as the lead direction."
         if payload["source_image_present"]
         else "The clean-editorial variant is the safest next-lane candidate here, because the source image is missing and the calmer baseline keeps the packet readable."
     )

@@ -132,7 +132,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["source_image_texture_mode"] == "pending" for spec in specs)
     assert [spec["burn_in_position_mode"] for spec in specs] == ["bottom_safe_footer_tag", "bottom_safe_footer_tag", "bottom_safe_footer_tag"]
     assert all(spec["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for spec in specs)
-    assert [spec["source_photo_focus_region"]["x"] for spec in specs] == [0.76, 0.75, 0.83]
+    assert [spec["source_photo_focus_region"]["x"] for spec in specs] == [0.76, 0.75, 0.9]
     assert all(spec["source_photo_focus_region"]["y"] == 0.5 for spec in specs)
     assert [spec["subject_crop_balance_mode"] for spec in specs] == [
         "face_safe_open_balance",
@@ -153,7 +153,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert [spec["lead_direction"] for spec in specs] == ["", "", "clean_editorial"]
     assert [spec["external_visual_qa_direction"] for spec in specs] == ["", "", "variant_03_crop_framing"]
     assert [spec["typography_scale"] for spec in specs] == [1.0, 1.0, 0.9]
-    assert [spec["subject_face_within_frame_intent"] for spec in specs] == [False, False, True]
+    assert [spec["subject_face_within_frame_intent"] for spec in specs] == [False, False, False]
     assert [spec["top_spotlight_softened"] for spec in specs] == [False, False, True]
     assert [spec["minimalist_font_scaling_standardized"] for spec in specs] == [False, False, True]
     assert specs[2]["top_spotlight_location"] == (0.8, 2.15, 4.05)
@@ -171,7 +171,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["layout_polish_checks"]["score_panel_softened"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["split_panel_softened"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["photo_type_integration_improved"] is True for spec in specs)
-    assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is False for spec in specs[2:])
     assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
     assert specs[0]["layout_polish_checks"]["typography_hierarchy_improved"] is True
     assert specs[0]["layout_polish_checks"]["scrim_softness_improved"] is True
@@ -288,11 +288,11 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["source_photo_crop_mode"] == "fit_1080x1350_right_focus" for row in manifest["variant_rows"])
     assert manifest["variant_rows"][0]["photo_anchor_type_treatment_mode"] == "open_scrim_hierarchy"
     assert manifest["variant_rows"][0]["photo_anchor_scrim_treatment_mode"] == "soft_editorial_scrim_v2"
-    assert [row["source_photo_focus_region"]["x"] for row in manifest["variant_rows"]] == [0.76, 0.75, 0.83]
+    assert [row["source_photo_focus_region"]["x"] for row in manifest["variant_rows"]] == [0.76, 0.75, 0.9]
     assert [row["lead_direction"] for row in manifest["variant_rows"]] == ["", "", "clean_editorial"]
     assert [row["external_visual_qa_direction"] for row in manifest["variant_rows"]] == ["", "", "variant_03_crop_framing"]
     assert [row["typography_scale"] for row in manifest["variant_rows"]] == [1.0, 1.0, 0.9]
-    assert [row["subject_face_within_frame_intent"] for row in manifest["variant_rows"]] == [False, False, True]
+    assert [row["subject_face_within_frame_intent"] for row in manifest["variant_rows"]] == [False, False, False]
     assert [row["top_spotlight_softened"] for row in manifest["variant_rows"]] == [False, False, True]
     assert [row["minimalist_font_scaling_standardized"] for row in manifest["variant_rows"]] == [False, False, True]
     assert manifest["variant_rows"][2]["top_spotlight_location"] == [0.8, 2.15, 4.05]
@@ -322,11 +322,11 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["layout_polish_checks"]["score_panel_softened"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["split_panel_softened"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["photo_type_integration_improved"] is True for row in manifest["variant_rows"])
-    assert all(row["layout_polish_checks"]["face_edge_clipping_reduced"] is True for row in manifest["variant_rows"])
+    assert manifest["variant_rows"][2]["layout_polish_checks"]["face_edge_clipping_reduced"] is False
     assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
     assert manifest["variant_rows"][0]["layout_polish_checks"]["split_panel_removed_or_minimized"] is True
     assert manifest["variant_rows"][0]["layout_polish_checks"]["full_photo_background_layer"] is True
-    assert manifest["variant_rows"][2]["source_photo_focus_region"] == {"x": 0.83, "y": 0.5}
+    assert manifest["variant_rows"][2]["source_photo_focus_region"] == {"x": 0.9, "y": 0.5}
     assert manifest["variant_rows"][2]["typography_scale"] == 0.9
     assert manifest["variant_rows"][2]["lead_direction"] == "clean_editorial"
     assert manifest["variant_rows"][2]["external_visual_qa_direction"] == "variant_03_crop_framing"
