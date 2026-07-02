@@ -30,6 +30,7 @@ PNG_NAME = "blender_apq_4x5_prototype_4x5.png"
 MANIFEST_NAME = "blender_apq_4x5_prototype_manifest.json"
 RUNNER_NAME = "blender_apq_4x5_prototype_runner.py"
 BURN_IN_TEXT = "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
+QUARANTINE_ROOT_REL = Path("data/assets/quarantine/review_only_candidates")
 
 FALSE_GUARDRAILS = {
     "approval_state_change": False,
@@ -61,6 +62,30 @@ def resolve_scene_payload_path(explicit: str | None = None) -> Path:
         candidate = Path(explicit)
         return candidate if candidate.is_absolute() else (repo_root() / candidate)
     return repo_root() / DEFAULT_SCENE_PAYLOAD
+
+
+def quarantine_root() -> Path:
+    return repo_root() / QUARANTINE_ROOT_REL
+
+
+def resolve_quarantine_photo_path(scene_payload_path: Path) -> Path:
+    payload = json.loads(scene_payload_path.read_text(encoding="utf-8"))
+    action_photo_slot = payload.get("action_photo_slot") if isinstance(payload.get("action_photo_slot"), dict) else {}
+    raw_path = str(action_photo_slot.get("quarantine_path") or "").strip()
+    if not raw_path:
+        raise ValueError("scene payload is missing action_photo_slot.quarantine_path")
+
+    candidate = Path(raw_path)
+    resolved = candidate if candidate.is_absolute() else (repo_root() / candidate)
+    resolved = resolved.resolve(strict=False)
+
+    root = quarantine_root().resolve(strict=False)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("action_photo_slot.quarantine_path must stay under data/assets/quarantine/review_only_candidates/") from exc
+
+    return resolved
 
 
 def resolve_blender_executable(explicit: str | None = None) -> Path | None:
@@ -200,6 +225,7 @@ def build_runner_script() -> str:
             def parse_args() -> argparse.Namespace:
                 parser = argparse.ArgumentParser()
                 parser.add_argument("--scene-payload", required=True)
+                parser.add_argument("--quarantine-photo-path", required=True)
                 parser.add_argument("--output-png", required=True)
                 return parser.parse_args(argv_after_double_dash())
 
@@ -354,7 +380,7 @@ def build_runner_script() -> str:
                 source_context = payload.get("source_context") if isinstance(payload.get("source_context"), dict) else {}
                 action_photo_slot = payload.get("action_photo_slot") if isinstance(payload.get("action_photo_slot"), dict) else {}
                 burn_in = payload.get("burn_in") if isinstance(payload.get("burn_in"), dict) else {}
-                photo_path = Path(str(action_photo_slot.get("quarantine_path") or ""))
+                photo_path = Path(str(payload.get("__quarantine_photo_path") or ""))
                 photo_exists = photo_path.exists()
 
                 backdrop = add_plane(
@@ -472,6 +498,7 @@ def build_runner_script() -> str:
             def main() -> int:
                 args = parse_args()
                 payload = json.loads(Path(args.scene_payload).read_text(encoding="utf-8"))
+                payload["__quarantine_photo_path"] = str(Path(args.quarantine_photo_path))
                 if int(payload.get("canvas", {}).get("width", 0)) != 1080 or int(payload.get("canvas", {}).get("height", 0)) != 1350:
                     raise RuntimeError("scene payload must remain 1080x1350")
 
@@ -514,7 +541,13 @@ def probe_blender_version(blender_executable: Path) -> str:
     return (result.stdout or result.stderr).strip().splitlines()[0]
 
 
-def run_blender_render(blender_executable: Path, runner_file: Path, scene_payload_path: Path, output_png_path: Path) -> subprocess.CompletedProcess[str]:
+def run_blender_render(
+    blender_executable: Path,
+    runner_file: Path,
+    scene_payload_path: Path,
+    quarantine_photo_path: Path,
+    output_png_path: Path,
+) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [
             str(blender_executable),
@@ -525,6 +558,8 @@ def run_blender_render(blender_executable: Path, runner_file: Path, scene_payloa
             "--",
             "--scene-payload",
             str(scene_payload_path),
+            "--quarantine-photo-path",
+            str(quarantine_photo_path),
             "--output-png",
             str(output_png_path),
         ],
@@ -578,6 +613,21 @@ def main(argv: list[str] | None = None) -> int:
         write_json_file(manifest_path(), manifest)
         return 1
 
+    try:
+        quarantine_photo_path = resolve_quarantine_photo_path(scene_payload_path)
+    except Exception as exc:
+        manifest = build_manifest(
+            blender_executable=None,
+            blender_version="unavailable",
+            scene_payload_path=scene_payload_path,
+            output_png_path=output_png_path(),
+            status="blender_apq_4x5_prototype_blocked_invalid_quarantine_path",
+            render_exit_code=1,
+            render_stderr=str(exc),
+        )
+        write_json_file(manifest_path(), manifest)
+        return 1
+
     blender_executable = resolve_blender_executable(args.blender_executable or None)
     if blender_executable is None:
         manifest = build_manifest(
@@ -612,7 +662,13 @@ def main(argv: list[str] | None = None) -> int:
             handle.write(build_runner_script())
             runner_file = Path(handle.name)
 
-        render_result = run_blender_render(blender_executable, runner_file, scene_payload_path, output_png_path())
+        render_result = run_blender_render(
+            blender_executable,
+            runner_file,
+            scene_payload_path,
+            quarantine_photo_path,
+            output_png_path(),
+        )
         if render_result.returncode != 0 or not output_png_path().exists():
             manifest = build_manifest(
                 blender_executable=blender_executable,

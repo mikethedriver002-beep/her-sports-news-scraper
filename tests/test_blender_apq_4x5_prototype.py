@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from PIL import Image
+import pytest
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -115,6 +116,50 @@ def test_build_manifest_contains_required_review_only_false_fields(tmp_path: Pat
     assert manifest["auto_approval"] is False
 
 
+def test_resolve_quarantine_photo_path_returns_absolute_repo_local_file(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    candidate = repo_root / "data" / "assets" / "quarantine" / "review_only_candidates" / "action_photo_candidates" / "wnba" / "apq001" / "apq001_review_only_candidate.jpg"
+    candidate.parent.mkdir(parents=True, exist_ok=True)
+    candidate.write_bytes(b"fake image")
+    payload = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    write_json(
+        payload,
+        {
+            "schema_version": "blender_apq_scene_payload_contract.v1",
+            "action_photo_slot": {
+                "quarantine_path": "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/apq001/apq001_review_only_candidate.jpg"
+            },
+        },
+    )
+
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    resolved = module.resolve_quarantine_photo_path(payload)
+
+    assert resolved == candidate.resolve()
+    assert resolved.is_absolute()
+    assert resolved.exists()
+
+
+def test_resolve_quarantine_photo_path_rejects_paths_outside_quarantine_root(tmp_path: Path, monkeypatch) -> None:
+    module = load_module()
+    repo_root = tmp_path / "repo"
+    payload = repo_root / "outputs" / "local" / "latest" / "files" / "blender_apq_scene_payload_contract" / "sample_apq001_scene_payload.json"
+    write_json(
+        payload,
+        {
+            "schema_version": "blender_apq_scene_payload_contract.v1",
+            "action_photo_slot": {"quarantine_path": "..\\..\\outside.jpg"},
+        },
+    )
+
+    monkeypatch.setattr(module, "repo_root", lambda: repo_root)
+
+    with pytest.raises(ValueError, match="must stay under data/assets/quarantine/review_only_candidates"):
+        module.resolve_quarantine_photo_path(payload)
+
+
 def test_main_writes_one_png_and_manifest_with_stubbed_blender(tmp_path: Path, monkeypatch) -> None:
     module = load_module()
     monkeypatch.chdir(tmp_path)
@@ -141,8 +186,15 @@ def test_main_writes_one_png_and_manifest_with_stubbed_blender(tmp_path: Path, m
     monkeypatch.setattr(module, "resolve_scene_payload_path", lambda explicit=None: scene_payload)
     monkeypatch.setattr(module, "resolve_blender_executable", lambda explicit=None: fake_blender)
     monkeypatch.setattr(module, "probe_blender_version", lambda blender_executable: "Blender 5.1.0")
+    quarantine_photo = tmp_path / "data" / "assets" / "quarantine" / "review_only_candidates" / "action_photo_candidates" / "wnba" / "apq001" / "apq001_review_only_candidate.jpg"
+    quarantine_photo.parent.mkdir(parents=True, exist_ok=True)
+    quarantine_photo.write_bytes(b"fake image")
+    monkeypatch.setattr(module, "resolve_quarantine_photo_path", lambda scene_payload_path: quarantine_photo.resolve())
 
-    def fake_run_blender_render(blender_executable, runner_file, scene_payload_path, output_png_path):
+    def fake_run_blender_render(blender_executable, runner_file, scene_payload_path, quarantine_photo_path, output_png_path):
+        assert quarantine_photo_path == quarantine_photo.resolve()
+        assert quarantine_photo_path.is_absolute()
+        assert quarantine_photo_path.exists()
         output_png_path.parent.mkdir(parents=True, exist_ok=True)
         Image.new("RGBA", (1080, 1350), (13, 18, 31, 255)).save(output_png_path, "PNG")
         return type("Result", (), {"returncode": 0, "stdout": "render ok", "stderr": ""})()
