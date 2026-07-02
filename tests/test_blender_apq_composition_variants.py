@@ -86,6 +86,11 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
         "score_weighted_center_balance",
         "editorial_face_open_balance",
     ]
+    assert [spec["composition_treatment_mode"] for spec in specs] == [
+        "photo_integrated_open_editorial",
+        "score_forward_open_editorial",
+        "clean_editorial_fullbleed",
+    ]
     assert all(spec["burn_in_treatment_mode"] == "bottom_safe_footer_tag" for spec in specs)
     assert [spec["score_typography_treatment"] for spec in specs] == [
         "open_editorial_type",
@@ -99,6 +104,8 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["layout_polish_checks"]["burn_in_off_primary_body"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["frame_clutter_reduced"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["score_panel_softened"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["split_panel_softened"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["photo_type_integration_improved"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
     assert specs[0]["layout_polish_checks"]["photo_is_hero"] is True
@@ -215,6 +222,11 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
         "score_weighted_center_balance",
         "editorial_face_open_balance",
     ]
+    assert [row["composition_treatment_mode"] for row in manifest["variant_rows"]] == [
+        "photo_integrated_open_editorial",
+        "score_forward_open_editorial",
+        "clean_editorial_fullbleed",
+    ]
     assert [row["score_typography_treatment"] for row in manifest["variant_rows"]] == [
         "open_editorial_type",
         "score_drama_open_type",
@@ -226,6 +238,8 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["layout_polish_checks"]["burn_in_off_primary_body"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["frame_clutter_reduced"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["score_panel_softened"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["split_panel_softened"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["photo_type_integration_improved"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["face_edge_clipping_reduced"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
 
