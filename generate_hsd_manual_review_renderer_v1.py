@@ -3309,6 +3309,7 @@ def draw_photo_first_athlete_stage(
 ) -> bool:
     _x, _y, _w, h = box
     variant_id = "photo_first_story" if h > 650 else "photo_first_feed"
+    is_feed = clean(format_id) == "ig_feed_4x5"
     path = athlete_photo_render_source_path(module, variant_id)
     if path is None:
         return False
@@ -3325,14 +3326,14 @@ def draw_photo_first_athlete_stage(
         return False
     layer = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer, "RGBA")
-    if clean(format_id) == "ig_feed_4x5":
-        draw.line((x + 12, y + 112, x + 12, y + h - 96), fill=(*accent, 12), width=1)
-        draw.line((x + 18, y + 48, x + w - 18, y + 46), fill=(*accent, 10), width=1)
-        draw.line((x + 18, y + h - 66, x + w - 18, y + h - 68), fill=(*accent, 8), width=1)
-        draw.polygon([(x + 28, y + 34), (x + w - 28, y + 34), (x + w - 124, y + 54), (x + 54, y + 60)], fill=(*PALETTE["gold"], 7))
-        draw.line((x + 54, y + 38, x + w - 64, y + 36), fill=(*accent, 8), width=1)
+    if is_feed:
+        draw.ellipse((x + 14, y + 34, x + w + 10, y + h + 4), fill=(0, 0, 0, 9))
     else:
         draw.rounded_rectangle((x + 24, y + 52, x + w + 16, y + h + 18), radius=34, fill=(0, 0, 0, 16))
+    if is_feed:
+        draw.line((x + 34, y + 46, x + w - 42, y + 34), fill=(*PALETTE["gold"], 14), width=1)
+        draw.line((x + 30, y + h - 68, x + w - 48, y + h - 74), fill=(*accent, 14), width=1)
+    else:
         draw.rectangle((x + 1, y + 104, x + 3, y + h - 92), fill=(*accent, 34))
         draw.polygon([(x + 16, y + h - 172), (x + w - 2, y + h - 318), (x + w - 2, y + h - 8), (x + 16, y + h - 8)], fill=(*accent, 16))
         draw.polygon([(x + 30, y + 86), (x + w - 4, y + 10), (x + w - 6, y + 128), (x + 30, y + 190)], fill=(255, 255, 255, 10))
@@ -3354,18 +3355,22 @@ def draw_photo_first_athlete_stage(
     stage_photo.alpha_composite(photo, (photo_x, photo_y))
     stage_mask = Image.new("L", image.size, 0)
     mask_draw = ImageDraw.Draw(stage_mask)
-    mask_draw.rounded_rectangle((x + 2, y + 20, x + w - 2, y + h - 8), radius=12, fill=255)
+    if is_feed:
+        mask_draw.ellipse((x + 2, y + 12, x + w - 2, y + h - 10), fill=255)
+    else:
+        mask_draw.rounded_rectangle((x + 2, y + 20, x + w - 2, y + h - 8), radius=12, fill=255)
     layer.alpha_composite(Image.composite(stage_photo, Image.new("RGBA", image.size, (0, 0, 0, 0)), stage_mask))
-    if clean(format_id) == "ig_feed_4x5":
+    if is_feed:
         draw.arc((x - 42, y + 20, x + w + 50, y + h + 82), start=198, end=300, fill=(*PALETTE["gold"], 14), width=1)
         draw.arc((x - 22, y + 44, x + w + 28, y + h + 48), start=208, end=290, fill=(248, 250, 255, 4), width=1)
     else:
         draw.arc((x - 42, y + 20, x + w + 50, y + h + 82), start=198, end=300, fill=(*PALETTE["gold"], 48), width=1)
         draw.arc((x - 22, y + 44, x + w + 28, y + h + 48), start=208, end=290, fill=(248, 250, 255, 12), width=1)
     draw.line((x + w - 22, y + 116, x + w - 22, y + h - 172), fill=(*PALETTE["gold"], 22), width=1)
-    if clean(format_id) == "ig_feed_4x5":
-        draw.line((x + 20, y + 54, x + min(x + 152, x + w - 34), y + 44), fill=(248, 250, 255, 12), width=1)
+    if is_feed:
+        draw.line((x + 20, y + 54, x + min(x + 152, x + w - 34), y + 42), fill=(248, 250, 255, 12), width=1)
         draw.line((x + max(170, int(w * 0.46)), y + h - 88, x + w - 28, y + h - 88), fill=(*PALETTE["gold"], 18), width=1)
+        draw.rectangle((x + 12, y + h - 96, x + w - 12, y + h - 20), fill=(248, 250, 255, 38))
     else:
         draw.line((x + 20, y + 54, x + min(x + 152, x + w - 34), y + 42), fill=(248, 250, 255, 32), width=1)
         draw.line((x + max(170, int(w * 0.46)), y + h - 88, x + w - 28, y + h - 88), fill=(*PALETTE["gold"], 42), width=1)
@@ -3376,8 +3381,8 @@ def draw_photo_first_athlete_stage(
         (x + 34, y + 42, w - 72, 32),
         player,
         "context",
-        19 if clean(format_id) == "ig_feed_4x5" else 21,
-        12 if clean(format_id) == "ig_feed_4x5" else 13,
+        19 if is_feed else 21,
+        12 if is_feed else 13,
         (230, 236, 246),
         max_lines=1,
         align="left",
