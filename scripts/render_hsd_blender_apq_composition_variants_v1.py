@@ -76,11 +76,11 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "photo_frame_alpha": 0.04,
         "photo_plane_scale": 1.03,
         "photo_plane_offset": 0.004,
-        "photo_title": {"line_1": "PHOTO FIRST", "line_2": "APQ001", "location": [0.66, 0.14, 1.72], "size": 0.34, "line_gap": 0.26},
-        "score_block": {"line_1": "OPEN SCORE", "line_2": "0 - 0", "location": [0.66, 0.12, 0.64], "size": 0.46, "line_gap": 0.24},
+        "photo_title": {"line_1": "PHOTO ANCHOR", "line_2": "APQ001", "location": [0.78, 0.14, 1.76], "size": 0.38, "line_gap": 0.24},
+        "score_block": {"line_1": "OPEN SCORE", "line_2": "0 - 0", "location": [0.78, 0.12, 0.62], "size": 0.5, "line_gap": 0.22},
         "support_lines": [
-            {"text": "AIRY TYPOGRAPHY", "location": [0.66, 0.12, -0.02], "size": 0.1, "color": [228, 233, 245]},
-            {"text": "NO DASHBOARD BOXES", "location": [0.66, 0.12, -0.24], "size": 0.08, "color": [168, 176, 191]},
+            {"text": "OPEN HIERARCHY", "location": [0.78, 0.12, -0.02], "size": 0.11, "color": [228, 233, 245]},
+            {"text": "SOFT SCRIM", "location": [0.78, 0.12, -0.24], "size": 0.09, "color": [168, 176, 191]},
         ],
         "use_score_plate": False,
         "use_editorial_scrim": True,
@@ -94,6 +94,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "burn_in_position_mode": "bottom_safe_footer_tag",
         "burn_in_treatment_mode": "bottom_safe_footer_tag",
         "score_typography_treatment": "open_editorial_type",
+        "photo_anchor_type_treatment_mode": "open_scrim_hierarchy",
         "layout_polish_checks": {
             "burn_in_inside_canvas": True,
             "burn_in_off_primary_body": True,
@@ -105,6 +106,7 @@ VARIANT_SPECS: list[dict[str, Any]] = [
             "photo_type_integration_improved": True,
             "face_edge_clipping_reduced": True,
             "photo_is_hero": True,
+            "typography_hierarchy_improved": True,
             "text_kept_off_face": True,
         },
     },
@@ -1017,12 +1019,13 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                         size=float(line.get("size") or 0.14),
                         color=rgba(list(line.get("color") or list(subtle)), 1.0),
                     )
-                add_text(
-                    spec["variant_id"].replace("_", " ").upper(),
-                    location=(-1.88, 0.12, 2.02),
-                    size=0.13,
-                    color=rgba(list(accent), 1.0),
-                )
+                if composition_mode != "full_photo_background_scrim":
+                    add_text(
+                        spec["variant_id"].replace("_", " ").upper(),
+                        location=(-1.88, 0.12, 2.02),
+                        size=0.13,
+                        color=rgba(list(accent), 1.0),
+                    )
                 burn_text = spec.get("burn_in_text") or "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
                 burn_in = spec.get("burn_in", {{}}) if isinstance(spec.get("burn_in"), dict) else {{}}
                 burn_location = tuple(burn_in.get("location") or (0.0, -0.12, -1.34))
