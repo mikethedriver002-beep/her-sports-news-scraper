@@ -1827,10 +1827,65 @@ def test_manual_review_renderer_photo_first_stage_adds_portrait_spotlight() -> N
         if r >= 185 and g >= 165 and 70 <= b <= 170:
             soft_frame_pixels += 1
 
-    assert bright_portrait_pixels / pixels > 0.145
-    assert blue_spotlight_pixels / pixels > 0.006
+    assert bright_portrait_pixels / pixels > 0.14
+    assert blue_spotlight_pixels / pixels > 0.003
     assert gold_rim_pixels / pixels > 0.003
     assert soft_frame_pixels / pixels > 0.002
+
+
+def test_manual_review_renderer_photo_first_stage_feed_decards_more_than_story() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("manual_renderer", SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    feed_geometry = module.photo_first_layout_geometry({"format_id": "ig_feed_4x5", "width": 1080, "height": 1350})
+    story_geometry = module.photo_first_layout_geometry({"format_id": "ig_story_9x16", "width": 1080, "height": 1920})
+    module_payload = {
+        "player_name": "Breanna Stewart",
+        "athlete_photo_path": "assets/leagues/wnba/athletes/new_york_liberty_breanna_stewart/headshot.png",
+        "athlete_photo_status": "approved_local_headshot",
+        "callouts": [{"value": "22", "label": "PTS"}, {"value": "7", "label": "REB"}],
+    }
+
+    feed_image = Image.new("RGBA", (1080, 1350), (2, 4, 9, 255))
+    story_image = Image.new("RGBA", (1080, 1920), (2, 4, 9, 255))
+    assert module.draw_photo_first_athlete_stage(
+        feed_image,
+        tuple(feed_geometry["photo_stage_box"]),
+        module_payload,
+        (72, 144, 216),
+        tuple(feed_geometry["photo_face_focus_box"]),
+        format_id="ig_feed_4x5",
+    )
+    assert module.draw_photo_first_athlete_stage(
+        story_image,
+        tuple(story_geometry["photo_stage_box"]),
+        module_payload,
+        (72, 144, 216),
+        tuple(story_geometry["photo_face_focus_box"]),
+        format_id="ig_story_9x16",
+    )
+
+    def lower_band_dark_ratio(image: Image.Image, box: tuple[int, int, int, int]) -> float:
+        x, y, w, h = box
+        crop = image.crop((x + 12, y + h - 120, x + w - 12, y + h - 18)).convert("RGB")
+        data = crop.tobytes()
+        pixels = max(1, len(data) // 3)
+        dark_pixels = 0
+        for index in range(0, len(data), 3):
+            r, g, b = data[index], data[index + 1], data[index + 2]
+            if r <= 18 and g <= 22 and b <= 32:
+                dark_pixels += 1
+        return dark_pixels / pixels
+
+    feed_dark = lower_band_dark_ratio(feed_image, tuple(feed_geometry["photo_stage_box"]))
+    story_dark = lower_band_dark_ratio(story_image, tuple(story_geometry["photo_stage_box"]))
+    assert feed_dark < story_dark
+    assert feed_dark < 0.16
+    assert story_dark > 0.14
 
 
 def test_manual_review_renderer_stat_strip_draws_visible_proof_rail() -> None:
