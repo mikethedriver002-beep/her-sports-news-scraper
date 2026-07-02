@@ -88,8 +88,8 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "source_photo_focus_region": {"x": 0.76, "y": 0.5},
         "subject_crop_balance_mode": "face_safe_open_balance",
         "photo_texture_render_layer_mode": "texture_front_no_frame_cover",
-        "composition_treatment_mode": "photo_integrated_open_editorial",
-        "editorial_scrim": {"location": (3.12, 0.12, 0.98), "scale": (0.8, 4.1, 1.0), "alpha": 0.14},
+        "composition_treatment_mode": "full_photo_background_scrim",
+        "editorial_scrim": {"location": (2.42, 0.12, 0.98), "scale": (1.88, 4.1, 1.0), "alpha": 0.34},
         "burn_in": {"location": (1.06, -0.2, -2.08), "size": 0.08, "align_x": "CENTER"},
         "burn_in_position_mode": "bottom_safe_footer_tag",
         "burn_in_treatment_mode": "bottom_safe_footer_tag",
@@ -100,6 +100,8 @@ VARIANT_SPECS: list[dict[str, Any]] = [
             "frame_clutter_reduced": True,
             "score_panel_softened": True,
             "split_panel_softened": True,
+            "split_panel_removed_or_minimized": True,
+            "full_photo_background_layer": True,
             "photo_type_integration_improved": True,
             "face_edge_clipping_reduced": True,
             "photo_is_hero": True,
@@ -846,6 +848,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 rotation_z = math.radians(float(photo_frame.get("rotation_z") or -1.0))
                 plane_scale = float(spec.get("photo_plane_scale") or 0.94)
                 plane_offset = float(spec.get("photo_plane_offset") or -0.014)
+                composition_mode = str(spec.get("composition_treatment_mode") or "")
                 texture_status = {{
                     "source_image_texture_attempted": bool(source_image_present),
                     "source_image_texture_loaded": False,
@@ -859,21 +862,37 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                         image_size = tuple(getattr(image, "size", (0, 0)))
                         if not image_size[0] or not image_size[1]:
                             raise RuntimeError("loaded_image_has_no_dimensions")
-                        add_plane(
-                            "PhotoShadowFrame",
-                            (location[0], location[1] + 0.032, location[2]),
-                            (math.radians(-90.0), 0.0, rotation_z),
-                            (scale[0] * 1.015, scale[1] * 1.015, 1.0),
-                            make_material("PhotoShadowFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=0.08),
-                        )
-                        photo_plane = add_plane(
-                            "PhotoTexture",
-                            (location[0], location[1] + plane_offset - 0.03, location[2]),
-                            (math.radians(-90.0), 0.0, rotation_z),
-                            (scale[0] * plane_scale, scale[1] * plane_scale, 1.0),
-                            make_photo_texture_material("APQSourcePhotoMaterial", image),
-                        )
-                        photo_plane.location = (location[0], location[1] + plane_offset - 0.03, location[2])
+                        if composition_mode == "full_photo_background_scrim":
+                            add_plane(
+                                "PhotoBackgroundTexture",
+                                (0.0, 0.12, 0.2),
+                                (math.radians(-90.0), 0.0, 0.0),
+                                (4.65, 5.45, 1.0),
+                                make_photo_texture_material("APQSourcePhotoBackgroundMaterial", image),
+                            )
+                            add_plane(
+                                "PhotoBackgroundVignette",
+                                (1.18, 0.12, 0.96),
+                                (math.radians(-90.0), 0.0, 0.0),
+                                (2.1, 4.15, 1.0),
+                                make_material("PhotoBackgroundVignetteMaterial", (0.02, 0.03, 0.05, 1.0), roughness=0.98, alpha=0.22),
+                            )
+                        else:
+                            add_plane(
+                                "PhotoShadowFrame",
+                                (location[0], location[1] + 0.032, location[2]),
+                                (math.radians(-90.0), 0.0, rotation_z),
+                                (scale[0] * 1.015, scale[1] * 1.015, 1.0),
+                                make_material("PhotoShadowFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=0.08),
+                            )
+                            photo_plane = add_plane(
+                                "PhotoTexture",
+                                (location[0], location[1] + plane_offset - 0.03, location[2]),
+                                (math.radians(-90.0), 0.0, rotation_z),
+                                (scale[0] * plane_scale, scale[1] * plane_scale, 1.0),
+                                make_photo_texture_material("APQSourcePhotoMaterial", image),
+                            )
+                            photo_plane.location = (location[0], location[1] + plane_offset - 0.03, location[2])
                         texture_status["source_image_texture_loaded"] = True
                         texture_status["source_image_texture_mode"] = "loaded"
                     except Exception as exc:
@@ -930,6 +949,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 background = tuple(spec.get("background_color") or [13, 17, 24])
                 accent = tuple(spec.get("accent_color") or [235, 189, 72])
                 subtle = tuple(spec.get("subtle_color") or [201, 209, 222])
+                composition_mode = str(spec.get("composition_treatment_mode") or "")
                 set_world(list(background))
                 bpy.ops.mesh.primitive_plane_add(location=(0.0, 1.95, -0.02), rotation=(math.radians(-90.0), 0.0, 0.0))
                 backdrop = bpy.context.active_object
@@ -955,21 +975,23 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                         (1.58, 2.08, 1.0),
                         make_material("ScorePlateMaterial", (0.04, 0.05, 0.08, 1.0), roughness=0.84, alpha=0.35),
                     )
-                add_plane(
-                    "PhotoShadow",
-                    (-2.34, 0.22, 0.3),
-                    (math.radians(-90.0), 0.0, math.radians(-1.0)),
-                    (2.72, 3.28, 1.0),
-                    make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0, alpha=0.1),
-                )
+                if composition_mode != "full_photo_background_scrim":
+                    add_plane(
+                        "PhotoShadow",
+                        (-2.34, 0.22, 0.3),
+                        (math.radians(-90.0), 0.0, math.radians(-1.0)),
+                        (2.72, 3.28, 1.0),
+                        make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0, alpha=0.1),
+                    )
                 texture_status = add_photo_or_placeholder(spec, source_photo_path, source_image_present)
-                add_plane(
-                    "AccentLine",
-                    (-0.02, 0.08, 0.0),
-                    (math.radians(-90.0), 0.0, 0.0),
-                    (0.018, 3.12, 1.0),
-                    make_material("AccentLineMaterial", rgba(list(accent), 1.0), roughness=0.2, emission=0.85),
-                )
+                if composition_mode != "full_photo_background_scrim":
+                    add_plane(
+                        "AccentLine",
+                        (-0.02, 0.08, 0.0),
+                        (math.radians(-90.0), 0.0, 0.0),
+                        (0.018, 3.12, 1.0),
+                        make_material("AccentLineMaterial", rgba(list(accent), 1.0), roughness=0.2, emission=0.85),
+                    )
                 photo_title = spec.get("photo_title", {{}}) if isinstance(spec.get("photo_title"), dict) else {{}}
                 score_block = spec.get("score_block", {{}}) if isinstance(spec.get("score_block"), dict) else {{}}
                 title_line_1 = str(photo_title.get("line_1") or "PHOTO FIRST")
