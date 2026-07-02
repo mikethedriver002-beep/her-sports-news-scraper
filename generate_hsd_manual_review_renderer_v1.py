@@ -3585,28 +3585,6 @@ def draw_photo_first_stat_strip(
         band_draw.line((x + 16, y + 20, x + 16, y + h - 20), fill=(*accent, 62), width=1)
         image.alpha_composite(band)
     elif clean(format_id) == "ig_feed_4x5":
-        wash_draw.rounded_rectangle((x + 10, y + 8, x + w - 10, y + h - 10), radius=16, fill=(248, 250, 255, 34))
-        wash_draw.rounded_rectangle((x + 18, y + 16, x + w - 18, y + h - 18), radius=14, fill=(248, 250, 255, 22))
-        wash_draw.rounded_rectangle((x + 8, y + 12, x + w - 8, y + h - 8), radius=18, fill=(248, 250, 255, 40))
-        wash_draw.polygon(
-            [
-                (x + int(w * 0.18), y + 10),
-                (x + w - 28, y + 20),
-                (x + int(w * 0.86), y + h - 2),
-                (x + 34, y + h - 4),
-            ],
-            fill=(*accent, 16),
-        )
-        if ImageFilter is not None:
-            wash = wash.filter(ImageFilter.GaussianBlur(5))
-        image.alpha_composite(wash)
-        band = Image.new("RGBA", image.size, (0, 0, 0, 0))
-        band_draw = ImageDraw.Draw(band, "RGBA")
-        band_draw.line((x + 34, y + 12, x + w - 44, y + 8), fill=(*PALETTE["gold"], 20), width=1)
-        band_draw.line((x + 40, y + h - 10, x + int(x + w * 0.46), y + h - 15), fill=(248, 250, 255, 16), width=1)
-        band_draw.line((x + 16, y + 20, x + 16, y + h - 20), fill=(*accent, 16), width=1)
-        image.alpha_composite(band)
-    else:
         wash_draw.ellipse((x + 6, y - 28, x + w - 4, y + h + 22), fill=(0, 0, 0, 7))
         wash_draw.ellipse((x + 42, y - 12, x + w - 40, y + h + 6), fill=(248, 250, 255, 12))
         wash_draw.polygon(
@@ -3627,10 +3605,38 @@ def draw_photo_first_stat_strip(
         band_draw.line((x + 42, y + h - 10, x + int(x + w * 0.50), y + h - 16), fill=(248, 250, 255, 10), width=1)
         band_draw.line((x + 14, y + 20, x + 14, y + h - 22), fill=(*accent, 18), width=1)
         image.alpha_composite(band)
+    else:
+        wash_draw.polygon(
+            [
+                (x + 12, y + 24),
+                (x + w - 18, y + 4),
+                (x + w - 24, y + h - 10),
+                (x + 20, y + h + 6),
+            ],
+            fill=(0, 0, 0, 8),
+        )
+        wash_draw.polygon(
+            [
+                (x + int(w * 0.18), y + 10),
+                (x + w - 28, y + 20),
+                (x + int(w * 0.86), y + h - 2),
+                (x + 34, y + h - 4),
+            ],
+            fill=(*accent, 7),
+        )
+        if ImageFilter is not None:
+            wash = wash.filter(ImageFilter.GaussianBlur(6))
+        image.alpha_composite(wash)
+        band = Image.new("RGBA", image.size, (0, 0, 0, 0))
+        band_draw = ImageDraw.Draw(band, "RGBA")
+        band_draw.line((x + 34, y + 12, x + w - 44, y + 5), fill=(*PALETTE["gold"], 62), width=2)
+        band_draw.line((x + 40, y + h - 10, x + int(x + w * 0.46), y + h - 15), fill=(248, 250, 255, 12), width=1)
+        band_draw.line((x + 16, y + 20, x + 16, y + h - 20), fill=(*accent, 62), width=1)
+        image.alpha_composite(band)
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
     athlete_line = clean(copy.get("athlete_line")) or clean(module.get("body")) or (f"{last_name(player).title()} led the final." if player else "Final score confirmed.")
-    stat_line = clean(copy.get("stat_line")) or public_stat_line(module.get("callouts") or [], separator=" · " if clean(format_id) == "ig_feed_4x5" else " / ")
+    stat_line = clean(copy.get("stat_line")) or public_stat_line(module.get("callouts") or [], separator=" \u00b7 " if clean(format_id) == "ig_feed_4x5" else " / ")
     athlete_type = photo_first_type_spec("athlete_line", compact=compact)
     stat_type = photo_first_type_spec("stat", compact=compact)
     if compact:
