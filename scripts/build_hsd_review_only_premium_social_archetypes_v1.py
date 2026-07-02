@@ -170,7 +170,7 @@ def build_archetype_specs() -> list[dict[str, Any]]:
             "stat_label": "POINTS",
             "support_line": "OVERSIZED STAT. ABSTRACT SUBJECT PLANE.",
             "safe_area_label": "SAFE IMAGE AREA",
-            "self_critique": "Best architecture for future player-photo integration. The safe-image zone proves useful discipline, but the shell is still less monetizable today than the score or breaking routes.",
+            "self_critique": "Useful structure test, but still the weakest commercial card. The abstract subject plane has more depth now, yet it remains a future photo-shell rather than the lead HSD route.",
             "manual_value_hint": "medium",
         },
         {
@@ -280,10 +280,10 @@ def build_runner_script() -> str:
 
 
             def setup_camera() -> None:
-                bpy.ops.object.camera_add(location=(0.0, -7.2, 0.08), rotation=(math.radians(90.0), 0.0, 0.0))
+                bpy.ops.object.camera_add(location=(0.0, -10.8, 0.18), rotation=(math.radians(87.4), 0.0, 0.0))
                 camera = bpy.context.object
-                camera.data.type = "ORTHO"
-                camera.data.ortho_scale = 8.9
+                camera.data.type = "PERSP"
+                camera.data.lens = 58
                 bpy.context.scene.camera = camera
 
 
@@ -326,13 +326,24 @@ def build_runner_script() -> str:
                     obj.data.materials.append(material)
 
 
-            def add_panel(name: str, location: tuple[float, float, float], scale: tuple[float, float, float], color: tuple[float, float, float, float], *, roughness: float = 0.4, metallic: float = 0.0) -> bpy.types.Object:
-                bpy.ops.mesh.primitive_cube_add(location=location, scale=scale)
+            def add_panel(
+                name: str,
+                location: tuple[float, float, float],
+                scale: tuple[float, float, float],
+                color: tuple[float, float, float, float],
+                *,
+                roughness: float = 0.4,
+                metallic: float = 0.0,
+                rotation: tuple[float, float, float] = (0.0, 0.0, 0.0),
+                bevel_ratio: float = 0.03,
+                bevel_segments: int = 3,
+            ) -> bpy.types.Object:
+                bpy.ops.mesh.primitive_cube_add(location=location, scale=scale, rotation=rotation)
                 obj = bpy.context.object
                 obj.name = name
                 bevel = obj.modifiers.new(name="Bevel", type="BEVEL")
-                bevel.width = min(scale[0], scale[2]) * 0.08
-                bevel.segments = 6
+                bevel.width = min(scale[0], scale[2]) * bevel_ratio
+                bevel.segments = bevel_segments
                 apply_material(obj, create_principled_material(f"{name}Material", color, roughness=roughness, metallic=metallic))
                 return obj
 
@@ -445,23 +456,68 @@ def build_runner_script() -> str:
                     scale=(1.6, 1.0, 1.6),
                     material=create_emission_material("GlowSecondaryMaterial", secondary_glow, 0.7),
                 )
+                add_panel(
+                    "AtmosphereSlabLeft",
+                    location=(-2.95, 1.68, 0.15),
+                    scale=(0.16, 0.04, 3.75),
+                    color=(0.06, 0.09, 0.15, 1.0),
+                    roughness=0.5,
+                    rotation=(math.radians(2.0), 0.0, math.radians(-5.0)),
+                    bevel_ratio=0.01,
+                    bevel_segments=2,
+                )
+                add_panel(
+                    "AtmosphereSlabRight",
+                    location=(3.05, 1.52, -0.2),
+                    scale=(0.22, 0.04, 3.1),
+                    color=(0.08, 0.09, 0.12, 1.0),
+                    roughness=0.52,
+                    rotation=(math.radians(-1.5), 0.0, math.radians(6.0)),
+                    bevel_ratio=0.01,
+                    bevel_segments=2,
+                )
+                add_panel(
+                    "FloorStage",
+                    location=(0.0, 1.98, -3.46),
+                    scale=(4.5, 0.02, 0.34),
+                    color=(0.10, 0.12, 0.18, 1.0),
+                    roughness=0.6,
+                    rotation=(math.radians(6.0), 0.0, 0.0),
+                    bevel_ratio=0.008,
+                    bevel_segments=2,
+                )
+                add_vertical_plane(
+                    "FloorEdgeLight",
+                    location=(0.0, 1.54, -3.16),
+                    scale=(2.8, 1.0, 0.04),
+                    material=create_emission_material("FloorEdgeLightMaterial", secondary_glow, 0.42),
+                )
                 add_area_light(
                     "TopLight",
-                    location=(0.0, -1.8, 4.2),
-                    rotation=(math.radians(68.0), 0.0, 0.0),
-                    energy=3400,
+                    location=(0.0, -2.6, 4.5),
+                    rotation=(math.radians(73.0), 0.0, 0.0),
+                    energy=2600,
                     color=(1.0, 0.97, 0.92),
-                    size=5.2,
-                    size_y=3.4,
+                    size=6.2,
+                    size_y=4.8,
                 )
                 add_area_light(
                     "RimLight",
-                    location=(3.6, -1.2, 1.4),
-                    rotation=(math.radians(90.0), 0.0, math.radians(-30.0)),
-                    energy=1200,
+                    location=(4.0, -2.0, 1.5),
+                    rotation=(math.radians(88.0), 0.0, math.radians(-34.0)),
+                    energy=1650,
                     color=(0.72, 0.79, 1.0),
                     size=2.4,
                     size_y=4.0,
+                )
+                add_area_light(
+                    "AccentLight",
+                    location=(-3.1, -1.6, 1.8),
+                    rotation=(math.radians(92.0), 0.0, math.radians(28.0)),
+                    energy=840,
+                    color=(0.96, 0.86, 0.72),
+                    size=1.8,
+                    size_y=3.0,
                 )
 
 
@@ -473,6 +529,8 @@ def build_runner_script() -> str:
                     color=(0.05, 0.07, 0.10, 1.0),
                     roughness=0.25,
                     metallic=0.02,
+                    bevel_ratio=0.01,
+                    bevel_segments=2,
                 )
                 add_text(
                     "BurnInText",
@@ -489,9 +547,11 @@ def build_runner_script() -> str:
             def build_score_final_editorial(spec: dict[str, object]) -> None:
                 accent = tuple(float(v) / 255.0 for v in spec["accent_color"]) + (1.0,)
                 support = tuple(float(v) / 255.0 for v in spec["support_color"]) + (1.0,)
-                add_panel("TopPill", (0.0, 0.55, 2.7), (3.25, 0.06, 0.26), (0.08, 0.10, 0.16, 1.0), roughness=0.18)
+                add_panel("TopPill", (0.0, 0.55, 2.7), (3.25, 0.04, 0.22), (0.08, 0.10, 0.16, 1.0), roughness=0.18, bevel_ratio=0.012, bevel_segments=2)
                 add_text("Title", str(spec["title"]), (-2.55, 0.18, 2.7), 0.46, (0.95, 0.96, 0.99, 1.0), bold=True)
                 add_text("Kicker", str(spec["kicker"]), (2.62, 0.18, 2.72), 0.20, accent, bold=True, align_x="RIGHT")
+                add_panel("ScoreCoreBlade", (0.0, 1.08, 0.58), (1.15, 0.03, 2.18), (0.87, 0.80, 0.60, 1.0), roughness=0.34, rotation=(0.0, 0.0, math.radians(2.8)), bevel_ratio=0.01, bevel_segments=2)
+                add_panel("ScoreShadowBlade", (0.03, 1.32, 0.08), (1.28, 0.02, 2.78), (0.48, 0.57, 0.72, 1.0), roughness=0.6, rotation=(0.0, 0.0, math.radians(-1.0)), bevel_ratio=0.008, bevel_segments=2)
                 add_text("ScoreLeft", str(spec["score_left"]), (-2.35, 0.08, 1.22), 1.62, (0.96, 0.97, 0.99, 1.0), bold=True)
                 add_text("Dash", "-", (0.0, 0.02, 1.20), 1.10, accent, bold=True, align_x="CENTER")
                 add_text("ScoreRight", str(spec["score_right"]), (1.04, 0.08, 1.22), 1.62, (0.96, 0.97, 0.99, 1.0), bold=True)
@@ -499,7 +559,7 @@ def build_runner_script() -> str:
                 add_text("TeamRight", str(spec["team_right"]), (0.0, 0.08, 0.05), 0.56, (0.96, 0.97, 0.99, 1.0), bold=True)
                 add_text("SupportLeft", str(spec["support_left"]), (-2.35, 0.06, -0.38), 0.17, support, bold=False)
                 add_text("SupportRight", str(spec["support_right"]), (0.0, 0.06, -0.38), 0.17, support, bold=False)
-                add_panel("InsightPanel", (0.0, 0.78, -1.42), (3.28, 0.08, 0.78), (0.05, 0.07, 0.11, 1.0), roughness=0.24)
+                add_panel("InsightPanel", (-0.12, 0.86, -1.42), (3.08, 0.05, 0.72), (0.06, 0.09, 0.14, 1.0), roughness=0.24, rotation=(0.0, 0.0, math.radians(-1.4)), bevel_ratio=0.012, bevel_segments=2)
                 add_text("PanelTitle", str(spec["panel_title"]), (-2.15, 0.16, -1.08), 0.28, (0.96, 0.97, 0.99, 1.0), bold=True)
                 panel_lines = list(spec["panel_lines"])
                 add_text("PanelLine1", str(panel_lines[0]), (-2.15, 0.15, -1.50), 0.19, (0.85, 0.88, 0.93, 1.0), bold=False)
@@ -515,31 +575,34 @@ def build_runner_script() -> str:
                 add_text("Title", str(spec["title"]), (-2.55, 0.10, 2.92), 0.23, accent, bold=True)
                 add_text("StatNumber", str(spec["stat_number"]), (-2.55, 0.04, 1.68), 2.18, (0.96, 0.97, 0.99, 1.0), bold=True)
                 add_text("StatLabel", str(spec["stat_label"]), (-2.46, 0.02, 0.86), 0.56, (0.96, 0.97, 0.99, 1.0), bold=True)
-                add_text("Support", str(spec["support_line"]), (-2.46, 0.02, 0.26), 0.16, support, bold=False)
-                add_panel("SafeAreaFrame", (1.52, 0.95, 0.18), (1.02, 0.09, 2.28), (0.16, 0.15, 0.20, 1.0), roughness=0.32)
-                add_vertical_plane("SafeAreaInset", (1.52, 0.82, 0.18), (0.78, 1.0, 1.92), create_principled_material("SafeAreaInsetMaterial", (0.09, 0.10, 0.12, 1.0), roughness=0.36))
-                add_vertical_plane("SilhouetteOval", (1.55, 0.74, 0.30), (0.88, 1.0, 1.74), create_emission_material("SilhouetteOvalMaterial", (0.18, 0.24, 0.46, 1.0), 0.55))
-                add_vertical_plane("SilhouetteCore", (1.44, 0.66, 0.08), (0.50, 1.0, 1.10), create_principled_material("SilhouetteCoreMaterial", (0.21, 0.16, 0.14, 1.0), roughness=0.40))
+                add_text("Support", str(spec["support_line"]), (-2.46, 0.02, 0.22), 0.15, support, bold=False)
+                add_panel("SubjectBackPlate", (0.82, 1.08, 0.62), (1.08, 0.03, 1.72), (0.88, 0.83, 0.90, 1.0), roughness=0.5, rotation=(0.0, 0.0, math.radians(-2.6)), bevel_ratio=0.008, bevel_segments=2)
+                add_panel("SubjectAccentPlate", (1.10, 0.96, 0.42), (1.22, 0.03, 1.18), (0.80, 0.60, 0.64, 1.0), roughness=0.42, rotation=(0.0, 0.0, math.radians(1.6)), bevel_ratio=0.008, bevel_segments=2)
+                add_panel("SafeAreaFrame", (1.82, 1.00, 0.06), (0.94, 0.05, 1.98), (0.88, 0.89, 0.94, 1.0), roughness=0.22, rotation=(0.0, 0.0, math.radians(1.2)), bevel_ratio=0.014, bevel_segments=2)
+                add_panel("SilhouetteOval", (1.92, 1.18, 0.22), (0.62, 0.02, 1.42), (0.40, 0.50, 0.68, 1.0), roughness=0.26, rotation=(0.0, 0.0, math.radians(4.6)), bevel_ratio=0.03, bevel_segments=3)
+                add_panel("SilhouetteCore", (1.84, 1.08, -0.02), (0.72, 0.03, 1.04), (0.85, 0.82, 0.79, 1.0), roughness=0.36, rotation=(0.0, 0.0, math.radians(-2.4)), bevel_ratio=0.012, bevel_segments=2)
+                add_panel("SubjectFootBlock", (2.38, 1.28, -1.66), (0.86, 0.03, 0.84), (0.62, 0.70, 0.82, 1.0), roughness=0.42, rotation=(0.0, 0.0, math.radians(-1.8)), bevel_ratio=0.008, bevel_segments=2)
                 add_text("SafeAreaLabel", str(spec["safe_area_label"]), (1.52, 0.16, -1.58), 0.22, (0.94, 0.95, 0.98, 1.0), bold=True, align_x="CENTER")
 
 
             def build_breaking_news_card(spec: dict[str, object]) -> None:
                 accent = tuple(float(v) / 255.0 for v in spec["accent_color"]) + (1.0,)
                 support = tuple(float(v) / 255.0 for v in spec["support_color"]) + (1.0,)
-                add_panel("Badge", (-2.20, 0.58, 2.82), (1.02, 0.07, 0.30), accent, roughness=0.14)
+                add_panel("Badge", (-2.20, 0.58, 2.82), (1.02, 0.04, 0.26), accent, roughness=0.16, bevel_ratio=0.012, bevel_segments=2)
                 add_text("BadgeText", str(spec["badge"]), (-2.20, 0.14, 2.82), 0.36, (1.0, 1.0, 1.0, 1.0), bold=True, align_x="CENTER")
-                add_panel("HeadlineCard", (0.38, 0.90, 0.64), (3.18, 0.09, 2.16), (0.02, 0.03, 0.06, 1.0), roughness=0.20)
-                add_panel("AccentBar", (-2.78, 0.62, 0.62), (0.12, 0.05, 1.95), accent, roughness=0.20)
+                add_panel("HeadlineCard", (0.38, 1.00, 0.82), (3.16, 0.05, 1.84), (0.05, 0.07, 0.11, 1.0), roughness=0.22, rotation=(0.0, 0.0, math.radians(-1.4)), bevel_ratio=0.012, bevel_segments=2)
+                add_panel("GlowCard", (0.60, 1.26, 0.92), (2.90, 0.02, 1.62), (0.62, 0.72, 0.88, 1.0), roughness=0.34, rotation=(0.0, 0.0, math.radians(1.2)), bevel_ratio=0.008, bevel_segments=2)
+                add_panel("AccentBar", (-2.78, 0.84, 0.78), (0.09, 0.03, 1.86), accent, roughness=0.26, bevel_ratio=0.008, bevel_segments=2)
                 lines = list(spec["headline_lines"])
-                add_text("Headline1", str(lines[0]), (-1.88, 0.12, 1.62), 0.76, (0.95, 0.96, 0.99, 1.0), bold=True)
-                add_text("Headline2", str(lines[1]), (-1.88, 0.12, 0.96), 0.76, (0.95, 0.96, 0.99, 1.0), bold=True)
-                add_text("Headline3", str(lines[2]), (-1.88, 0.12, 0.30), 0.76, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Headline1", str(lines[0]), (-1.86, 0.12, 1.56), 0.70, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Headline2", str(lines[1]), (-1.86, 0.12, 0.96), 0.70, (0.95, 0.96, 0.99, 1.0), bold=True)
+                add_text("Headline3", str(lines[2]), (-1.86, 0.12, 0.36), 0.70, (0.95, 0.96, 0.99, 1.0), bold=True)
                 body_lines = list(spec["body_lines"])
-                add_text("Body1", str(body_lines[0]), (-1.88, 0.10, -0.68), 0.28, support, bold=False)
-                add_text("Body2", str(body_lines[1]), (-1.88, 0.10, -1.06), 0.28, support, bold=False)
-                add_text("Body3", str(body_lines[2]), (-1.88, 0.10, -1.44), 0.28, support, bold=False)
-                add_panel("FooterPill", (0.18, 0.68, -2.68), (2.48, 0.06, 0.22), (0.96, 0.96, 0.96, 1.0), roughness=0.18)
-                add_text("FooterLabel", str(spec["footer_label"]), (0.18, 0.14, -2.68), 0.17, (0.88, 0.75, 0.31, 1.0), bold=True, align_x="CENTER")
+                add_text("Body1", str(body_lines[0]), (-1.86, 0.10, -0.88), 0.24, support, bold=False)
+                add_text("Body2", str(body_lines[1]), (-1.86, 0.10, -1.22), 0.24, support, bold=False)
+                add_text("Body3", str(body_lines[2]), (-1.86, 0.10, -1.56), 0.24, support, bold=False)
+                add_panel("FooterPill", (0.08, 0.78, -2.94), (2.34, 0.04, 0.18), (0.96, 0.96, 0.96, 1.0), roughness=0.20, bevel_ratio=0.01, bevel_segments=2)
+                add_text("FooterLabel", str(spec["footer_label"]), (0.08, 0.14, -2.94), 0.14, (0.88, 0.75, 0.31, 1.0), bold=True, align_x="CENTER")
 
 
             def render_spec(spec: dict[str, object]) -> None:
@@ -626,32 +689,32 @@ def build_contact_sheet(packet_dir: Path, rows: list[dict[str, Any]]) -> dict[st
 
     margin = 18
     card_w = 330
-    card_h = 470
+    card_h = 566
     thumb_box = (294, 368)
-    canvas = Image.new("RGB", (1080, 562), (236, 239, 244))
+    canvas = Image.new("RGB", (1080, 680), (236, 239, 244))
     draw = ImageDraw.Draw(canvas)
     title_font = load_font(30, bold=True)
     subtitle_font = load_font(16, bold=False)
     label_font = load_font(18, bold=True)
     body_font = load_font(14, bold=False)
 
-    draw.rounded_rectangle((16, 18, 1064, 544), radius=26, fill=(242, 244, 248))
+    draw.rounded_rectangle((16, 18, 1064, 662), radius=26, fill=(242, 244, 248))
     draw.text((32, 32), "Review-Only Premium Social Archetypes", fill=(28, 32, 40), font=title_font)
     draw.text((32, 66), "Non-APQ visual architecture bypass while photo sourcing is blocked.", fill=(84, 96, 114), font=subtitle_font)
 
     for index, row in enumerate(rows):
         x0 = 32 + index * 340
-        y0 = 86
+        y0 = 92
         draw.rounded_rectangle((x0, y0, x0 + card_w, y0 + card_h), radius=22, fill=(255, 255, 255))
         with Image.open(Path(row["output_png_path"])) as source:
             thumb = ImageOps.fit(source.convert("RGB"), thumb_box, centering=(0.5, 0.2))
         canvas.paste(thumb, (x0, y0))
         draw.text((x0 + 18, y0 + 392), row["archetype_name"], fill=(31, 36, 44), font=label_font)
-        critique_lines = textwrap.wrap(str(row["self_critique"]), width=45)[:3]
-        y_text = y0 + 424
+        critique_lines = textwrap.wrap(str(row["self_critique"]), width=37)[:5]
+        y_text = y0 + 428
         for line in critique_lines:
             draw.text((x0 + 18, y_text), line, fill=(90, 99, 112), font=body_font)
-            y_text += 17
+            y_text += 16
 
     canvas.save(contact_sheet_path, "PNG")
     return {"created": True, "path": contact_sheet_path.as_posix(), "reason": ""}

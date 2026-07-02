@@ -52,6 +52,8 @@ def test_build_runner_script_describes_blender_backed_render_pipeline() -> None:
     assert 'scene.render.resolution_x = 1080' in runner
     assert 'scene.render.resolution_y = 1350' in runner
     assert 'add_area_light(' in runner
+    assert 'camera.data.type = "PERSP"' in runner
+    assert 'camera.data.lens = 58' in runner
     assert 'build_score_final_editorial(spec)' in runner
     assert 'build_stat_player_spotlight_shell(spec)' in runner
     assert 'build_breaking_news_card(spec)' in runner
@@ -107,6 +109,9 @@ def test_main_writes_review_only_blender_packet_with_stubbed_render(tmp_path: Pa
         "Which visual route should become the renderer baseline while photo sourcing is blocked?",
         "What is visually unacceptable before any publishing path?",
     ]
+    assert "weakest commercial card" in next(
+        item["self_critique"] for item in manifest["archetype_rows"] if item["archetype_id"] == "stat_player_spotlight_shell"
+    )
 
     for item in manifest["archetype_rows"]:
         image = Image.open(item["output_png_path"])
@@ -116,7 +121,7 @@ def test_main_writes_review_only_blender_packet_with_stubbed_render(tmp_path: Pa
         assert item["self_critique"]
 
     contact_sheet = Image.open(run_dir / "contact_sheet.png")
-    assert contact_sheet.size == (1080, 562)
+    assert contact_sheet.size == (1080, 680)
 
     assert "Blender-backed procedural scene generation only" in report
     assert "non-APQ visual architecture bypass" in report
