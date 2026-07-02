@@ -1575,16 +1575,16 @@ def score_total(score: Dict[str, str]) -> int | None:
         return None
 
 
-def public_stat_line(callouts: List[Dict[str, str]]) -> str:
+def public_stat_line(callouts: List[Dict[str, str]], *, separator: str = " / ") -> str:
     parts = [
         f"{clean(item.get('value'))} {clean(item.get('label')).upper()}".strip()
         for item in callouts[:3]
         if clean(item.get("value")) and clean(item.get("label"))
     ]
-    return " / ".join(parts)
+    return separator.join(parts)
 
 
-def photo_first_public_canvas_copy(score: Dict[str, str], stat_module: Dict[str, Any]) -> Dict[str, str]:
+def photo_first_public_canvas_copy(score: Dict[str, str], stat_module: Dict[str, Any], *, format_id: str | None = None) -> Dict[str, str]:
     winner = short_team(score.get("winner", "")).title()
     loser = short_team(score.get("loser", "")).title()
     winner_score = clean(score.get("winner_score"))
@@ -1592,6 +1592,7 @@ def photo_first_public_canvas_copy(score: Dict[str, str], stat_module: Dict[str,
     player = clean(stat_module.get("player_name"))
     callouts = stat_module.get("callouts") if isinstance(stat_module.get("callouts"), list) else []
     pts = next((clean(item.get("value")) for item in callouts if clean(item.get("label")).upper() == "PTS"), "")
+    stat_separator = " · " if clean(format_id) == "ig_feed_4x5" else " / "
     city = team_city_name(score.get("winner", ""))
     if player and pts and city:
         athlete_line = f"{player} led {city} with {pts} points."
@@ -1601,7 +1602,7 @@ def photo_first_public_canvas_copy(score: Dict[str, str], stat_module: Dict[str,
         athlete_line = f"{player} led the final-score story."
     else:
         athlete_line = f"{winner} closed out the final." if winner else "Final score confirmed."
-    stat_line = public_stat_line(callouts)
+    stat_line = public_stat_line(callouts, separator=stat_separator)
     scoreline = f"{winner} beat {loser}, {winner_score}-{loser_score}".strip(" ,-")
     compact_scoreline = f"{winner} {winner_score}, {loser} {loser_score}".strip(" ,")
     return {
@@ -3584,26 +3585,25 @@ def draw_photo_first_stat_strip(
         band_draw.line((x + 16, y + 20, x + 16, y + h - 20), fill=(*accent, 62), width=1)
         image.alpha_composite(band)
     elif clean(format_id) == "ig_feed_4x5":
-        wash_draw.rounded_rectangle((x + 10, y + 8, x + w - 10, y + h - 10), radius=16, fill=(248, 250, 255, 34))
-        wash_draw.rounded_rectangle((x + 18, y + 16, x + w - 18, y + h - 18), radius=14, fill=(248, 250, 255, 22))
-        wash_draw.rounded_rectangle((x + 8, y + 12, x + w - 8, y + h - 8), radius=18, fill=(248, 250, 255, 40))
+        wash_draw.ellipse((x + 6, y - 28, x + w - 4, y + h + 22), fill=(0, 0, 0, 7))
+        wash_draw.ellipse((x + 42, y - 12, x + w - 40, y + h + 6), fill=(248, 250, 255, 12))
         wash_draw.polygon(
             [
-                (x + int(w * 0.18), y + 10),
-                (x + w - 28, y + 20),
-                (x + int(w * 0.86), y + h - 2),
-                (x + 34, y + h - 4),
+                (x + 22, y + 16),
+                (x + int(w * 0.70), y + 2),
+                (x + w - 34, y + h - 10),
+                (x + 34, y + h + 6),
             ],
-            fill=(*accent, 16),
+            fill=(*accent, 6),
         )
         if ImageFilter is not None:
-            wash = wash.filter(ImageFilter.GaussianBlur(5))
+            wash = wash.filter(ImageFilter.GaussianBlur(14))
         image.alpha_composite(wash)
         band = Image.new("RGBA", image.size, (0, 0, 0, 0))
         band_draw = ImageDraw.Draw(band, "RGBA")
-        band_draw.line((x + 34, y + 12, x + w - 44, y + 8), fill=(*PALETTE["gold"], 20), width=1)
-        band_draw.line((x + 40, y + h - 10, x + int(x + w * 0.46), y + h - 15), fill=(248, 250, 255, 16), width=1)
-        band_draw.line((x + 16, y + 20, x + 16, y + h - 20), fill=(*accent, 16), width=1)
+        band_draw.line((x + 26, y + 14, x + w - 34, y + 8), fill=(*PALETTE["gold"], 28), width=1)
+        band_draw.line((x + 42, y + h - 10, x + int(x + w * 0.50), y + h - 16), fill=(248, 250, 255, 10), width=1)
+        band_draw.line((x + 14, y + 20, x + 14, y + h - 22), fill=(*accent, 18), width=1)
         image.alpha_composite(band)
     else:
         wash_draw.polygon(
@@ -3636,7 +3636,7 @@ def draw_photo_first_stat_strip(
     player = clean(module.get("player_name"))
     copy = canvas_copy or {}
     athlete_line = clean(copy.get("athlete_line")) or clean(module.get("body")) or (f"{last_name(player).title()} led the final." if player else "Final score confirmed.")
-    stat_line = clean(copy.get("stat_line")) or public_stat_line(module.get("callouts") or [])
+    stat_line = clean(copy.get("stat_line")) or public_stat_line(module.get("callouts") or [], separator=" \u00b7 " if clean(format_id) == "ig_feed_4x5" else " / ")
     athlete_type = photo_first_type_spec("athlete_line", compact=compact)
     stat_type = photo_first_type_spec("stat", compact=compact)
     if compact:
@@ -3705,7 +3705,7 @@ def draw_photo_first_final_score_template(
     draw_photo_first_editorial_depth_bridge(image, geometry, winner_accent, loser_accent)
     draw_photo_first_blueprint_depth_layers(image, geometry, score, winner_profile, loser_profile, aliases, logos)
     draw_reference_badge(image, template_spec)
-    canvas_copy = photo_first_public_canvas_copy(score, stat_module)
+    canvas_copy = photo_first_public_canvas_copy(score, stat_module, format_id=format_id)
     draw_photo_first_public_header(image, template_spec, format_id, canvas_copy)
     photo_box = tuple_box(geometry["photo_stage_box"])
     focus_box = tuple_box(geometry["photo_face_focus_box"])
@@ -4808,7 +4808,7 @@ def render_preview(packet: Dict[str, Any]) -> Dict[str, Any]:
     parsed_score = parse_final_score(packet) if clean(template.get("tone")) == "result" else {}
     raw_stat_module = select_verified_stat_module(packet, parsed_score) if parsed_score else {}
     public_canvas_copy = (
-        photo_first_public_canvas_copy(parsed_score, raw_stat_module)
+        photo_first_public_canvas_copy(parsed_score, raw_stat_module, format_id="ig_feed_4x5")
         if parsed_score
         and clean(raw_stat_module.get("status")) in {"verified_player_stat_module", "verified_supporting_stat_module"}
         and photo_first_eligible(raw_stat_module)
