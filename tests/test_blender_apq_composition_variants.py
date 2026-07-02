@@ -69,6 +69,13 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["source_image_texture_attempted"] is False for spec in specs)
     assert all(spec["source_image_texture_loaded"] is False for spec in specs)
     assert all(spec["source_image_texture_mode"] == "pending" for spec in specs)
+    assert [spec["burn_in_position_mode"] for spec in specs] == ["lower_safe_band", "lower_safe_band", "lower_safe_band"]
+    assert all(spec["layout_polish_checks"]["burn_in_inside_canvas"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["frame_clutter_reduced"] is True for spec in specs)
+    assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
+    assert specs[0]["layout_polish_checks"]["photo_is_hero"] is True
+    assert specs[0]["use_score_plate"] is False
+    assert specs[1]["use_editorial_scrim"] is True
 
 
 def test_build_runner_script_bakes_texture_loading_contract(tmp_path: Path, monkeypatch) -> None:
@@ -168,6 +175,10 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["source_image_texture_loaded"] is False for row in manifest["variant_rows"])
     assert all(row["source_image_texture_mode"] == "placeholder_missing_source" for row in manifest["variant_rows"])
     assert all(row["placeholder_used"] is True for row in manifest["variant_rows"])
+    assert all(row["burn_in_position_mode"] == "lower_safe_band" for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["burn_in_inside_canvas"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["frame_clutter_reduced"] is True for row in manifest["variant_rows"])
+    assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
 
     for variant_id in ["variant_01_photo_anchor", "variant_02_score_drama", "variant_03_clean_editorial"]:
         assert (out_dir / f"{variant_id}.png").exists()
@@ -179,6 +190,7 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert "photo-first hero" in report
     assert "pause_for_external_visual_qa" in report
     assert "source image is missing" in report.lower()
+    assert "Layout polish checks" in report
     assert [row["variant_id"] for row in rows] == [
         "variant_01_photo_anchor",
         "variant_02_score_drama",

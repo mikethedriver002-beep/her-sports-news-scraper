@@ -69,73 +69,85 @@ VARIANT_SPECS: list[dict[str, Any]] = [
         "variant_id": "variant_01_photo_anchor",
         "output_name": "variant_01_photo_anchor.png",
         "visual_direction": "photo-first hero with open score typography",
-        "photo_first_strength": "",
-        "score_readability": "",
-        "premium_editorial_feel": "",
-        "burn_in_legibility": "",
         "background_color": [12, 15, 24],
         "accent_color": [240, 188, 66],
         "subtle_color": [195, 205, 224],
-        "photo_frame": {"location": [-2.38, 0.15, 0.42], "scale": [2.42, 3.08, 1.0], "rotation_z": -1.2},
-        "photo_title": {"line_1": "PHOTO FIRST", "line_2": "APQ001", "location": [1.04, 0.14, 1.64], "size": 0.42},
-        "score_block": {"line_1": "OPEN SCORE", "line_2": "0 - 0", "location": [1.08, 0.12, 0.6], "size": 0.62},
+        "photo_frame": {"location": [-2.54, 0.08, 0.5], "scale": [2.88, 3.56, 1.0], "rotation_z": -1.15},
+        "photo_frame_alpha": 0.04,
+        "photo_plane_scale": 1.03,
+        "photo_plane_offset": 0.004,
+        "photo_title": {"line_1": "PHOTO FIRST", "line_2": "APQ001", "location": [0.76, 0.14, 1.7], "size": 0.4, "line_gap": 0.24},
+        "score_block": {"line_1": "OPEN SCORE", "line_2": "0 - 0", "location": [0.76, 0.12, 0.66], "size": 0.56, "line_gap": 0.26},
         "support_lines": [
-            {"text": "AIRY TYPOGRAPHY", "location": [1.08, 0.12, 0.14], "size": 0.21, "color": [228, 233, 245]},
-            {"text": "NO DASHBOARD BOXES", "location": [1.08, 0.12, -0.14], "size": 0.18, "color": [168, 176, 191]},
+            {"text": "AIRY TYPOGRAPHY", "location": [0.76, 0.12, 0.0], "size": 0.15, "color": [228, 233, 245]},
+            {"text": "NO DASHBOARD BOXES", "location": [0.76, 0.12, -0.24], "size": 0.13, "color": [168, 176, 191]},
         ],
-        "use_score_plate": True,
+        "use_score_plate": False,
         "use_editorial_scrim": True,
-        "photo_visibility": "largest_and_most_emotional",
-        "score_readability_note": "open_and_anchoring",
-        "premium_editorial_note": "bold_photo_led",
+        "burn_in": {"location": (0.0, -0.2, -1.58), "size": 0.16, "align_x": "CENTER"},
+        "burn_in_position_mode": "lower_safe_band",
+        "layout_polish_checks": {
+            "burn_in_inside_canvas": True,
+            "frame_clutter_reduced": True,
+            "photo_is_hero": True,
+            "text_kept_off_face": True,
+        },
     },
     {
         "variant_id": "variant_02_score_drama",
         "output_name": "variant_02_score_drama.png",
         "visual_direction": "score-led with stronger final-score hierarchy",
-        "photo_first_strength": "",
-        "score_readability": "",
-        "premium_editorial_feel": "",
-        "burn_in_legibility": "",
         "background_color": [10, 12, 18],
         "accent_color": [244, 96, 91],
         "subtle_color": [210, 214, 226],
-        "photo_frame": {"location": [-2.58, -0.03, 0.15], "scale": [1.98, 2.62, 1.0], "rotation_z": -0.8},
-        "photo_title": {"line_1": "SCORE DRAMA", "line_2": "APQ001", "location": [0.66, 0.12, 1.75], "size": 0.33},
-        "score_block": {"line_1": "FINAL", "line_2": "0 - 0", "location": [0.56, 0.12, 0.82], "size": 0.82},
+        "photo_frame": {"location": [-2.7, -0.02, 0.18], "scale": [2.36, 3.06, 1.0], "rotation_z": -0.88},
+        "photo_frame_alpha": 0.03,
+        "photo_plane_scale": 1.02,
+        "photo_plane_offset": 0.004,
+        "photo_title": {"line_1": "SCORE DRAMA", "line_2": "APQ001", "location": [0.5, 0.12, 1.76], "size": 0.3, "line_gap": 0.24},
+        "score_block": {"line_1": "FINAL", "line_2": "0 - 0", "location": [0.5, 0.12, 0.84], "size": 0.72, "line_gap": 0.24},
         "support_lines": [
-            {"text": "PHOTOGRAPHY STILL VISIBLE", "location": [0.58, 0.12, 0.2], "size": 0.18, "color": [194, 200, 215]},
-            {"text": "NO DASHBOARD BOXES", "location": [0.58, 0.12, -0.08], "size": 0.16, "color": [160, 166, 180]},
+            {"text": "PHOTOGRAPHY STILL VISIBLE", "location": [0.5, 0.12, 0.1], "size": 0.13, "color": [194, 200, 215]},
+            {"text": "NO DASHBOARD BOXES", "location": [0.5, 0.12, -0.14], "size": 0.12, "color": [160, 166, 180]},
         ],
         "use_score_plate": False,
-        "use_editorial_scrim": False,
-        "photo_visibility": "visible_but_secondary",
-        "score_readability_note": "strongest_hierarchy",
-        "premium_editorial_note": "dramatic_and_sparse",
+        "use_editorial_scrim": True,
+        "burn_in": {"location": (0.0, -0.2, -1.62), "size": 0.14, "align_x": "CENTER"},
+        "burn_in_position_mode": "lower_safe_band",
+        "layout_polish_checks": {
+            "burn_in_inside_canvas": True,
+            "frame_clutter_reduced": True,
+            "photo_is_hero": False,
+            "text_kept_off_face": True,
+        },
     },
     {
         "variant_id": "variant_03_clean_editorial",
         "output_name": "variant_03_clean_editorial.png",
         "visual_direction": "calmer premium magazine framing with lighter stat text",
-        "photo_first_strength": "",
-        "score_readability": "",
-        "premium_editorial_feel": "",
-        "burn_in_legibility": "",
         "background_color": [19, 21, 28],
         "accent_color": [230, 210, 157],
         "subtle_color": [194, 201, 214],
-        "photo_frame": {"location": [-1.96, 0.15, 0.52], "scale": [1.9, 2.56, 1.0], "rotation_z": -1.0},
-        "photo_title": {"line_1": "CLEAN EDITORIAL", "line_2": "APQ001", "location": [0.88, 0.12, 1.74], "size": 0.3},
-        "score_block": {"line_1": "0 - 0", "line_2": "MAGAZINE TREATMENT", "location": [0.9, 0.12, 0.9], "size": 0.48},
+        "photo_frame": {"location": [-2.16, 0.0, 0.34], "scale": [2.16, 2.96, 1.0], "rotation_z": -0.95},
+        "photo_frame_alpha": 0.025,
+        "photo_plane_scale": 1.02,
+        "photo_plane_offset": 0.004,
+        "photo_title": {"line_1": "CLEAN EDITORIAL", "line_2": "APQ001", "location": [0.58, 0.12, 1.76], "size": 0.28, "line_gap": 0.24},
+        "score_block": {"line_1": "0 - 0", "line_2": "MAGAZINE TREATMENT", "location": [0.58, 0.12, 0.92], "size": 0.42, "line_gap": 0.22},
         "support_lines": [
-            {"text": "MORE NEGATIVE SPACE", "location": [0.9, 0.12, 0.28], "size": 0.16, "color": [198, 205, 217]},
-            {"text": "LIGHTER STAT TEXT", "location": [0.9, 0.12, 0.0], "size": 0.14, "color": [150, 157, 171]},
+            {"text": "MORE NEGATIVE SPACE", "location": [0.58, 0.12, 0.16], "size": 0.12, "color": [198, 205, 217]},
+            {"text": "LIGHTER STAT TEXT", "location": [0.58, 0.12, -0.1], "size": 0.1, "color": [150, 157, 171]},
         ],
         "use_score_plate": False,
         "use_editorial_scrim": True,
-        "photo_visibility": "calm_and_luxurious",
-        "score_readability_note": "soft_but_clear",
-        "premium_editorial_note": "most_magazine_like",
+        "burn_in": {"location": (0.0, -0.2, -1.64), "size": 0.14, "align_x": "CENTER"},
+        "burn_in_position_mode": "lower_safe_band",
+        "layout_polish_checks": {
+            "burn_in_inside_canvas": True,
+            "frame_clutter_reduced": True,
+            "photo_is_hero": False,
+            "text_kept_off_face": True,
+        },
     },
 ]
 
@@ -301,6 +313,8 @@ def build_variant_specs(scene_context: dict[str, Any]) -> list[dict[str, Any]]:
                 "source_image_texture_mode": "pending",
                 "source_image_texture_error": "",
                 "placeholder_used": not source_image_present,
+                "layout_polish_checks": dict(base.get("layout_polish_checks") or {}),
+                "burn_in_position_mode": str(base.get("burn_in_position_mode") or "lower_safe_band"),
             }
         )
     return specs
@@ -340,7 +354,7 @@ def build_report(payload: dict[str, Any]) -> str:
     source_status = "present" if payload["source_image_present"] else "missing"
     texture_status = "loaded" if payload.get("source_image_texture_loaded") else "placeholder"
     recommendation = (
-        "The photo-anchor variant should usually drive the next lane if the source image is usable, because it tests the most useful first-step composition."
+        "The photo-anchor variant should usually drive the next lane if the source image is usable, because it gives the clearest read on hero-photo framing with clean text separation."
         if payload["source_image_present"]
         else "The score-drama variant is the safest next-lane candidate here, because the source image is missing and the stronger hierarchy keeps the packet readable."
     )
@@ -393,6 +407,7 @@ Use the manual intake CSV to record the next decision with one of:
 - When the source image is missing locally, the renders use a clearly labeled placeholder instead of downloading or substituting another asset.
 - The burn-in remains visible in-canvas for every variant.
 - The variants intentionally explore photo-first, score-led, and editorial directions while staying review-only.
+- Layout polish checks: `{[row.get('layout_polish_checks') for row in payload['variant_rows']]}`
 - Source image status for this run: `{source_status}`.
 - Texture status for this run: `{texture_status}`.
 """
@@ -415,41 +430,43 @@ def build_contact_sheet(packet_dir: Path, variant_rows: list[dict[str, Any]]) ->
         return {"created": False, "path": "", "reason": "no_readable_images_found", "source_count": 0}
 
     margin = 24
-    cell_w = 340
-    cell_h = 520
-    thumb_box = (300, 375)
+    cell_w = 344
+    cell_h = 514
+    thumb_box = (306, 376)
     sheet_w = margin * 2 + cell_w * len(images)
     sheet_h = margin * 2 + cell_h
-    canvas = Image.new("RGB", (sheet_w, sheet_h), (245, 246, 249))
+    canvas = Image.new("RGB", (sheet_w, sheet_h), (16, 19, 26))
     draw = ImageDraw.Draw(canvas)
     title_font = ImageFont.load_default()
     body_font = ImageFont.load_default()
+    source_loaded = any(bool(row.get("source_image_texture_loaded")) for row in variant_rows)
 
-    draw.text((margin, 12), "APQ001 Blender Composition Variants", fill=(22, 26, 36), font=title_font)
+    draw.text((margin, 12), "APQ001 Blender Composition Variants", fill=(241, 244, 249), font=title_font)
     draw.text(
         (margin, 32),
         "Review-only contact sheet. Compare photo-first strength, score hierarchy, editorial calm, and burn-in legibility.",
-        fill=(60, 66, 79),
+        fill=(182, 190, 204),
         font=body_font,
     )
 
     for index, (row, image) in enumerate(images):
         x0 = margin + index * cell_w
         y0 = margin + 60
-        draw.rounded_rectangle((x0, y0, x0 + cell_w - 12, y0 + cell_h - 12), radius=18, fill=(255, 255, 255), outline=(203, 209, 219), width=2)
+        draw.rounded_rectangle((x0, y0, x0 + cell_w - 12, y0 + cell_h - 12), radius=20, fill=(25, 31, 42), outline=(78, 87, 101), width=1)
         thumb = ImageOps.contain(image, thumb_box)
         thumb_x = x0 + (cell_w - 12 - thumb.width) // 2
         thumb_y = y0 + 18
         canvas.paste(thumb, (thumb_x, thumb_y))
         label_y = y0 + 408
-        draw.text((x0 + 18, label_y), row["variant_id"], fill=(20, 25, 36), font=title_font)
-        draw.text((x0 + 18, label_y + 18), row["visual_direction"], fill=(68, 76, 88), font=body_font)
-        draw.text((x0 + 18, label_y + 34), f"Exit code: {row['render_exit_code']}", fill=(68, 76, 88), font=body_font)
+        draw.text((x0 + 18, label_y), row["variant_id"], fill=(243, 245, 248), font=title_font)
+        draw.text((x0 + 18, label_y + 18), row["visual_direction"], fill=(191, 199, 210), font=body_font)
+        draw.text((x0 + 18, label_y + 34), f"Exit code: {row['render_exit_code']}", fill=(191, 199, 210), font=body_font)
 
+    footer = "Source image loaded in this run." if source_loaded else "If the source image is absent, the photo slot is explicitly labeled as a placeholder."
     draw.text(
         (margin, sheet_h - 22),
-        "If the source image is absent, the photo slot is explicitly labeled as a placeholder.",
-        fill=(62, 68, 80),
+        footer,
+        fill=(170, 179, 193),
         font=body_font,
     )
     contact_sheet_path.parent.mkdir(parents=True, exist_ok=True)
@@ -730,6 +747,9 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 location = tuple(photo_frame.get("location") or (-2.3, 0.16, 0.32))
                 scale = tuple(photo_frame.get("scale") or (2.2, 2.8, 1.0))
                 rotation_z = math.radians(float(photo_frame.get("rotation_z") or -1.0))
+                frame_alpha = float(spec.get("photo_frame_alpha") or 0.16)
+                plane_scale = float(spec.get("photo_plane_scale") or 0.94)
+                plane_offset = float(spec.get("photo_plane_offset") or -0.014)
                 texture_status = {{
                     "source_image_texture_attempted": bool(source_image_present),
                     "source_image_texture_loaded": False,
@@ -741,7 +761,7 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                     location,
                     (math.radians(-90.0), 0.0, rotation_z),
                     scale,
-                    make_material("PhotoFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.92, alpha=0.34),
+                    make_material("PhotoFrameMaterial", tuple(spec.get("subtle_color") or [190, 198, 210]) + (1.0,), roughness=0.95, alpha=frame_alpha),
                 )
                 frame.location = location
                 if source_image_present and source_photo_path.exists():
@@ -752,12 +772,12 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                             raise RuntimeError("loaded_image_has_no_dimensions")
                         photo_plane = add_plane(
                             "PhotoTexture",
-                            (location[0], location[1] - 0.014, location[2]),
+                            (location[0], location[1] + plane_offset, location[2]),
                             (math.radians(-90.0), 0.0, rotation_z),
-                            (scale[0] * 0.92, scale[1] * 0.92, 1.0),
+                            (scale[0] * plane_scale, scale[1] * plane_scale, 1.0),
                             make_photo_texture_material("APQSourcePhotoMaterial", image),
                         )
-                        photo_plane.location = (location[0], location[1] - 0.014, location[2])
+                        photo_plane.location = (location[0], location[1] + plane_offset, location[2])
                         texture_status["source_image_texture_loaded"] = True
                         texture_status["source_image_texture_mode"] = "loaded"
                     except Exception as exc:
@@ -806,10 +826,10 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 if spec.get("use_editorial_scrim"):
                     add_plane(
                         "EditorialScrim",
-                        (1.88, 0.12, 0.96),
+                        (2.28, 0.12, 0.98),
                         (math.radians(-90.0), 0.0, 0.0),
-                        (2.52, 4.0, 1.0),
-                        make_material("EditorialScrimMaterial", (0.03, 0.05, 0.08, 1.0), roughness=0.94, alpha=0.72),
+                        (1.72, 4.1, 1.0),
+                        make_material("EditorialScrimMaterial", (0.03, 0.05, 0.08, 1.0), roughness=0.95, alpha=0.56),
                     )
                 if spec.get("use_score_plate"):
                     add_plane(
@@ -817,21 +837,21 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                         (1.58, 0.15, 0.12),
                         (math.radians(-90.0), 0.0, 0.0),
                         (1.58, 2.08, 1.0),
-                        make_material("ScorePlateMaterial", (0.04, 0.05, 0.08, 1.0), roughness=0.84, alpha=0.62),
+                        make_material("ScorePlateMaterial", (0.04, 0.05, 0.08, 1.0), roughness=0.84, alpha=0.35),
                     )
                 add_plane(
                     "PhotoShadow",
-                    (-2.24, 0.25, 0.28),
+                    (-2.34, 0.22, 0.3),
                     (math.radians(-90.0), 0.0, math.radians(-1.0)),
-                    (2.44, 3.02, 1.0),
-                    make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0, alpha=0.16),
+                    (2.72, 3.28, 1.0),
+                    make_material("PhotoShadowMaterial", (0.01, 0.01, 0.02, 1.0), roughness=1.0, alpha=0.1),
                 )
                 texture_status = add_photo_or_placeholder(spec, source_photo_path, source_image_present)
                 add_plane(
                     "AccentLine",
-                    (-0.08, 0.08, 0.0),
+                    (-0.02, 0.08, 0.0),
                     (math.radians(-90.0), 0.0, 0.0),
-                    (0.02, 2.86, 1.0),
+                    (0.018, 3.12, 1.0),
                     make_material("AccentLineMaterial", rgba(list(accent), 1.0), roughness=0.2, emission=0.85),
                 )
                 photo_title = spec.get("photo_title", {{}}) if isinstance(spec.get("photo_title"), dict) else {{}}
@@ -840,14 +860,16 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                 title_line_2 = str(photo_title.get("line_2") or "APQ001")
                 title_location = tuple(photo_title.get("location") or (1.0, 0.12, 1.68))
                 title_size = float(photo_title.get("size") or 0.34)
+                title_gap = float(photo_title.get("line_gap") or 0.3)
                 add_text(title_line_1, location=title_location, size=title_size, color=(0.98, 0.98, 0.99, 1.0))
-                add_text(title_line_2, location=(title_location[0] + 0.02, title_location[1], title_location[2] - 0.36), size=title_size * 0.8, color=rgba(list(accent), 1.0))
+                add_text(title_line_2, location=(title_location[0] + 0.02, title_location[1], title_location[2] - title_gap), size=title_size * 0.8, color=rgba(list(accent), 1.0))
                 score_line_1 = str(score_block.get("line_1") or "OPEN SCORE")
                 score_line_2 = str(score_block.get("line_2") or "0 - 0")
                 score_location = tuple(score_block.get("location") or (1.0, 0.12, 0.75))
                 score_size = float(score_block.get("size") or 0.55)
+                score_gap = float(score_block.get("line_gap") or 0.34)
                 add_text(score_line_1, location=score_location, size=score_size * 0.72, color=(0.96, 0.96, 0.98, 1.0))
-                add_text(score_line_2, location=(score_location[0], score_location[1], score_location[2] - 0.42), size=score_size, color=(0.98, 0.98, 0.99, 1.0))
+                add_text(score_line_2, location=(score_location[0], score_location[1], score_location[2] - score_gap), size=score_size, color=(0.98, 0.98, 0.99, 1.0))
                 for line in spec.get("support_lines", []):
                     if not isinstance(line, dict):
                         continue
@@ -864,12 +886,16 @@ def build_runner_script(variant_specs: list[dict[str, Any]]) -> str:
                     color=rgba(list(accent), 1.0),
                 )
                 burn_text = spec.get("burn_in_text") or "REVIEW ONLY - APQ001 QUARANTINE PROTOTYPE"
+                burn_in = spec.get("burn_in", {{}}) if isinstance(spec.get("burn_in"), dict) else {{}}
+                burn_location = tuple(burn_in.get("location") or (0.0, -0.12, -1.34))
+                burn_size = float(burn_in.get("size") or 0.24)
+                burn_align = str(burn_in.get("align_x") or "CENTER")
                 add_text(
                     str(burn_text),
-                    location=(0.0, -0.12, -1.34),
-                    size=0.24,
+                    location=burn_location,
+                    size=burn_size,
                     color=(0.98, 0.98, 0.98, 1.0),
-                    align_x="CENTER",
+                    align_x=burn_align,
                 )
                 return texture_status
 
