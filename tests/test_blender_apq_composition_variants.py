@@ -87,7 +87,7 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
         "editorial_face_open_balance",
     ]
     assert [spec["composition_treatment_mode"] for spec in specs] == [
-        "photo_integrated_open_editorial",
+        "full_photo_background_scrim",
         "score_forward_open_editorial",
         "clean_editorial_fullbleed",
     ]
@@ -108,6 +108,8 @@ def test_build_variant_specs_carries_three_distinct_directions(tmp_path: Path, m
     assert all(spec["layout_polish_checks"]["photo_type_integration_improved"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["face_edge_clipping_reduced"] is True for spec in specs)
     assert all(spec["layout_polish_checks"]["text_kept_off_face"] is True for spec in specs)
+    assert specs[0]["layout_polish_checks"]["split_panel_removed_or_minimized"] is True
+    assert specs[0]["layout_polish_checks"]["full_photo_background_layer"] is True
     assert specs[0]["layout_polish_checks"]["photo_is_hero"] is True
     assert specs[0]["use_score_plate"] is False
     assert specs[1]["use_editorial_scrim"] is True
@@ -126,6 +128,7 @@ def test_build_runner_script_bakes_texture_loading_contract(tmp_path: Path, monk
     assert "bpy.data.images.load" in runner
     assert "ShaderNodeTexImage" in runner
     assert "ShaderNodeBsdfPrincipled" in runner
+    assert "PhotoBackgroundTexture" in runner
     assert module.TEXTURE_STATUS_PREFIX in runner
     assert ".texture_status.json" in runner
 
@@ -223,7 +226,7 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
         "editorial_face_open_balance",
     ]
     assert [row["composition_treatment_mode"] for row in manifest["variant_rows"]] == [
-        "photo_integrated_open_editorial",
+        "full_photo_background_scrim",
         "score_forward_open_editorial",
         "clean_editorial_fullbleed",
     ]
@@ -242,6 +245,8 @@ def test_main_writes_three_pngs_manifest_report_and_csv_with_stubbed_blender(tmp
     assert all(row["layout_polish_checks"]["photo_type_integration_improved"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["face_edge_clipping_reduced"] is True for row in manifest["variant_rows"])
     assert all(row["layout_polish_checks"]["text_kept_off_face"] is True for row in manifest["variant_rows"])
+    assert manifest["variant_rows"][0]["layout_polish_checks"]["split_panel_removed_or_minimized"] is True
+    assert manifest["variant_rows"][0]["layout_polish_checks"]["full_photo_background_layer"] is True
 
     for variant_id in ["variant_01_photo_anchor", "variant_02_score_drama", "variant_03_clean_editorial"]:
         assert (out_dir / f"{variant_id}.png").exists()
