@@ -26,6 +26,7 @@ MANIFEST_NAME = "manifest.json"
 
 FALSE_GUARDRAILS = {
     "approval_state_change": False,
+    "approved_marker_writes": False,
     "asset_approved": False,
     "asset_downloads": False,
     "auto_approval": False,
