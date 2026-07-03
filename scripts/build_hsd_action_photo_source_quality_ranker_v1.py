@@ -508,13 +508,17 @@ def duplicate_image_key(row: Mapping[str, str]) -> str:
     return lower(row.get("candidate_image_url"))
 
 
+def is_reject_decision(row: Mapping[str, str]) -> bool:
+    decision = lower(row.get("decision")) or lower(row.get("operator_decision"))
+    manual_next_action = lower(row.get("manual_next_action"))
+    return decision.startswith("reject") or "rejected" in manual_next_action
+
+
 def reject_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]:
     keys: set[tuple[str, str]] = set()
     for rows in reject_logs:
         for row in rows:
-            decision = lower(row.get("decision")) or lower(row.get("operator_decision"))
-            manual_next_action = lower(row.get("manual_next_action"))
-            if not decision.startswith("reject") and "rejected" not in manual_next_action:
+            if not is_reject_decision(row):
                 continue
             candidate_id = clean(row.get("candidate_id")) or clean(row.get("scout_candidate_id"))
             entity_id = clean(row.get("entity_id"))
@@ -523,19 +527,40 @@ def reject_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]
     return keys
 
 
+def reject_family_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]:
+    keys: set[tuple[str, str]] = set()
+    for rows in reject_logs:
+        for row in rows:
+            if not is_reject_decision(row):
+                continue
+            entity_id = clean(row.get("entity_id"))
+            source_url = lower(row.get("source_url"))
+            if entity_id and source_url:
+                keys.add((entity_id, source_url))
+    return keys
+
+
+def family_key(row: Mapping[str, str]) -> tuple[str, str]:
+    return (clean(row.get("entity_id")), lower(row.get("source_url")))
+
+
 def build_ranked_rows(
     input_sets: list[tuple[str, list[dict[str, str]]]],
     limit: int,
     closed_reject_keys: set[tuple[str, str]] | None = None,
+    closed_reject_family_keys: set[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     scored: list[tuple[int, str, list[str], list[str], dict[str, str]]] = []
     seen_candidate_images: set[tuple[str, str]] = set()
     rejected = closed_reject_keys or set()
+    rejected_families = closed_reject_family_keys or set()
     for packet, rows in input_sets:
         for row in rows:
             if not eligible_candidate(row):
                 continue
             if candidate_key(row) in rejected:
+                continue
+            if family_key(row) in rejected_families:
                 continue
             key = (clean(row.get("scout_candidate_id")), clean(row.get("candidate_image_url")))
             if key in seen_candidate_images:
@@ -646,6 +671,7 @@ This review-only packet ranks existing scout metadata for manual visual triage. 
 
 - Rows ranked: {manifest['ranked_row_count']}
 - Closed reject keys suppressed: {manifest['closed_reject_keys_applied']}
+- Closed reject family keys suppressed: {manifest['closed_reject_family_keys_applied']}
 - Visual-review-now rows: {review_count}
 - Fast-reject or low-priority rows: {fast_reject_count}
 - Input packets: {', '.join(manifest['input_packets'])}
@@ -693,7 +719,8 @@ def build_packet(
     input_sets = [(source_packet_name(path), read_csv_rows(path)) for path in resolved_inputs]
     reject_log_rows = [read_csv_rows(path) for path in resolved_reject_logs if path.exists()]
     closed_rejects = reject_keys(reject_log_rows)
-    rows = build_ranked_rows(input_sets, limit, closed_rejects)
+    closed_reject_families = reject_family_keys(reject_log_rows)
+    rows = build_ranked_rows(input_sets, limit, closed_rejects, closed_reject_families)
 
     csv_path = output_dir / CSV_NAME
     report_path = output_dir / REPORT_NAME
@@ -715,6 +742,7 @@ def build_packet(
         "input_packets": [packet for packet, _ in input_sets],
         "input_rows_read": sum(len(input_rows) for _, input_rows in input_sets),
         "closed_reject_keys_applied": len(closed_rejects),
+        "closed_reject_family_keys_applied": len(closed_reject_families),
         "ranked_row_count": len(rows),
         "tier_counts": tier_counts,
         "top_candidate_id": rows[0]["scout_candidate_id"] if rows else "",
