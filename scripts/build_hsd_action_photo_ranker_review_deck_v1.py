@@ -63,6 +63,38 @@ def source_domain(url: str) -> str:
     return urlparse(clean(url)).netloc
 
 
+def decision_key(candidate_id: str, entity_id: str, image_url: str) -> tuple[str, str, str]:
+    return (clean(candidate_id), clean(entity_id), clean(image_url).lower())
+
+
+def decision_exclusion_keys(decision_rows: list[dict[str, str]]) -> set[tuple[str, str, str]]:
+    keys: set[tuple[str, str, str]] = set()
+    for row in decision_rows:
+        if not clean(row.get("operator_decision")):
+            continue
+        candidate_id = clean(row.get("candidate_id") or row.get("scout_candidate_id"))
+        entity_id = clean(row.get("entity_id"))
+        image_url = clean(row.get("image_or_render_url") or row.get("candidate_image_url"))
+        if candidate_id and entity_id and image_url:
+            keys.add(decision_key(candidate_id, entity_id, image_url))
+    return keys
+
+
+def read_decision_exclusion_keys(paths: list[Path]) -> set[tuple[str, str, str]]:
+    keys: set[tuple[str, str, str]] = set()
+    for path in paths:
+        keys.update(decision_exclusion_keys(read_csv_rows(path)))
+    return keys
+
+
+def ranker_row_decision_key(row: dict[str, str]) -> tuple[str, str, str]:
+    return decision_key(
+        clean(row.get("scout_candidate_id")),
+        clean(row.get("entity_id")),
+        clean(row.get("candidate_image_url")),
+    )
+
+
 def is_review_now(row: dict[str, str]) -> bool:
     tier = clean(row.get("source_quality_tier"))
     return tier.startswith("A") or tier.startswith("B") or tier.startswith("C")
@@ -75,7 +107,12 @@ def visual_priority(row: dict[str, str]) -> str:
     return "P2_ranker_hold_backup_review"
 
 
-def deck_input_rows(ranker_rows: list[dict[str, str]], limit: int) -> list[dict[str, str]]:
+def deck_input_rows(
+    ranker_rows: list[dict[str, str]],
+    limit: int,
+    excluded_decision_keys: set[tuple[str, str, str]] | None = None,
+) -> list[dict[str, str]]:
+    excluded_decision_keys = excluded_decision_keys or set()
     rows: list[dict[str, str]] = []
     for row in ranker_rows:
         if not is_review_now(row):
@@ -83,6 +120,8 @@ def deck_input_rows(ranker_rows: list[dict[str, str]], limit: int) -> list[dict[
         if lower(row.get("download_approved")) not in {"", "no", "false", "0"}:
             continue
         if lower(row.get("publish_ready")) not in {"", "false"}:
+            continue
+        if ranker_row_decision_key(row) in excluded_decision_keys:
             continue
         rows.append(
             {
@@ -114,11 +153,34 @@ def deck_input_rows(ranker_rows: list[dict[str, str]], limit: int) -> list[dict[
     return rows
 
 
+def decision_exclusion_skip_count(
+    ranker_rows: list[dict[str, str]],
+    excluded_decision_keys: set[tuple[str, str, str]],
+) -> int:
+    skipped = 0
+    for row in ranker_rows:
+        if not is_review_now(row):
+            continue
+        if lower(row.get("download_approved")) not in {"", "no", "false", "0"}:
+            continue
+        if lower(row.get("publish_ready")) not in {"", "false"}:
+            continue
+        if ranker_row_decision_key(row) in excluded_decision_keys:
+            skipped += 1
+    return skipped
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build a focused swipe review deck from source-quality ranker A/B rows."
     )
     parser.add_argument("--ranker-csv", default=DEFAULT_RANKER_CSV.as_posix())
+    parser.add_argument(
+        "--exclude-decisions-csv",
+        action="append",
+        default=[],
+        help="Exported review-deck decision CSV to exclude from the next deck. Repeatable.",
+    )
     parser.add_argument("--proof-manifest", default="")
     parser.add_argument("--output-dir", default="")
     parser.add_argument("--limit", type=int, default=DEFAULT_LIMIT)
@@ -131,8 +193,11 @@ def main(argv: list[str] | None = None) -> int:
     output_dir = resolve_output_dir(args.output_dir or None)
     output_dir.mkdir(parents=True, exist_ok=True)
     ranker_csv = resolve_path(args.ranker_csv)
+    exclude_decision_csvs = [resolve_path(path) for path in args.exclude_decisions_csv]
+    excluded_keys = read_decision_exclusion_keys(exclude_decision_csvs)
     ranker_rows = read_csv_rows(ranker_csv)
-    input_rows = deck_input_rows(ranker_rows, max(1, args.limit))
+    input_rows = deck_input_rows(ranker_rows, max(1, args.limit), excluded_keys)
+    skipped_by_decisions = decision_exclusion_skip_count(ranker_rows, excluded_keys)
     deck_input_csv = output_dir / DECK_INPUT_CSV_NAME
     write_csv(deck_input_csv, input_rows, DECK_INPUT_FIELDS)
 
@@ -150,7 +215,23 @@ def main(argv: list[str] | None = None) -> int:
     manifest["deck_input_csv"] = deck_input_csv.resolve(strict=False).as_posix()
     manifest["ranker_rows_read"] = len(ranker_rows)
     manifest["review_now_rows_selected"] = len(input_rows)
+    manifest["excluded_decision_csvs"] = [path.resolve(strict=False).as_posix() for path in exclude_decision_csvs]
+    manifest["decision_exclusion_keys_applied"] = len(excluded_keys)
+    manifest["ranker_rows_skipped_by_decision_exclusion"] = skipped_by_decisions
     Path(str(manifest["manifest_path"])).write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    report_path = Path(str(manifest["report_path"]))
+    report_path.write_text(
+        report_path.read_text(encoding="utf-8")
+        + f"""
+
+## Decision Exclusion
+
+- Exported decision CSVs applied: {len(exclude_decision_csvs)}
+- Unique decided deck rows excluded: {len(excluded_keys)}
+- Ranker rows skipped before deck refill: {skipped_by_decisions}
+""",
+        encoding="utf-8",
+    )
     print(
         json.dumps(
             {
@@ -159,6 +240,7 @@ def main(argv: list[str] | None = None) -> int:
                 "deck_item_count": manifest["deck_item_count"],
                 "candidate_item_count": manifest["candidate_item_count"],
                 "review_now_rows_selected": manifest["review_now_rows_selected"],
+                "ranker_rows_skipped_by_decision_exclusion": skipped_by_decisions,
                 "output_dir": manifest["output_dir"],
             },
             indent=2,
