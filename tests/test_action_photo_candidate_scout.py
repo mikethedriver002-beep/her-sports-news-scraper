@@ -259,6 +259,51 @@ def test_action_photo_candidate_scout_filters_nwsl_related_post_graphics(tmp_pat
     assert rows[0]["candidate_image_url"] == "https://cdn.prod.website-files.com/site/sophia-wilson-match-action-2026.jpg"
 
 
+def test_action_photo_candidate_scout_filters_wll_store_badges_and_related_pll_cards(tmp_path: Path) -> None:
+    module = load_module()
+    seed_csv = tmp_path / "seed.csv"
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://premierlacrosseleague.test/articles/wll-story")])
+
+    html = """
+    <html>
+      <head>
+        <title>WLL goalie wins player of the week</title>
+        <meta name="description" content="Madison Doucette makes saves during WLL action.">
+      </head>
+      <body>
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2019/05/apple-download.png" alt="apple-download">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2019/05/google-download.png" alt="google-download">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2019/05/accessibility.png" alt="accessibility">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2024/07/16x9-2.png" alt="Subscribe to The Feed">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2024/07/4x5-3.png" alt="Subscribe to The Feed">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2024/07/16x9_Draft_27BigBoard_v2-1024x576.webp" alt="">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2026/07/Owen-Grant-1024x576.webp" alt="">
+        <img src="https://premierlacrosseleague.test/wp-content/uploads/2026/06/Madison-Doucette.webp" alt="Madison Doucette makes a save during WLL action" width="1200" height="1500">
+      </body>
+    </html>
+    """
+
+    def fetcher(url: str):
+        if url == "https://premierlacrosseleague.test/robots.txt":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
+        if url == "https://premierlacrosseleague.test/articles/wll-story":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/html"}, body=html.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    manifest = module.scout_packet(
+        seed_path=seed_csv,
+        output_dir=tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1",
+        fetcher=fetcher,
+        sleep_fn=lambda _: None,
+    )
+
+    rows = read_csv(tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1" / "action_photo_candidate_intake.csv")
+
+    assert manifest["extracted_candidate_rows"] == 1
+    assert len(rows) == 1
+    assert rows[0]["candidate_image_url"] == "https://premierlacrosseleague.test/wp-content/uploads/2026/06/Madison-Doucette.webp"
+
+
 def test_action_photo_candidate_scout_extracts_open_graph_image_metadata(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"
