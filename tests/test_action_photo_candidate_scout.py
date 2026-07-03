@@ -81,6 +81,9 @@ def test_action_photo_candidate_scout_extracts_review_only_metadata(tmp_path: Pa
           <figcaption>Open floor action with room on the left.</figcaption>
         </figure>
         <img src="/images/logo.png" alt="Team logo" width="120" height="120">
+        <img src="/players/example/images/headshot.jpg" alt="" width="800" height="800">
+        <img src="/unrivaled_wordmark.png" alt="" width="500" height="120">
+        <img src="/_next/static/media/hive-x1300.dd74c4f8.png" alt="Away Team" width="1300" height="1300">
       </body>
     </html>
     """

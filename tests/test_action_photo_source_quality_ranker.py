@@ -250,6 +250,42 @@ def test_source_quality_ranker_dedupes_same_filename_across_cdn_variants(tmp_pat
     assert len(rows) == 2
 
 
+def test_source_quality_ranker_keeps_distinct_generic_cdn_filenames(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    output_dir = tmp_path / "out"
+    first_original = candidate_row(
+        "APCS031",
+        entity_id="unrivaled_mist_arike_ogunbowale",
+        image_url="https://cdn.test/images/dlccjspq4yym/original.png",
+        alt="Arike Ogunbowale celebrates after a record scoring game.",
+    )
+    second_original = candidate_row(
+        "APCS032",
+        entity_id="unrivaled_rose_chelsea_gray",
+        image_url="https://cdn.test/images/h690wbqgihym/original.png",
+        alt="Chelsea Gray drives during the Rose game.",
+    )
+    first_size_name = candidate_row(
+        "APCS033",
+        entity_id="unrivaled_hive_paige_bueckers",
+        image_url="https://cdn.test/images/kvmcgu1zmlpg/jpg/16x9/720x405.jpg",
+        alt="Paige Bueckers passes during an Unrivaled game.",
+    )
+    second_size_name = candidate_row(
+        "APCS034",
+        entity_id="unrivaled_laces_kelsey_plum",
+        image_url="https://cdn.test/images/6y7u5jo2qpuu/jpg/16x9/720x405.jpg",
+        alt="Kelsey Plum shoots during an Unrivaled game.",
+    )
+    write_input(input_csv, [first_original, second_original, first_size_name, second_size_name])
+
+    module.build_packet(input_csvs=[input_csv], output_dir=output_dir, head_commit="abc123", limit=10)
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    assert {row["scout_candidate_id"] for row in rows} == {"APCS031", "APCS032", "APCS033", "APCS034"}
+
+
 def test_source_quality_ranker_downranks_url_declared_landscape_and_thumbnail_dimensions(tmp_path: Path) -> None:
     module = load_module()
     input_csv = tmp_path / "action_photo_candidate_intake.csv"
@@ -446,6 +482,7 @@ def test_source_quality_ranker_default_inputs_include_latest_source_packets() ->
     assert "outputs/local/latest/files/action_photo_wta_lpga_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
     assert "outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv" in default_inputs
     assert "outputs/local/latest/files/action_photo_volleyball_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
+    assert "outputs/local/latest/files/action_photo_unrivaled_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
     assert (
         "outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"
         in default_reject_logs
