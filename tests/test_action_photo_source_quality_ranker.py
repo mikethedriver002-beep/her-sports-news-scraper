@@ -219,6 +219,67 @@ def test_source_quality_ranker_dedupes_duplicate_image_urls_after_scoring(tmp_pa
     assert len({row["candidate_image_url"] for row in rows}) == len(rows)
 
 
+def test_source_quality_ranker_dedupes_same_filename_across_cdn_variants(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    output_dir = tmp_path / "out"
+    source_cdn = candidate_row(
+        "APCS025",
+        entity_id="au_volleyball_molly_mccage",
+        image_url="https://auprosports.com/wp-content/uploads/2025/10/Molly_McCage_AU_Pro_Volleyball.png",
+        alt="Molly McCage celebrates during AU Pro Volleyball.",
+    )
+    imgix_cdn = candidate_row(
+        "APCS026",
+        entity_id="au_volleyball_molly_mccage",
+        image_url="https://au.imgix.net/2025/10/Molly_McCage_AU_Pro_Volleyball.png?w=1920&s=example",
+        alt="Molly McCage celebrates during AU Pro Volleyball.",
+    )
+    distinct = candidate_row(
+        "APCS027",
+        entity_id="au_volleyball_jordan_thompson",
+        image_url="https://au.imgix.net/2025/11/Jordan_Thompson_AU_Pro_Volleyball.png",
+        alt="Jordan Thompson attacks during AU Pro Volleyball.",
+    )
+    write_input(input_csv, [source_cdn, imgix_cdn, distinct])
+
+    module.build_packet(input_csvs=[input_csv], output_dir=output_dir, head_commit="abc123", limit=10)
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    assert {row["scout_candidate_id"] for row in rows} == {"APCS025", "APCS027"}
+    assert len(rows) == 2
+
+
+def test_source_quality_ranker_does_not_treat_generic_sport_terms_as_filename_identity(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    output_dir = tmp_path / "out"
+    wrong_athlete_filename = candidate_row(
+        "APCS030",
+        entity_id="au_volleyball_jordan_thompson",
+        image_url="https://au.imgix.net/2025/10/Reagan_Cooper_AU_Pro_Volleyball.png",
+        alt="Jordan Thompson celebrates during the championship run.",
+        body_margin="unclear",
+    )
+    correct_athlete_filename = candidate_row(
+        "APCS031",
+        entity_id="au_volleyball_jordan_thompson",
+        image_url="https://au.imgix.net/2025/11/Jordan_Thompson_AU_Pro_Volleyball.png",
+        alt="Jordan Thompson attacks during the championship run.",
+        body_margin="unclear",
+    )
+    write_input(input_csv, [wrong_athlete_filename, correct_athlete_filename])
+
+    module.build_packet(input_csvs=[input_csv], output_dir=output_dir, head_commit="abc123", limit=10)
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    by_candidate = {row["scout_candidate_id"]: row for row in rows}
+    assert rows[0]["scout_candidate_id"] == "APCS031"
+    assert "image_filename_match" in by_candidate["APCS031"]["positive_signals"]
+    assert "image_filename_match" not in by_candidate["APCS030"]["positive_signals"]
+    assert "image_filename_unverified" in by_candidate["APCS030"]["risk_flags"]
+
+
 def test_source_quality_ranker_suppresses_closed_rejects_by_candidate_and_entity(tmp_path: Path) -> None:
     module = load_module()
     input_csv = tmp_path / "action_photo_candidate_intake.csv"
