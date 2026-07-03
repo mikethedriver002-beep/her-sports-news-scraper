@@ -252,6 +252,41 @@ def int_value(value: object) -> int | None:
         return None
 
 
+def image_url_declared_dimensions(url: str) -> tuple[int | None, int | None]:
+    raw = clean(url)
+    if not raw:
+        return (None, None)
+    parsed = urlparse(raw)
+    query = parse_qs(parsed.query)
+
+    def query_int(*names: str) -> int | None:
+        for name in names:
+            values = query.get(name, [])
+            if values:
+                value = int_value(values[0])
+                if value:
+                    return value
+        return None
+
+    width = query_int("width", "w")
+    height = query_int("height", "h")
+    decoded = unquote(raw)
+    if width is None:
+        match = re.search(r"(?:^|[,/_-])w(?:idth)?[_=-](\d{2,5})(?:[,/_-]|$)", decoded, flags=re.IGNORECASE)
+        if match:
+            width = int_value(match.group(1))
+    if height is None:
+        match = re.search(r"(?:^|[,/_-])h(?:eight)?[_=-](\d{2,5})(?:[,/_-]|$)", decoded, flags=re.IGNORECASE)
+        if match:
+            height = int_value(match.group(1))
+    if width is None or height is None:
+        match = re.search(r"(?<!\d)(\d{3,5})\s*x\s*(\d{3,5})(?!\d)", decoded, flags=re.IGNORECASE)
+        if match:
+            width = width or int_value(match.group(1))
+            height = height or int_value(match.group(2))
+    return (width, height)
+
+
 def landscape_ratio_flag(row: Mapping[str, str]) -> str:
     width = int_value(row.get("apparent_width"))
     height = int_value(row.get("apparent_height"))
@@ -262,6 +297,20 @@ def landscape_ratio_flag(row: Mapping[str, str]) -> str:
     if height / width < 1.12:
         return "not_vertical_enough_for_4x5"
     return "vertical_or_unknown_ok"
+
+
+def image_url_dimension_flags(url: str) -> list[str]:
+    width, height = image_url_declared_dimensions(url)
+    if not width or not height:
+        return []
+    flags: list[str] = []
+    if min(width, height) < 180 or max(width, height) < 360:
+        flags.append("image_url_thumbnail_or_card_size")
+    if width > height:
+        flags.append("image_url_landscape_dimensions_weak_4x5")
+    elif height / width < 1.12:
+        flags.append("image_url_not_vertical_enough_for_4x5")
+    return flags
 
 
 def named_context_signal(row: Mapping[str, str]) -> str:
@@ -334,6 +383,7 @@ def risk_flags(row: Mapping[str, str]) -> list[str]:
     ratio_flag = landscape_ratio_flag(row)
     if ratio_flag and ratio_flag != "vertical_or_unknown_ok":
         flags.append(ratio_flag)
+    flags.extend(image_url_dimension_flags(image_url))
     if named_context_signal(row) != "named_context_match":
         flags.append("named_context_unverified")
     if filename_identity_signal(row) != "image_filename_match":
@@ -369,6 +419,9 @@ def score_row(row: Mapping[str, str]) -> int:
         "png_cms_layout_asset": 8,
         "landscape_dimensions_weak_4x5": 12,
         "not_vertical_enough_for_4x5": 7,
+        "image_url_thumbnail_or_card_size": 10,
+        "image_url_landscape_dimensions_weak_4x5": 12,
+        "image_url_not_vertical_enough_for_4x5": 7,
         "named_context_unverified": 6,
         "image_filename_unverified": 4,
         "missing_image_filename": 3,
@@ -393,6 +446,8 @@ def severe_fast_reject_flags(flags: list[str]) -> list[str]:
             "screenshot_asset",
             "png_cms_layout_asset",
             "landscape_dimensions_weak_4x5",
+            "image_url_thumbnail_or_card_size",
+            "image_url_landscape_dimensions_weak_4x5",
         }
     ]
     return severe

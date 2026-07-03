@@ -250,6 +250,52 @@ def test_source_quality_ranker_dedupes_same_filename_across_cdn_variants(tmp_pat
     assert len(rows) == 2
 
 
+def test_source_quality_ranker_downranks_url_declared_landscape_and_thumbnail_dimensions(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    output_dir = tmp_path / "out"
+    strong_vertical = candidate_row(
+        "APCS040",
+        entity_id="ausl_texas_volts_tiare_jennings",
+        image_url="https://cdn.test/images/TiareJennings_action_pitch.jpg",
+        alt="Tiare Jennings pitches during the game with clean vertical room.",
+        width="1200",
+        height="1600",
+    )
+    tiny_landscape_query = candidate_row(
+        "APCS041",
+        entity_id="wta_elena_rybakina",
+        image_url="https://photoresources.wtatennis.com/photo-resources/2026/03/14/RybakinaSabalenka.png?width=185&height=105",
+        alt="Elena Rybakina celebrates after match point.",
+    )
+    cloudinary_landscape = candidate_row(
+        "APCS042",
+        entity_id="pwhl_minnesota_frost_kelly_pannek",
+        image_url="https://res.cloudinary.com/pwhl-low/image/upload/c_fill,g_faces:auto,h_630,w_1200/q_auto/f_jpg/4.4_Pannek_W",
+        alt="Kelly Pannek scores during a playoff game.",
+    )
+    filename_landscape = candidate_row(
+        "APCS043",
+        entity_id="ausl_utah_talons_bri_ellis",
+        image_url="https://cdn.test/images/Screenshot-2026-06-12-at-11.16.20-AM-1024x686.png",
+        alt="Bri Ellis highlight.",
+    )
+    write_input(input_csv, [tiny_landscape_query, cloudinary_landscape, filename_landscape, strong_vertical])
+
+    module.build_packet(input_csvs=[input_csv], output_dir=output_dir, head_commit="abc123", limit=10)
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    by_candidate = {row["scout_candidate_id"]: row for row in rows}
+
+    assert rows[0]["scout_candidate_id"] == "APCS040"
+    assert "image_url_thumbnail_or_card_size" in by_candidate["APCS041"]["risk_flags"]
+    assert "image_url_landscape_dimensions_weak_4x5" in by_candidate["APCS041"]["risk_flags"]
+    assert "image_url_landscape_dimensions_weak_4x5" in by_candidate["APCS042"]["risk_flags"]
+    assert "image_url_landscape_dimensions_weak_4x5" in by_candidate["APCS043"]["risk_flags"]
+    assert by_candidate["APCS041"]["source_quality_tier"] == "D_fast_reject_or_low_priority"
+    assert by_candidate["APCS042"]["source_quality_tier"] == "D_fast_reject_or_low_priority"
+
+
 def test_source_quality_ranker_does_not_treat_generic_sport_terms_as_filename_identity(tmp_path: Path) -> None:
     module = load_module()
     input_csv = tmp_path / "action_photo_candidate_intake.csv"
