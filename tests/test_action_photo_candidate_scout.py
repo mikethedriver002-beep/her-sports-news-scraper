@@ -126,7 +126,7 @@ def test_action_photo_candidate_scout_extracts_review_only_metadata(tmp_path: Pa
 def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"
-    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/story")])
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/2026/story")])
 
     html = """
     <html>
@@ -134,12 +134,15 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
         <title>Player attacks the rim during a rivalry game</title>
         <meta name="description" content="Public recap with one useful action photo and several low-value assets.">
       </head>
-      <body>
+    <body>
         <img src="/images/tracker-pixel.png" width="1" height="1" alt="tracking pixel">
         <img src="/images/campaign-banner-970x90.png" alt="campaign banner">
         <img src="/services/stat_handler.aspx?rp_id=22" alt="player card">
+        <img src="/images/2024/pregame-fit-player.jpg" alt="pregame fit arrival" width="1200" height="1500">
+        <img src="/images/2024/archive-drive.jpg" alt="Guard drives to the basket" width="1200" height="1500">
         <figure>
-          <img src="/images/action-1.jpg" alt="Forward elevates for a layup during the game" width="1200" height="1500">
+          <img src="/images/2026/action-1.jpg" alt="Forward elevates for a layup during the game" width="1200" height="1500">
+          <img src="/images/2026/action-1.jpg?im=AspectCrop=(16,9),xPosition=.5,yPosition=.5" alt="Forward elevates for a layup during the game" width="1200" height="1500">
           <figcaption>Action frame with room above the player.</figcaption>
         </figure>
       </body>
@@ -149,7 +152,7 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
     def fetcher(url: str):
         if url == "https://fixtures.test/robots.txt":
             return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
-        if url == "https://fixtures.test/story":
+        if url == "https://fixtures.test/2026/story":
             return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/html"}, body=html.encode("utf-8"))
         raise AssertionError(f"Unexpected URL: {url}")
 
@@ -164,7 +167,7 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
 
     assert manifest["extracted_candidate_rows"] == 1
     assert len(rows) == 1
-    assert rows[0]["candidate_image_url"] == "https://fixtures.test/images/action-1.jpg"
+    assert rows[0]["candidate_image_url"] == "https://fixtures.test/images/2026/action-1.jpg"
 
 
 def test_action_photo_candidate_scout_records_robots_and_paywall_skips(tmp_path: Path) -> None:
