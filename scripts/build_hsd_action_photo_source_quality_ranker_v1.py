@@ -22,6 +22,7 @@ DEFAULT_INPUT_CSVS = [
     Path("outputs/local/latest/files/action_photo_official_source_expansion_v3/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_wta_lpga_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv"),
+    Path("outputs/local/latest/files/action_photo_volleyball_source_expansion_v1/action_photo_candidate_intake.csv"),
 ]
 DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_recovered_decision_reject_log_v1/recovered_decision_reject_log.csv"),
