@@ -113,6 +113,7 @@ def test_review_deck_builds_candidate_and_proof_items(tmp_path: Path) -> None:
     assert manifest_json["deck_item_count"] == 2
     assert manifest_json["browser_storage_key"].startswith("hsd_action_photo_review_deck_v1:")
     assert manifest_json["legacy_browser_storage_key"] == "hsd_action_photo_review_deck_v1"
+    assert manifest_json["cross_deck_decision_recovery"] is True
     assert manifest_json["download_approved_default"] == "no"
     assert manifest_json["asset_downloads"] is False
     assert manifest_json["approval_state_change"] is False
@@ -143,8 +144,15 @@ def test_review_deck_builds_candidate_and_proof_items(tmp_path: Path) -> None:
     assert "proof_01_vertical_score_anchor" in html
     assert "const legacyStateKey = \"hsd_action_photo_review_deck_v1\"" in html
     assert "const stateKey = \"hsd_action_photo_review_deck_v1:" in html
+    assert "reviewDeckStorageKeys" in html
+    assert "itemMatchKey" in html
+    assert "storedDecisionMatchKey" in html
+    assert "enrichDecision" in html
+    assert "key.startsWith(`${legacyStateKey}:`)" in html
     assert "loadScopedDecisions" in html
     assert "validIds.has(key)" in html
+    assert "storedKey !== itemMatchKey(sameIdItem)" in html
+    assert "![legacyStateKey, stateKey].includes(storageKey)" in html
 
     assert len(rows) == 2
     assert all(row["operator_decision"] == "" for row in rows)

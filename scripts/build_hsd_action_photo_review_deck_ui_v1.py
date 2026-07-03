@@ -528,15 +528,53 @@ def build_html(items: list[dict[str, Any]], storage_key: str | None = None) -> s
       try {{ return JSON.parse(localStorage.getItem(key) || "{{}}"); }}
       catch (error) {{ return {{}}; }}
     }}
+    function reviewDeckStorageKeys() {{
+      const keys = [legacyStateKey, stateKey];
+      for (let i = 0; i < localStorage.length; i += 1) {{
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`${{legacyStateKey}}:`)) keys.push(key);
+      }}
+      return [...new Set(keys)];
+    }}
+    function itemMatchKey(item) {{
+      return [item.candidate_id || "", item.entity_id || "", item.image_or_render_url || ""].join("||");
+    }}
+    function storedDecisionMatchKey(value) {{
+      if (!value || typeof value !== "object") return "";
+      return [value.candidate_id || "", value.entity_id || "", value.image_or_render_url || ""].join("||");
+    }}
+    function enrichDecision(item, value) {{
+      const copy = Object.assign({{}}, value || {{}});
+      copy.candidate_id = item.candidate_id || copy.candidate_id || "";
+      copy.entity_id = item.entity_id || copy.entity_id || "";
+      copy.image_or_render_url = item.image_or_render_url || copy.image_or_render_url || "";
+      copy.source_url = item.source_url || copy.source_url || "";
+      return copy;
+    }}
     function loadScopedDecisions() {{
-      const scoped = parseStoredDecisions(stateKey);
-      const legacy = parseStoredDecisions(legacyStateKey);
+      const storedPayloads = reviewDeckStorageKeys().map(key => [key, parseStoredDecisions(key)]);
       const validIds = new Set(items.map(item => item.deck_item_id));
-      const migrated = {{}};
-      Object.entries(legacy).forEach(([key, value]) => {{
-        if (validIds.has(key)) migrated[key] = value;
+      const itemById = new Map(items.map(item => [item.deck_item_id, item]));
+      const itemByMatch = new Map(items.map(item => [itemMatchKey(item), item]));
+      const recovered = {{}};
+      storedPayloads.forEach(([storageKey, payload]) => {{
+        Object.entries(payload).forEach(([key, value]) => {{
+          if (!value || typeof value !== "object" || !value.operator_decision) return;
+          if (validIds.has(key)) {{
+            const sameIdItem = itemById.get(key);
+            const storedKey = storedDecisionMatchKey(value);
+            if (storedKey && storedKey !== itemMatchKey(sameIdItem)) return;
+            if (!storedKey && ![legacyStateKey, stateKey].includes(storageKey)) return;
+            recovered[key] = enrichDecision(sameIdItem, value);
+            return;
+          }}
+          const matchedItem = itemByMatch.get(storedDecisionMatchKey(value));
+          if (matchedItem && !recovered[matchedItem.deck_item_id]) {{
+            recovered[matchedItem.deck_item_id] = enrichDecision(matchedItem, value);
+          }}
+        }});
       }});
-      return Object.assign(migrated, scoped);
+      return recovered;
     }}
     const decisions = loadScopedDecisions();
     const fields = {json.dumps(DECISION_FIELDS)};
@@ -550,6 +588,7 @@ def build_html(items: list[dict[str, Any]], storage_key: str | None = None) -> s
       decisions[item.deck_item_id].operator_decision = value;
       decisions[item.deck_item_id].operator_notes = document.getElementById("notes").value;
       decisions[item.deck_item_id].reviewed_at_utc = new Date().toISOString();
+      decisions[item.deck_item_id] = enrichDecision(item, decisions[item.deck_item_id]);
       save();
       if (index < items.length - 1) index += 1;
       render();
@@ -722,6 +761,7 @@ def build_html(items: list[dict[str, Any]], storage_key: str | None = None) -> s
       const item = active();
       decisions[item.deck_item_id] = decisions[item.deck_item_id] || {{}};
       decisions[item.deck_item_id].operator_notes = document.getElementById("notes").value;
+      decisions[item.deck_item_id] = enrichDecision(item, decisions[item.deck_item_id]);
       save();
     }});
     document.getElementById("prev").onclick = () => {{ index = Math.max(0, index - 1); render(); }};
@@ -774,6 +814,7 @@ This packet creates a local review-only approve/reject deck for action-photo can
 - Manual decision template: `{manifest['decision_template_path']}`
 - Manifest: `{manifest['manifest_path']}`
 - Browser storage key: `{manifest['browser_storage_key']}`
+- Cross-deck decision recovery: `{manifest.get('cross_deck_decision_recovery')}`
 
 ## Review Flow
 
@@ -829,6 +870,7 @@ def build_packet(*, board_csv: Path, proof_manifest: Path, output_dir: Path, lim
         "decision_fields": DECISION_FIELDS,
         "browser_storage_key": storage_key,
         "legacy_browser_storage_key": LEGACY_BROWSER_STORAGE_KEY,
+        "cross_deck_decision_recovery": True,
         "review_only": True,
         "download_approved_default": "no",
         **FALSE_GUARDRAILS,
