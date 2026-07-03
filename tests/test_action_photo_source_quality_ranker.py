@@ -473,6 +473,77 @@ def test_source_quality_ranker_suppresses_adapter_operator_decision_rejects(tmp_
     assert [row["scout_candidate_id"] for row in rows] == ["APCS009"]
 
 
+def test_source_quality_ranker_suppresses_rejected_source_entity_siblings(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    reject_csv = tmp_path / "rejected_or_held_review_deck_decisions.csv"
+    output_dir = tmp_path / "out"
+    rejected_exact = candidate_row(
+        "APCS029",
+        entity_id="wnba_atlanta_dream_allisha_gray",
+        image_url="https://cdn.test/images/allisha-gray-group-photo.png",
+        alt="Allisha Gray group celebration.",
+    )
+    rejected_sibling = candidate_row(
+        "APCS030",
+        entity_id="wnba_atlanta_dream_allisha_gray",
+        image_url="https://cdn.test/images/allisha-gray-story-photo.png",
+        alt="Allisha Gray group photo from the same recap.",
+    )
+    same_source_different_entity = candidate_row(
+        "APCS031",
+        entity_id="wnba_atlanta_dream_rhyne_howard",
+        image_url="https://cdn.test/images/rhyne-howard-action.png",
+        alt="Rhyne Howard drives during the game.",
+    )
+    same_entity_different_source = candidate_row(
+        "APCS032",
+        entity_id="wnba_atlanta_dream_allisha_gray",
+        image_url="https://cdn.test/images/allisha-gray-other-recap-action.png",
+        alt="Allisha Gray drives during another game.",
+    )
+    same_entity_different_source["source_url"] = "https://fixtures.test/other-story"
+    same_entity_different_source["source_page_url"] = "https://fixtures.test/other-story"
+    write_input(input_csv, [rejected_exact, rejected_sibling, same_source_different_entity, same_entity_different_source])
+    reject_csv.parent.mkdir(parents=True, exist_ok=True)
+    with reject_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "candidate_id",
+                "entity_id",
+                "source_url",
+                "operator_decision",
+                "review_only",
+                "download_approved",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "candidate_id": "APCS029",
+                "entity_id": "wnba_atlanta_dream_allisha_gray",
+                "source_url": "https://fixtures.test/story",
+                "operator_decision": "reject_group_photo",
+                "review_only": "true",
+                "download_approved": "no",
+            }
+        )
+
+    manifest = module.build_packet(
+        input_csvs=[input_csv],
+        reject_log_csvs=[reject_csv],
+        output_dir=output_dir,
+        head_commit="abc123",
+        limit=10,
+    )
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    assert manifest["closed_reject_keys_applied"] == 1
+    assert manifest["closed_reject_family_keys_applied"] == 1
+    assert {row["scout_candidate_id"] for row in rows} == {"APCS031", "APCS032"}
+
+
 def test_source_quality_ranker_default_inputs_include_latest_source_packets() -> None:
     module = load_module()
 
