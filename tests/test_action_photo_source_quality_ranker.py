@@ -451,6 +451,10 @@ def test_source_quality_ranker_default_inputs_include_latest_source_packets() ->
         in default_reject_logs
     )
     assert (
+        "outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v2/rejected_or_held_review_deck_decisions.csv"
+        in default_reject_logs
+    )
+    assert (
         "outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"
         in default_reject_logs
     )

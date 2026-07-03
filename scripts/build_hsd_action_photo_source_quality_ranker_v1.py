@@ -28,6 +28,7 @@ DEFAULT_INPUT_CSVS = [
 DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_recovered_decision_reject_log_v1/recovered_decision_reject_log.csv"),
     Path("outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
+    Path("outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v2/rejected_or_held_review_deck_decisions.csv"),
     Path("outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
 ]
 DEFAULT_OUTPUT_DIR = Path("outputs/local/tmp/action_photo_source_quality_ranker_v1")
