@@ -122,6 +122,12 @@ def test_review_deck_builds_candidate_and_proof_items(tmp_path: Path) -> None:
     assert "Reject Group Photo" in html
     assert "Carry Forward" in html
     assert "Export Decision CSV" in html
+    assert "Copy CSV" in html
+    assert "Download CSV Again" in html
+    assert 'id="csv-output"' in html
+    assert 'id="export-status"' in html
+    assert "buildCsvText" in html
+    assert "showCsvFallback" in html
     assert "download_approved: \"no\"" in html
     assert "APCS039" in html
     assert "proof_01_vertical_score_anchor" in html
