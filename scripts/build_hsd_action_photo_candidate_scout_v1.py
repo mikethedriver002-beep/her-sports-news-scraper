@@ -12,7 +12,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Mapping
 from urllib.error import HTTPError
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 from urllib.robotparser import RobotFileParser
 
@@ -128,7 +128,11 @@ LOW_VALUE_URL_TERMS = (
     "banner",
     "tracking",
     "/akam/",
+    "pregame-fit",
+    "peakperformer",
 )
+STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
+STRIP_QUERY_MARKERS = ("im=",)
 
 
 @dataclass(frozen=True)
@@ -344,6 +348,31 @@ def infer_dimensions(image: Mapping[str, str]) -> tuple[int | None, int | None]:
     return width, height
 
 
+def year_from_text(value: str) -> str:
+    match = re.search(r"20\d{2}", clean(value))
+    return match.group(0) if match else ""
+
+
+def source_page_year(url: str) -> str:
+    return year_from_text(url)
+
+
+def candidate_image_year(url: str) -> str:
+    parsed = urlparse(url)
+    year = year_from_text(parsed.path)
+    if year:
+        return year
+    return year_from_text(parsed.query)
+
+
+def normalize_candidate_image_url(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.path.lower().endswith(STRIP_QUERY_IMAGE_EXTENSIONS) and any(marker in parsed.query for marker in STRIP_QUERY_MARKERS):
+        parsed = parsed._replace(query="", fragment="")
+        return urlunparse(parsed)
+    return url
+
+
 def score_band(score: int) -> str:
     if score >= 2:
         return "likely"
@@ -425,7 +454,7 @@ def score_candidate(image: Mapping[str, str], parser: ScoutPageParser, source_ty
     }
 
 
-def likely_candidate_image(image: Mapping[str, str]) -> bool:
+def likely_candidate_image(image: Mapping[str, str], *, page_year: str = "") -> bool:
     src = clean(image.get("src")).lower()
     combined = normalize_text_fragments(
         clean(image.get("alt")),
@@ -439,6 +468,12 @@ def likely_candidate_image(image: Mapping[str, str]) -> bool:
         return False
     if any(term in combined for term in LOW_VALUE_IMAGE_TERMS):
         return False
+    if "pregame" in combined:
+        return False
+    if page_year:
+        image_year = candidate_image_year(src)
+        if image_year and image_year != page_year:
+            return False
     width, height = infer_dimensions(image)
     if width and height and max(width, height) < 250:
         return False
@@ -509,10 +544,15 @@ def candidate_rows_for_seed(
     parser.feed(page.text)
     candidates: List[Dict[str, str]] = []
     seen_urls = set()
+    page_year = source_page_year(source_page_url) or source_page_year(page.url)
     for image in parser.images:
-        if not likely_candidate_image(image):
+        if not likely_candidate_image(image, page_year=page_year):
             continue
-        image_url = urljoin(page.url, clean(image.get("src")))
+        image_url = normalize_candidate_image_url(urljoin(page.url, clean(image.get("src"))))
+        if page_year:
+            image_year = candidate_image_year(image_url)
+            if image_year and image_year != page_year:
+                continue
         if image_url in seen_urls or urlparse(image_url).scheme not in {"http", "https"}:
             continue
         seen_urls.add(image_url)
