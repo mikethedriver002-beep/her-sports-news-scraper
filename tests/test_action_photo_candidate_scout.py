@@ -212,6 +212,50 @@ def test_action_photo_candidate_scout_filters_wta_lpga_navigation_and_store_badg
     assert rows[0]["candidate_image_url"].endswith("Mirra_Andreeva_-_Roland_Garros_2026_-_Day_14-DSC_8506A.jpg")
 
 
+def test_action_photo_candidate_scout_filters_nwsl_related_post_graphics(tmp_path: Path) -> None:
+    module = load_module()
+    seed_csv = tmp_path / "seed.csv"
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/2026/nwsl-story")])
+
+    html = """
+    <html>
+      <head>
+        <title>Forward scores twice during NWSL match</title>
+        <meta name="description" content="Official recap with action imagery and related-post graphics.">
+      </head>
+      <body>
+        <img src="https://cdn.prod.website-files.com/site/MIDSEASON_ROSTER_UPDATES_16X9.png" alt="Midseason roster update">
+        <img src="https://cdn.prod.website-files.com/site/EXTENSION_HIATT_2026_16X9.jpg" alt="Contract extension graphic">
+        <img src="https://cdn.prod.website-files.com/site/Boston%20Legacy.avif" alt="Boston Legacy tile">
+        <img src="https://cdn.prod.website-files.com/site/Denver%20Summit.avif" alt="Denver Summit tile">
+        <img src="https://cdn.prod.website-files.com/site/STATS.jpg" alt="Stats card">
+        <img src="https://cdn.prod.website-files.com/site/Untitled%20(300%20x%20343%20px).avif" alt="Untitled tile">
+        <img src="https://cdn.prod.website-files.com/site/sophia-wilson-match-action-2026.jpg" alt="Sophia Wilson dribbles during the match" width="1200" height="1500">
+      </body>
+    </html>
+    """
+
+    def fetcher(url: str):
+        if url == "https://fixtures.test/robots.txt":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
+        if url == "https://fixtures.test/2026/nwsl-story":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/html"}, body=html.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    manifest = module.scout_packet(
+        seed_path=seed_csv,
+        output_dir=tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1",
+        fetcher=fetcher,
+        sleep_fn=lambda _: None,
+    )
+
+    rows = read_csv(tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1" / "action_photo_candidate_intake.csv")
+
+    assert manifest["extracted_candidate_rows"] == 1
+    assert len(rows) == 1
+    assert rows[0]["candidate_image_url"] == "https://cdn.prod.website-files.com/site/sophia-wilson-match-action-2026.jpg"
+
+
 def test_action_photo_candidate_scout_extracts_open_graph_image_metadata(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"
@@ -299,6 +343,36 @@ def test_action_photo_candidate_scout_wta_lpga_seed_defaults_guardrails() -> Non
     assert all(row["rights_class"] == "official_league_site" for row in rows)
     assert all(row["intended_review_only_use"] == "review_only_action_photo_candidate_scout" for row in rows)
     assert all(row["source_page_url"].startswith(("https://www.wtatennis.com/", "https://www.lpga.com/")) for row in rows)
+
+
+def test_action_photo_candidate_scout_nwsl_seed_defaults_guardrails() -> None:
+    module = load_module()
+    seed_csv = (
+        REPO
+        / "data"
+        / "asset_registry"
+        / "action_photo_candidates"
+        / "review_only_action_photo_candidate_scout_nwsl_source_expansion_v4.csv"
+    )
+
+    rows = read_csv(seed_csv)
+
+    assert len(rows) == 10
+    with seed_csv.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        assert reader.fieldnames == module.SEED_FIELDS
+        assert all(None not in row for row in reader)
+    assert {row["seed_id"] for row in rows} == {f"NWSLSCOUT{index:03d}" for index in range(1, 11)}
+    assert all(row["operator_fair_use_asserted"] == "yes" for row in rows)
+    assert all(row["download_approved"] == "no" for row in rows)
+    assert {row["rights_class"] for row in rows} <= {"official_league_site", "official_team_site"}
+    assert all(row["intended_review_only_use"] == "review_only_action_photo_candidate_scout" for row in rows)
+    assert all(
+        row["source_page_url"].startswith(
+            ("https://www.nwslsoccer.com/", "https://www.kansascitycurrent.com/", "https://www.thorns.com/")
+        )
+        for row in rows
+    )
 
 
 def test_action_photo_candidate_scout_records_robots_and_paywall_skips(tmp_path: Path) -> None:

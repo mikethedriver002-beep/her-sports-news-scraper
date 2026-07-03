@@ -147,6 +147,13 @@ LOW_VALUE_URL_TERMS = (
     "googleplaystore",
     "appstore",
     "replace_me",
+    "midseason_roster",
+    "roster_updates",
+    "extension_hiatt",
+    "boston%20legacy",
+    "denver%20summit",
+    "stats.jpg",
+    "untitled%20(300%20x%20343%20px)",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)
