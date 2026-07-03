@@ -131,6 +131,22 @@ LOW_VALUE_URL_TERMS = (
     "/akam/",
     "pregame-fit",
     "peakperformer",
+    "quick-link",
+    "quick_links",
+    "wta_web_quick-links",
+    "tiles-scores",
+    "tiles-rankings",
+    "tiles-exclusive-content",
+    "tiles-tourcalendar",
+    "tiles-video",
+    "tiles-h2h",
+    "unlocked.png",
+    "finals-quick-link-tile",
+    "400x160",
+    "android_googleplaystore",
+    "googleplaystore",
+    "appstore",
+    "replace_me",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)
