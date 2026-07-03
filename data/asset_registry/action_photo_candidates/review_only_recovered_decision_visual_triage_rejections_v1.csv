@@ -1,0 +1,4 @@
+candidate_id,entity_id,identity_read,image_type,face_visibility,body_margin_4x5,text_overlay_space,visual_strength,decision,notes,review_only,download_approved,asset_downloads,approval_state_change,publish_ready,publishing
+APCS007,wnba_indiana_fever_aliyah_boston,likely,near_solo_action,usable,weak,weak,weak,reject_bad_crop,"Horizontal game-recap photo lacks the necessary vertical depth and negative space for a clean 4:5 crop.",true,no,false,none,false,false
+APCS023,wnba_atlanta_dream_rhyne_howard,likely,bad_source,strong,fails,fails,reject,reject_bad_crop,"CMS-hosted PNG is a stylized promotional web graphic with pre-baked dimensions, not a raw action shot.",true,no,false,none,false,false
+APCS027,wnba_atlanta_dream_allisha_gray,likely,bad_source,strong,fails,fails,reject,reject_bad_crop,"Pre-rendered team header asset features hard layout constraints that leave no clean room for HSD typography layers.",true,no,false,none,false,false
