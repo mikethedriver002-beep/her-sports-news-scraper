@@ -184,6 +184,41 @@ def test_source_quality_ranker_ignores_non_review_ready_rows(tmp_path: Path) -> 
     assert [row["scout_candidate_id"] for row in rows] == ["APCS012"]
 
 
+def test_source_quality_ranker_dedupes_duplicate_image_urls_after_scoring(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    output_dir = tmp_path / "out"
+    duplicate_low = candidate_row(
+        "APCS020",
+        entity_id="nwsl_kansas_city_current_temwa_chawinga",
+        image_url="https://cdn.test/images/shared-action.jpg",
+        alt="Match recap image.",
+        body_margin="unclear",
+    )
+    duplicate_high = candidate_row(
+        "APCS021",
+        entity_id="nwsl_kansas_city_current_temwa_chawinga",
+        image_url="https://cdn.test/images/shared-action.jpg",
+        alt="Temwa Chawinga scores the winner during the match.",
+        width="1200",
+        height="1600",
+    )
+    distinct = candidate_row(
+        "APCS022",
+        entity_id="wta_elena_rybakina",
+        image_url="https://cdn.test/images/Rybakina_action.jpg",
+        alt="Elena Rybakina celebrates after match point.",
+    )
+    write_input(input_csv, [duplicate_low, duplicate_high, distinct])
+
+    module.build_packet(input_csvs=[input_csv], output_dir=output_dir, head_commit="abc123", limit=10)
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    assert [row["scout_candidate_id"] for row in rows].count("APCS021") == 1
+    assert "APCS020" not in {row["scout_candidate_id"] for row in rows}
+    assert len({row["candidate_image_url"] for row in rows}) == len(rows)
+
+
 def test_source_quality_ranker_suppresses_closed_rejects_by_candidate_and_entity(tmp_path: Path) -> None:
     module = load_module()
     input_csv = tmp_path / "action_photo_candidate_intake.csv"
