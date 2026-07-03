@@ -345,6 +345,28 @@ def build_html(items: list[dict[str, Any]]) -> str:
       border-top: 1px solid var(--line);
       padding-top: 12px;
     }}
+    .export-panel {{
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }}
+    .export-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }}
+    #csv-output {{
+      min-height: 170px;
+      font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre;
+    }}
+    #export-status {{
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 18px;
+    }}
     @media (max-width: 920px) {{
       main {{ grid-template-columns: 1fr; }}
       .stage {{ min-height: 560px; }}
@@ -388,7 +410,15 @@ def build_html(items: list[dict[str, Any]]) -> str:
         Operator notes
         <textarea id=\"notes\" placeholder=\"Optional manual note for exported decision CSV\"></textarea>
       </label>
-      <button id=\"export\">Export Decision CSV</button>
+      <div class=\"export-panel\">
+        <div class=\"export-actions\">
+          <button id=\"export\">Export Decision CSV</button>
+          <button id=\"copy-csv\" type=\"button\">Copy CSV</button>
+          <a id=\"download-link\" class=\"button\" download=\"hsd_action_photo_review_deck_manual_decisions.csv\" hidden>Download CSV Again</a>
+        </div>
+        <textarea id=\"csv-output\" readonly placeholder=\"Exported CSV will appear here if the browser blocks or hides the file download.\"></textarea>
+        <div id=\"export-status\"></div>
+      </div>
       <div class=\"guardrail\">
         Exported decisions are a manual intake surface. `download_approved` remains `no`; a separate formal intake is required before any later quarantine-only download.
       </div>
@@ -398,6 +428,7 @@ def build_html(items: list[dict[str, Any]]) -> str:
     const items = {payload};
     const stateKey = "hsd_action_photo_review_deck_v1";
     let index = 0;
+    let exportObjectUrl = "";
     const decisions = JSON.parse(localStorage.getItem(stateKey) || "{{}}");
     const fields = {json.dumps(DECISION_FIELDS)};
 
@@ -459,7 +490,7 @@ def build_html(items: list[dict[str, Any]]) -> str:
       const s = String(value ?? "");
       return /[\",\\n]/.test(s) ? `"${{s.replaceAll('"', '""')}}"` : s;
     }}
-    function exportCsv() {{
+    function buildCsvText() {{
       const rows = items.map(item => {{
         const decision = decisions[item.deck_item_id] || {{}};
         return {{
@@ -482,14 +513,48 @@ def build_html(items: list[dict[str, Any]]) -> str:
           publishing: "false"
         }};
       }});
-      const text = [fields.join(","), ...rows.map(row => fields.map(field => csvCell(row[field])).join(","))].join("\\n");
-      const blob = new Blob([text + "\\n"], {{ type: "text/csv" }});
+      return [fields.join(","), ...rows.map(row => fields.map(field => csvCell(row[field])).join(","))].join("\\n") + "\\n";
+    }}
+    function filledDecisionCount() {{
+      return Object.values(decisions).filter(decision => decision.operator_decision).length;
+    }}
+    function showCsvFallback(text) {{
+      const output = document.getElementById("csv-output");
+      const status = document.getElementById("export-status");
+      const link = document.getElementById("download-link");
+      output.value = text;
+      if (exportObjectUrl) URL.revokeObjectURL(exportObjectUrl);
+      exportObjectUrl = URL.createObjectURL(new Blob([text], {{ type: "text/csv" }}));
+      link.href = exportObjectUrl;
+      link.hidden = false;
+      status.textContent = `CSV ready: ${{filledDecisionCount()}} manual decisions recorded across ${{items.length}} deck items. If no file downloaded, use Copy CSV or Download CSV Again.`;
+    }}
+    function exportCsv() {{
+      const text = buildCsvText();
+      showCsvFallback(text);
+      const blob = new Blob([text], {{ type: "text/csv" }});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
       a.download = "hsd_action_photo_review_deck_manual_decisions.csv";
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }}
+    async function copyCsv() {{
+      const output = document.getElementById("csv-output");
+      const status = document.getElementById("export-status");
+      if (!output.value) showCsvFallback(buildCsvText());
+      try {{
+        await navigator.clipboard.writeText(output.value);
+        status.textContent = `CSV copied: ${{filledDecisionCount()}} manual decisions recorded across ${{items.length}} deck items.`;
+      }} catch (error) {{
+        output.focus();
+        output.select();
+        document.execCommand("copy");
+        status.textContent = "CSV selected/copied with browser fallback. If copy did not land, press Ctrl+C while the CSV box is selected.";
+      }}
     }}
     document.querySelectorAll("[data-action]").forEach(button => button.addEventListener("click", () => setDecision(button.dataset.action)));
     document.getElementById("notes").addEventListener("input", () => {{
@@ -501,6 +566,7 @@ def build_html(items: list[dict[str, Any]]) -> str:
     document.getElementById("prev").onclick = () => {{ index = Math.max(0, index - 1); render(); }};
     document.getElementById("next").onclick = () => {{ index = Math.min(items.length - 1, index + 1); render(); }};
     document.getElementById("export").onclick = exportCsv;
+    document.getElementById("copy-csv").onclick = copyCsv;
     render();
   </script>
 </body>
