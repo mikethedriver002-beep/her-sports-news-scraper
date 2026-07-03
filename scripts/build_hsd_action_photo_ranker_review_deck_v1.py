@@ -107,50 +107,79 @@ def visual_priority(row: dict[str, str]) -> str:
     return "P2_ranker_hold_backup_review"
 
 
+def eligible_ranker_row(row: dict[str, str], excluded_decision_keys: set[tuple[str, str, str]]) -> bool:
+    if not is_review_now(row):
+        return False
+    if lower(row.get("download_approved")) not in {"", "no", "false", "0"}:
+        return False
+    if lower(row.get("publish_ready")) not in {"", "false"}:
+        return False
+    if ranker_row_decision_key(row) in excluded_decision_keys:
+        return False
+    return True
+
+
+def source_entity_cluster_key(row: dict[str, str]) -> tuple[str, str]:
+    return (clean(row.get("entity_id")), lower(row.get("source_url")))
+
+
+def to_deck_input_row(row: dict[str, str]) -> dict[str, str]:
+    return {
+        "scout_candidate_id": clean(row.get("scout_candidate_id")),
+        "entity_id": clean(row.get("entity_id")),
+        "source_type": clean(row.get("source_type")),
+        "source_url": clean(row.get("source_url")),
+        "candidate_image_url": clean(row.get("candidate_image_url")),
+        "image_alt": clean(row.get("image_alt")),
+        "source_domain": source_domain(clean(row.get("source_url"))),
+        "score": clean(row.get("source_quality_score")),
+        "visual_priority": visual_priority(row),
+        "candidate_quality_tier": clean(row.get("source_quality_tier")),
+        "candidate_risk_flags": clean(row.get("risk_flags")),
+        "identity_confidence": clean(row.get("identity_confidence")),
+        "face_likely_visible": clean(row.get("face_likely_visible")),
+        "body_margin_likely": clean(row.get("body_margin_likely")),
+        "four_by_five_crop_potential": clean(row.get("four_by_five_crop_potential")),
+        "text_safe_negative_space": clean(row.get("text_safe_negative_space")),
+        "download_approved": "no",
+        "review_only": "true",
+        "publish_ready": "false",
+        "asset_downloads": "false",
+        "approval_state_change": "none",
+    }
+
+
 def deck_input_rows(
     ranker_rows: list[dict[str, str]],
     limit: int,
     excluded_decision_keys: set[tuple[str, str, str]] | None = None,
 ) -> list[dict[str, str]]:
     excluded_decision_keys = excluded_decision_keys or set()
-    rows: list[dict[str, str]] = []
-    for row in ranker_rows:
-        if not is_review_now(row):
+    eligible = [row for row in ranker_rows if eligible_ranker_row(row, excluded_decision_keys)]
+    selected: list[dict[str, str]] = []
+    selected_row_keys: set[tuple[str, str, str]] = set()
+    selected_clusters: set[tuple[str, str]] = set()
+
+    for row in eligible:
+        cluster = source_entity_cluster_key(row)
+        if cluster in selected_clusters:
             continue
-        if lower(row.get("download_approved")) not in {"", "no", "false", "0"}:
+        selected.append(row)
+        selected_row_keys.add(ranker_row_decision_key(row))
+        selected_clusters.add(cluster)
+        if len(selected) >= limit:
+            return [to_deck_input_row(item) for item in selected]
+
+    for row in eligible:
+        row_key = ranker_row_decision_key(row)
+        if row_key in selected_row_keys:
             continue
-        if lower(row.get("publish_ready")) not in {"", "false"}:
-            continue
-        if ranker_row_decision_key(row) in excluded_decision_keys:
-            continue
-        rows.append(
-            {
-                "scout_candidate_id": clean(row.get("scout_candidate_id")),
-                "entity_id": clean(row.get("entity_id")),
-                "source_type": clean(row.get("source_type")),
-                "source_url": clean(row.get("source_url")),
-                "candidate_image_url": clean(row.get("candidate_image_url")),
-                "image_alt": clean(row.get("image_alt")),
-                "source_domain": source_domain(clean(row.get("source_url"))),
-                "score": clean(row.get("source_quality_score")),
-                "visual_priority": visual_priority(row),
-                "candidate_quality_tier": clean(row.get("source_quality_tier")),
-                "candidate_risk_flags": clean(row.get("risk_flags")),
-                "identity_confidence": clean(row.get("identity_confidence")),
-                "face_likely_visible": clean(row.get("face_likely_visible")),
-                "body_margin_likely": clean(row.get("body_margin_likely")),
-                "four_by_five_crop_potential": clean(row.get("four_by_five_crop_potential")),
-                "text_safe_negative_space": clean(row.get("text_safe_negative_space")),
-                "download_approved": "no",
-                "review_only": "true",
-                "publish_ready": "false",
-                "asset_downloads": "false",
-                "approval_state_change": "none",
-            }
-        )
-        if len(rows) >= limit:
+        selected.append(row)
+        selected_row_keys.add(row_key)
+        if len(selected) >= limit:
             break
-    return rows
+
+    return [to_deck_input_row(item) for item in selected]
 
 
 def decision_exclusion_skip_count(
@@ -159,15 +188,20 @@ def decision_exclusion_skip_count(
 ) -> int:
     skipped = 0
     for row in ranker_rows:
-        if not is_review_now(row):
-            continue
-        if lower(row.get("download_approved")) not in {"", "no", "false", "0"}:
-            continue
-        if lower(row.get("publish_ready")) not in {"", "false"}:
+        if not eligible_ranker_row(row, set()):
             continue
         if ranker_row_decision_key(row) in excluded_decision_keys:
             skipped += 1
     return skipped
+
+
+def selected_cluster_stats(rows: list[dict[str, str]]) -> dict[str, int]:
+    clusters = [source_entity_cluster_key(row) for row in rows]
+    unique_clusters = set(clusters)
+    return {
+        "selected_source_entity_clusters": len(unique_clusters),
+        "selected_source_entity_refill_rows": len(rows) - len(unique_clusters),
+    }
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -218,6 +252,10 @@ def main(argv: list[str] | None = None) -> int:
     manifest["excluded_decision_csvs"] = [path.resolve(strict=False).as_posix() for path in exclude_decision_csvs]
     manifest["decision_exclusion_keys_applied"] = len(excluded_keys)
     manifest["ranker_rows_skipped_by_decision_exclusion"] = skipped_by_decisions
+    cluster_stats = selected_cluster_stats(input_rows)
+    manifest["source_entity_cluster_strategy"] = "first_pass_unique_then_refill"
+    manifest["selected_source_entity_clusters"] = cluster_stats["selected_source_entity_clusters"]
+    manifest["selected_source_entity_refill_rows"] = cluster_stats["selected_source_entity_refill_rows"]
     Path(str(manifest["manifest_path"])).write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
     report_path = Path(str(manifest["report_path"]))
     report_path.write_text(
@@ -229,6 +267,12 @@ def main(argv: list[str] | None = None) -> int:
 - Exported decision CSVs applied: {len(exclude_decision_csvs)}
 - Unique decided deck rows excluded: {len(excluded_keys)}
 - Ranker rows skipped before deck refill: {skipped_by_decisions}
+
+## Source/Entity Cluster Collapse
+
+- Strategy: first pass selects one card per `entity_id + source_url`; second pass refills duplicates only if the deck still has room.
+- Source/entity clusters selected: {cluster_stats["selected_source_entity_clusters"]}
+- Refill rows from already-represented clusters: {cluster_stats["selected_source_entity_refill_rows"]}
 """,
         encoding="utf-8",
     )
