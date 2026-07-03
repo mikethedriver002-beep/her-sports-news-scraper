@@ -404,6 +404,10 @@ def candidate_key(row: Mapping[str, str], candidate_field: str = "scout_candidat
     return (clean(row.get(candidate_field)), clean(row.get("entity_id")))
 
 
+def duplicate_image_key(row: Mapping[str, str]) -> str:
+    return lower(row.get("candidate_image_url"))
+
+
 def reject_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]:
     keys: set[tuple[str, str]] = set()
     for rows in reject_logs:
@@ -425,7 +429,7 @@ def build_ranked_rows(
     closed_reject_keys: set[tuple[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     scored: list[tuple[int, str, list[str], list[str], dict[str, str]]] = []
-    seen: set[tuple[str, str]] = set()
+    seen_candidate_images: set[tuple[str, str]] = set()
     rejected = closed_reject_keys or set()
     for packet, rows in input_sets:
         for row in rows:
@@ -434,9 +438,9 @@ def build_ranked_rows(
             if candidate_key(row) in rejected:
                 continue
             key = (clean(row.get("scout_candidate_id")), clean(row.get("candidate_image_url")))
-            if key in seen:
+            if key in seen_candidate_images:
                 continue
-            seen.add(key)
+            seen_candidate_images.add(key)
             flags = risk_flags(row)
             signals = positive_signals(row)
             score = score_row(row)
@@ -453,12 +457,18 @@ def build_ranked_rows(
     )
 
     output: list[dict[str, str]] = []
-    for index, (score, packet, flags, signals, row) in enumerate(scored[:limit], start=1):
+    seen_image_urls: set[str] = set()
+    for score, packet, flags, signals, row in scored:
+        image_key = duplicate_image_key(row)
+        if image_key and image_key in seen_image_urls:
+            continue
+        if image_key:
+            seen_image_urls.add(image_key)
         tier = quality_tier(score, flags)
         output.append(
             {
-                "rank": str(index),
-                "ranker_id": f"APSQ{index:03d}",
+                "rank": str(len(output) + 1),
+                "ranker_id": f"APSQ{len(output) + 1:03d}",
                 "source_packet": packet,
                 "scout_candidate_id": clean(row.get("scout_candidate_id")),
                 "entity_id": clean(row.get("entity_id")),
@@ -490,6 +500,8 @@ def build_ranked_rows(
                 "publishing": "false",
             }
         )
+        if len(output) >= limit:
+            break
     return output
 
 
