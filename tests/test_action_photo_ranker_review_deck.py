@@ -69,7 +69,7 @@ def write_ranker_csv(path: Path, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
-def test_ranker_review_deck_builds_swipe_deck_from_review_now_rows(tmp_path: Path) -> None:
+def test_ranker_review_deck_builds_swipe_deck_from_prioritized_rows(tmp_path: Path) -> None:
     module = load_module()
     ranker_csv = tmp_path / "ranker.csv"
     output_dir = tmp_path / "out"
@@ -103,22 +103,28 @@ def test_ranker_review_deck_builds_swipe_deck_from_review_now_rows(tmp_path: Pat
     assert manifest["source_packet"] == "action_photo_source_quality_ranker_v1"
     assert manifest["repo_head"] == "abc123"
     assert manifest["ranker_rows_read"] == 3
-    assert manifest["review_now_rows_selected"] == 1
-    assert manifest["candidate_item_count"] == 1
+    assert manifest["review_now_rows_selected"] == 2
+    assert manifest["candidate_item_count"] == 2
     assert manifest["download_approved_default"] == "no"
     assert manifest["asset_downloads"] is False
     assert manifest["approval_state_change"] is False
     assert manifest["publish_ready"] is False
     assert manifest["publishing"] is False
 
-    assert [row["scout_candidate_id"] for row in deck_input] == ["APCS008"]
-    assert len(rows) == 1
+    assert [row["scout_candidate_id"] for row in deck_input] == ["APCS008", "APCS009"]
+    assert [row["visual_priority"] for row in deck_input] == [
+        "P1_ranker_manual_review",
+        "P2_ranker_hold_backup_review",
+    ]
+    assert len(rows) == 2
     assert rows[0]["candidate_id"] == "APCS008"
+    assert rows[1]["candidate_id"] == "APCS009"
     assert rows[0]["download_approved"] == "no"
     assert rows[0]["review_only"] == "true"
     assert rows[0]["publish_ready"] == "false"
     assert "APCS008" in html
-    assert "APCS009" not in html
+    assert "APCS009" in html
+    assert "APCS010" not in html
     assert "id=\"swipe-card\"" in html
     assert "Export Decision CSV" in html
 
