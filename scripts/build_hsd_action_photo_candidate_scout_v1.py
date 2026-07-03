@@ -131,6 +131,8 @@ LOW_VALUE_IMAGE_TERMS = (
     "ad",
     "advert",
     "scorebug",
+    "subscribe",
+    "the feed",
     "watermark",
     "wordmark",
 )
@@ -155,10 +157,18 @@ LOW_VALUE_URL_TERMS = (
     "tiles-h2h",
     "unlocked.png",
     "finals-quick-link-tile",
+    "16x9-2.png",
+    "4x5-3.png",
     "400x160",
     "android_googleplaystore",
+    "apple-download",
+    "accessibility.png",
+    "bigboard",
+    "draft_27bigboard",
+    "google-download",
     "googleplaystore",
     "appstore",
+    "owen-grant",
     "replace_me",
     "midseason_roster",
     "roster_updates",
@@ -170,7 +180,10 @@ LOW_VALUE_URL_TERMS = (
     "/images/headshot",
     "stats.jpg",
     "untitled%20(300%20x%20343%20px)",
+    "ty-english",
     "wordmark",
+    "subscribe%20to%20the%20feed",
+    "subscribe-to-the-feed",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)

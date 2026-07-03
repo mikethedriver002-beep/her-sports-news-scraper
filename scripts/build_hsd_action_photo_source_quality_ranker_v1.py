@@ -25,12 +25,14 @@ DEFAULT_INPUT_CSVS = [
     Path("outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_volleyball_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_unrivaled_source_expansion_v1/action_photo_candidate_intake.csv"),
+    Path("outputs/local/latest/files/action_photo_wll_source_expansion_v1/action_photo_candidate_intake.csv"),
 ]
 DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_recovered_decision_reject_log_v1/recovered_decision_reject_log.csv"),
     Path("outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
     Path("outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v2/rejected_or_held_review_deck_decisions.csv"),
     Path("outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
+    Path("outputs/local/latest/files/action_photo_manual_decision_batch_v1/rejected_or_held_review_deck_decisions.csv"),
 ]
 DEFAULT_OUTPUT_DIR = Path("outputs/local/tmp/action_photo_source_quality_ranker_v1")
 CSV_NAME = "action_photo_source_quality_ranker.csv"

@@ -554,6 +554,7 @@ def test_source_quality_ranker_default_inputs_include_latest_source_packets() ->
     assert "outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv" in default_inputs
     assert "outputs/local/latest/files/action_photo_volleyball_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
     assert "outputs/local/latest/files/action_photo_unrivaled_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
+    assert "outputs/local/latest/files/action_photo_wll_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
     assert (
         "outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"
         in default_reject_logs
@@ -564,5 +565,9 @@ def test_source_quality_ranker_default_inputs_include_latest_source_packets() ->
     )
     assert (
         "outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"
+        in default_reject_logs
+    )
+    assert (
+        "outputs/local/latest/files/action_photo_manual_decision_batch_v1/rejected_or_held_review_deck_decisions.csv"
         in default_reject_logs
     )
