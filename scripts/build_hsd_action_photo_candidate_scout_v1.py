@@ -124,6 +124,7 @@ LOW_VALUE_IMAGE_TERMS = ("logo", "icon", "sponsor", "ad", "advert", "scorebug", 
 LOW_VALUE_URL_TERMS = (
     "pixel",
     "scorecardresearch",
+    "sb-instagram-feed-images",
     "stat_handler",
     "banner",
     "tracking",
