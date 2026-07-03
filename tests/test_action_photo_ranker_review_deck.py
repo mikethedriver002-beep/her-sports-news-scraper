@@ -25,6 +25,14 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def write_csv(path: Path, rows: list[dict[str, str]], fields: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def ranker_row(candidate_id: str, *, tier: str, entity_id: str = "pwhl_minnesota_frost_kelly_pannek") -> dict[str, str]:
     return {
         "rank": candidate_id.removeprefix("APCS") or "1",
@@ -137,3 +145,98 @@ def test_ranker_review_deck_ignores_truthy_download_approval(tmp_path: Path) -> 
     write_ranker_csv(ranker_csv, [row])
 
     assert module.deck_input_rows(read_csv(ranker_csv), limit=10) == []
+
+
+def test_ranker_review_deck_excludes_exported_manual_decisions_without_overmatching(tmp_path: Path) -> None:
+    module = load_module()
+    ranker_csv = tmp_path / "ranker.csv"
+    decisions_csv = tmp_path / "manual_decisions.csv"
+    output_dir = tmp_path / "out"
+    excluded = ranker_row(
+        "APCS008",
+        tier="B_manual_review",
+        entity_id="pwhl_minnesota_frost_kelly_pannek",
+    )
+    same_id_different_entity = ranker_row(
+        "APCS008",
+        tier="B_manual_review",
+        entity_id="wnba_indiana_fever_kelsey_mitchell",
+    )
+    refill = ranker_row(
+        "APCS009",
+        tier="C_hold_backup",
+        entity_id="nwsl_kansas_city_current_temwa_chawinga",
+    )
+    write_ranker_csv(ranker_csv, [excluded, same_id_different_entity, refill])
+    write_csv(
+        decisions_csv,
+        [
+            {
+                "deck_item_id": "candidate_APCS008",
+                "item_kind": "candidate_source",
+                "candidate_id": "APCS008",
+                "entity_id": "pwhl_minnesota_frost_kelly_pannek",
+                "source_url": excluded["source_url"],
+                "image_or_render_url": excluded["candidate_image_url"],
+                "operator_decision": "reject_group_photo",
+                "operator_notes": "",
+                "manual_reviewer": "Mike",
+                "reviewed_at_utc": "2026-07-03T18:41:15Z",
+                "formal_intake_next_action": "",
+                "review_only": "true",
+                "download_approved": "no",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+            }
+        ],
+        [
+            "deck_item_id",
+            "item_kind",
+            "candidate_id",
+            "entity_id",
+            "source_url",
+            "image_or_render_url",
+            "operator_decision",
+            "operator_notes",
+            "manual_reviewer",
+            "reviewed_at_utc",
+            "formal_intake_next_action",
+            "review_only",
+            "download_approved",
+            "asset_downloads",
+            "approval_state_change",
+            "publish_ready",
+            "publishing",
+        ],
+    )
+
+    assert module.main(
+        [
+            "--ranker-csv",
+            ranker_csv.as_posix(),
+            "--exclude-decisions-csv",
+            decisions_csv.as_posix(),
+            "--output-dir",
+            output_dir.as_posix(),
+            "--limit",
+            "2",
+            "--head-commit",
+            "abc123",
+        ]
+    ) == 0
+
+    deck_input = read_csv(output_dir / "ranker_review_deck_input.csv")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = (output_dir / "action_photo_review_deck_report.md").read_text(encoding="utf-8")
+
+    assert [row["entity_id"] for row in deck_input] == [
+        "wnba_indiana_fever_kelsey_mitchell",
+        "nwsl_kansas_city_current_temwa_chawinga",
+    ]
+    assert manifest["decision_exclusion_keys_applied"] == 1
+    assert manifest["ranker_rows_skipped_by_decision_exclusion"] == 1
+    assert manifest["excluded_decision_csvs"] == [decisions_csv.resolve(strict=False).as_posix()]
+    assert "Decision Exclusion" in report
+    assert "Ranker rows skipped before deck refill: 1" in report
