@@ -33,7 +33,13 @@ def write_csv(path: Path, rows: list[dict[str, str]], fields: list[str]) -> None
         writer.writerows(rows)
 
 
-def ranker_row(candidate_id: str, *, tier: str, entity_id: str = "pwhl_minnesota_frost_kelly_pannek") -> dict[str, str]:
+def ranker_row(
+    candidate_id: str,
+    *,
+    tier: str,
+    entity_id: str = "pwhl_minnesota_frost_kelly_pannek",
+    source_url: str = "https://www.thepwhl.com/en/news/fixture",
+) -> dict[str, str]:
     return {
         "rank": candidate_id.removeprefix("APCS") or "1",
         "ranker_id": f"APSQ{candidate_id.removeprefix('APCS') or '001'}",
@@ -41,7 +47,7 @@ def ranker_row(candidate_id: str, *, tier: str, entity_id: str = "pwhl_minnesota
         "scout_candidate_id": candidate_id,
         "entity_id": entity_id,
         "source_type": "official_league_recap",
-        "source_url": "https://www.thepwhl.com/en/news/fixture",
+        "source_url": source_url,
         "candidate_image_url": f"https://cdn.test/images/{candidate_id}_action.jpg",
         "image_alt": "Kelly Pannek scores during a playoff game.",
         "apparent_width": "",
@@ -145,6 +151,60 @@ def test_ranker_review_deck_ignores_truthy_download_approval(tmp_path: Path) -> 
     write_ranker_csv(ranker_csv, [row])
 
     assert module.deck_input_rows(read_csv(ranker_csv), limit=10) == []
+
+
+def test_ranker_review_deck_collapses_source_entity_clusters_before_refill(tmp_path: Path) -> None:
+    module = load_module()
+    ranker_csv = tmp_path / "ranker.csv"
+    output_dir = tmp_path / "out"
+    same_cluster_first = ranker_row(
+        "APCS001",
+        tier="B_manual_review",
+        entity_id="wnba_connecticut_sun_aneesah_morrow",
+        source_url="https://sun.wnba.com/news/sun-defeat-sky-92-63",
+    )
+    same_cluster_second = ranker_row(
+        "APCS002",
+        tier="B_manual_review",
+        entity_id="wnba_connecticut_sun_aneesah_morrow",
+        source_url="https://sun.wnba.com/news/sun-defeat-sky-92-63",
+    )
+    distinct_cluster = ranker_row(
+        "APCS003",
+        tier="C_hold_backup",
+        entity_id="wll_new_york_charging_madison_doucette",
+        source_url="https://premierlacrosseleague.com/articles/wll-player-of-the-week-chargings-madison-doucette",
+    )
+    same_cluster_third = ranker_row(
+        "APCS004",
+        tier="C_hold_backup",
+        entity_id="wnba_connecticut_sun_aneesah_morrow",
+        source_url="https://sun.wnba.com/news/sun-defeat-sky-92-63",
+    )
+    write_ranker_csv(ranker_csv, [same_cluster_first, same_cluster_second, distinct_cluster, same_cluster_third])
+
+    assert module.main(
+        [
+            "--ranker-csv",
+            ranker_csv.as_posix(),
+            "--output-dir",
+            output_dir.as_posix(),
+            "--limit",
+            "3",
+            "--head-commit",
+            "abc123",
+        ]
+    ) == 0
+
+    deck_input = read_csv(output_dir / "ranker_review_deck_input.csv")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = (output_dir / "action_photo_review_deck_report.md").read_text(encoding="utf-8")
+
+    assert [row["scout_candidate_id"] for row in deck_input] == ["APCS001", "APCS003", "APCS002"]
+    assert manifest["source_entity_cluster_strategy"] == "first_pass_unique_then_refill"
+    assert manifest["selected_source_entity_clusters"] == 2
+    assert manifest["selected_source_entity_refill_rows"] == 1
+    assert "Source/Entity Cluster Collapse" in report
 
 
 def test_ranker_review_deck_excludes_exported_manual_decisions_without_overmatching(tmp_path: Path) -> None:
