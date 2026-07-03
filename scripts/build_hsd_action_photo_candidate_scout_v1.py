@@ -176,6 +176,18 @@ class ScoutPageParser(HTMLParser):
                 self.meta_description = content
             if key in {"author", "parsely-author", "article:author", "dc.creator"} and content and not self.byline:
                 self.byline = content
+            if key in {"image", "og:image", "og:image:url", "twitter:image", "twitter:image:src"} and content:
+                self.images.append(
+                    {
+                        "src": content,
+                        "alt": self.meta_description,
+                        "title": self.page_title,
+                        "caption": "",
+                        "credit": "",
+                        "width": attr.get("width", "") or attr.get("data-width", ""),
+                        "height": attr.get("height", "") or attr.get("data-height", ""),
+                    }
+                )
         if tag_name == "img":
             self.images.append(
                 {
@@ -383,6 +395,11 @@ def score_band(score: int) -> str:
     return "unclear"
 
 
+def contains_low_value_image_term(value: str) -> bool:
+    lowered = value.lower()
+    return any(term in lowered for term in LOW_VALUE_IMAGE_TERMS if term != "ad") or bool(re.search(r"\bad\b", lowered))
+
+
 def crop_potential(width: int | None, height: int | None, text: str) -> str:
     lowered = text.lower()
     if any(term in lowered for term in CLOSEUP_TERMS):
@@ -466,7 +483,7 @@ def likely_candidate_image(image: Mapping[str, str], *, page_year: str = "") -> 
         return False
     if any(term in src for term in LOW_VALUE_URL_TERMS):
         return False
-    if any(term in combined for term in LOW_VALUE_IMAGE_TERMS):
+    if contains_low_value_image_term(combined):
         return False
     if "pregame" in combined:
         return False

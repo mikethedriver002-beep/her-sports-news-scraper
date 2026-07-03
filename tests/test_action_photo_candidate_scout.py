@@ -170,6 +170,47 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
     assert rows[0]["candidate_image_url"] == "https://fixtures.test/images/2026/action-1.jpg"
 
 
+def test_action_photo_candidate_scout_extracts_open_graph_image_metadata(tmp_path: Path) -> None:
+    module = load_module()
+    seed_csv = tmp_path / "seed.csv"
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/2026/pwhl-story", "official_league_recap")])
+
+    html = """
+    <html>
+      <head>
+        <title>Star scores overtime goal in PWHL playoff game</title>
+        <meta name="description" content="Forward celebrates after a clutch playoff goal during the game.">
+        <meta property="og:image" content="https://res.cloudinary.com/pwhl-low/image/upload/c_fill,g_faces:auto,h_630,w_1200/q_auto/f_jpg/20260520-mtl-ott-action?_a=DATA">
+      </head>
+      <body></body>
+    </html>
+    """
+
+    def fetcher(url: str):
+        if url == "https://fixtures.test/robots.txt":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
+        if url == "https://fixtures.test/2026/pwhl-story":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/html"}, body=html.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    manifest = module.scout_packet(
+        seed_path=seed_csv,
+        output_dir=tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1",
+        fetcher=fetcher,
+        sleep_fn=lambda _: None,
+    )
+
+    rows = read_csv(tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1" / "action_photo_candidate_intake.csv")
+
+    assert manifest["extracted_candidate_rows"] == 1
+    assert rows[0]["fetch_status"] == "candidate_metadata_extracted"
+    assert rows[0]["candidate_image_url"].startswith("https://res.cloudinary.com/pwhl-low/image/upload/")
+    assert rows[0]["image_alt"] == "Forward celebrates after a clutch playoff goal during the game."
+    assert rows[0]["source_provenance_clarity"] == "clear"
+    assert rows[0]["download_approved"] == "no"
+    assert rows[0]["asset_downloads"] == "false"
+
+
 def test_action_photo_candidate_scout_records_robots_and_paywall_skips(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"
