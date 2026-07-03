@@ -164,13 +164,10 @@ def normalize_row(row: dict[str, str], source_path: Path) -> dict[str, str]:
     return normalized
 
 
-def decision_key(row: dict[str, str]) -> tuple[str, str, str, str, str]:
+def decision_group_key(row: dict[str, str]) -> tuple[str, str]:
     return (
         lower(row.get("candidate_id")),
         lower(row.get("entity_id")),
-        lower(row.get("source_url")),
-        lower(row.get("image_or_render_url")),
-        lower(row.get("operator_decision")),
     )
 
 
@@ -250,7 +247,9 @@ This packet normalizes exported review-deck decisions into a durable review-only
 
 - Decision files read: `{manifest['decision_files_read']}`
 - Raw decision rows read: `{manifest['raw_decision_rows_read']}`
-- Normalized unique rows: `{manifest['normalized_decision_rows']}`
+- Latest decision rows: `{manifest['latest_decision_rows']}`
+- Superseded older rows collapsed: `{manifest['superseded_decision_rows']}`
+- Normalized valid rows: `{manifest['normalized_decision_rows']}`
 - Carry-forward rows: `{manifest['formal_intake_rows']}`
 - Rejected rows: `{manifest['reject_rows']}`
 - Held rows: `{manifest['hold_rows']}`
@@ -271,38 +270,54 @@ def build_packet(*, decision_paths: list[Path], output_dir: Path, head_commit: s
     output_dir = output_dir.resolve(strict=False)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    normalized: list[dict[str, str]] = []
+    staged: list[tuple[dict[str, str], Path, int, int]] = []
     invalid: list[dict[str, str]] = []
     raw_count = 0
-    seen: set[tuple[str, str, str, str, str]] = set()
-    for path in decision_paths:
+    for source_index, path in enumerate(decision_paths):
         rows = read_csv_rows(path)
         raw_count += len(rows)
-        for source_row in rows:
-            row = normalize_row(source_row, path.resolve(strict=False))
-            issue = invalid_guardrail(source_row)
-            if issue:
-                invalid.append({**row, "validation_issues": issue})
-                continue
-            if not row["candidate_id"] or not row["entity_id"] or not row["operator_decision"]:
+        for row_index, source_row in enumerate(rows):
+            source_path = path.resolve(strict=False)
+            candidate_id = clean(source_row.get("candidate_id") or source_row.get("scout_candidate_id"))
+            entity_id = clean(source_row.get("entity_id"))
+            operator_decision = clean(source_row.get("operator_decision") or source_row.get("decision"))
+            if not candidate_id or not entity_id or not operator_decision:
+                row = normalize_row(source_row, source_path)
                 invalid.append({**row, "validation_issues": "missing_candidate_entity_or_decision"})
                 continue
-            key = decision_key(row)
-            if key in seen:
-                continue
-            seen.add(key)
-            normalized.append(row)
+            staged.append((source_row, source_path, source_index, row_index))
+
+    latest_by_key: dict[tuple[str, str], tuple[dict[str, str], Path, int, int]] = {}
+    for staged_row in staged:
+        source_row, source_path, source_index, row_index = staged_row
+        key = decision_group_key(source_row)
+        existing = latest_by_key.get(key)
+        if not existing:
+            latest_by_key[key] = staged_row
+            continue
+        if (existing[2], existing[3]) <= (source_index, row_index):
+            latest_by_key[key] = staged_row
+
+    latest_rows = sorted(latest_by_key.values(), key=lambda row: (row[2], row[3]))
+    normalized: list[dict[str, str]] = []
 
     formal: list[dict[str, str]] = []
     rejected_or_held: list[dict[str, str]] = []
-    for row in normalized:
+    for source_row, source_path, _, _ in latest_rows:
+        row = normalize_row(source_row, source_path)
         decision = lower(row.get("operator_decision"))
+        issue = invalid_guardrail(source_row)
+        if issue:
+            invalid.append({**row, "validation_issues": issue})
+            continue
         if decision == CARRY_FORWARD:
             if row["source_url"] and row["image_or_render_url"]:
                 formal.append(formal_row(row))
+                normalized.append(row)
             else:
                 invalid.append({**row, "validation_issues": "carry_forward_missing_source_or_image_url"})
             continue
+        normalized.append(row)
         rejected_or_held.append({field: row.get(field, "") for field in REJECTED_FIELDS})
 
     normalized_path = write_csv(output_dir / NORMALIZED_DECISIONS_NAME, normalized, NORMALIZED_FIELDS)
@@ -330,6 +345,8 @@ def build_packet(*, decision_paths: list[Path], output_dir: Path, head_commit: s
         "report_path": report_path.as_posix(),
         "decision_files_read": len(decision_paths),
         "raw_decision_rows_read": raw_count,
+        "latest_decision_rows": len(latest_rows),
+        "superseded_decision_rows": max(0, len(staged) - len(latest_rows)),
         "normalized_decision_rows": len(normalized),
         "formal_intake_rows": len(formal),
         "rejected_or_held_rows": len(rejected_or_held),
@@ -368,6 +385,7 @@ def main(argv: list[str] | None = None) -> int:
                 "version": VERSION,
                 "status": manifest["status"],
                 "decision_files_read": manifest["decision_files_read"],
+                "latest_decision_rows": manifest["latest_decision_rows"],
                 "formal_intake_rows": manifest["formal_intake_rows"],
                 "reject_rows": manifest["reject_rows"],
                 "hold_rows": manifest["hold_rows"],
