@@ -65,7 +65,14 @@ def source_domain(url: str) -> str:
 
 def is_review_now(row: dict[str, str]) -> bool:
     tier = clean(row.get("source_quality_tier"))
-    return tier.startswith("A") or tier.startswith("B")
+    return tier.startswith("A") or tier.startswith("B") or tier.startswith("C")
+
+
+def visual_priority(row: dict[str, str]) -> str:
+    tier = clean(row.get("source_quality_tier"))
+    if tier.startswith("A") or tier.startswith("B"):
+        return "P1_ranker_manual_review"
+    return "P2_ranker_hold_backup_review"
 
 
 def deck_input_rows(ranker_rows: list[dict[str, str]], limit: int) -> list[dict[str, str]]:
@@ -87,7 +94,7 @@ def deck_input_rows(ranker_rows: list[dict[str, str]], limit: int) -> list[dict[
                 "image_alt": clean(row.get("image_alt")),
                 "source_domain": source_domain(clean(row.get("source_url"))),
                 "score": clean(row.get("source_quality_score")),
-                "visual_priority": "P1_ranker_manual_review",
+                "visual_priority": visual_priority(row),
                 "candidate_quality_tier": clean(row.get("source_quality_tier")),
                 "candidate_risk_flags": clean(row.get("risk_flags")),
                 "identity_confidence": clean(row.get("identity_confidence")),

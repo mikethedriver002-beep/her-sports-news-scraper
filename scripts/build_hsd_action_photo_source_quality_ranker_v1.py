@@ -20,9 +20,13 @@ DEFAULT_INPUT_CSVS = [
     Path("outputs/local/latest/files/action_photo_ausl_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_pwhl_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_official_source_expansion_v3/action_photo_candidate_intake.csv"),
+    Path("outputs/local/latest/files/action_photo_wta_lpga_source_expansion_v1/action_photo_candidate_intake.csv"),
+    Path("outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv"),
 ]
 DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_recovered_decision_reject_log_v1/recovered_decision_reject_log.csv"),
+    Path("outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
+    Path("outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
 ]
 DEFAULT_OUTPUT_DIR = Path("outputs/local/tmp/action_photo_source_quality_ranker_v1")
 CSV_NAME = "action_photo_source_quality_ranker.csv"
@@ -404,7 +408,7 @@ def reject_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]
     keys: set[tuple[str, str]] = set()
     for rows in reject_logs:
         for row in rows:
-            decision = lower(row.get("decision"))
+            decision = lower(row.get("decision")) or lower(row.get("operator_decision"))
             manual_next_action = lower(row.get("manual_next_action"))
             if not decision.startswith("reject") and "rejected" not in manual_next_action:
                 continue

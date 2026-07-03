@@ -239,3 +239,75 @@ def test_source_quality_ranker_suppresses_closed_rejects_by_candidate_and_entity
     assert manifest["closed_reject_keys_applied"] == 1
     assert [row["entity_id"] for row in rows] == ["pwhl_minnesota_frost_kelly_pannek"]
     assert rows[0]["scout_candidate_id"] == "APCS023"
+
+
+def test_source_quality_ranker_suppresses_adapter_operator_decision_rejects(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    reject_csv = tmp_path / "rejected_or_held_review_deck_decisions.csv"
+    output_dir = tmp_path / "out"
+    closed = candidate_row(
+        "APCS008",
+        entity_id="pwhl_minnesota_frost_kelly_pannek",
+        image_url="https://cdn.test/images/KellyPannek_action.jpg",
+        alt="Kelly Pannek scores during a playoff game.",
+    )
+    open_row = candidate_row(
+        "APCS009",
+        entity_id="nwsl_kansas_city_current_temwa_chawinga",
+        image_url="https://cdn.test/images/TemwaChawinga_action.jpg",
+        alt="Temwa Chawinga scores during a match.",
+    )
+    write_input(input_csv, [closed, open_row])
+    reject_csv.parent.mkdir(parents=True, exist_ok=True)
+    with reject_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "candidate_id",
+                "entity_id",
+                "operator_decision",
+                "review_only",
+                "download_approved",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "candidate_id": "APCS008",
+                "entity_id": "pwhl_minnesota_frost_kelly_pannek",
+                "operator_decision": "reject_group_photo",
+                "review_only": "true",
+                "download_approved": "no",
+            }
+        )
+
+    manifest = module.build_packet(
+        input_csvs=[input_csv],
+        reject_log_csvs=[reject_csv],
+        output_dir=output_dir,
+        head_commit="abc123",
+        limit=10,
+    )
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    assert manifest["closed_reject_keys_applied"] == 1
+    assert [row["scout_candidate_id"] for row in rows] == ["APCS009"]
+
+
+def test_source_quality_ranker_default_inputs_include_latest_source_packets() -> None:
+    module = load_module()
+
+    default_inputs = {path.as_posix() for path in module.DEFAULT_INPUT_CSVS}
+    default_reject_logs = {path.as_posix() for path in module.DEFAULT_REJECT_LOG_CSVS}
+
+    assert "outputs/local/latest/files/action_photo_wta_lpga_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
+    assert "outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv" in default_inputs
+    assert (
+        "outputs/local/latest/files/action_photo_ranker_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"
+        in default_reject_logs
+    )
+    assert (
+        "outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"
+        in default_reject_logs
+    )
