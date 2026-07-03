@@ -120,7 +120,20 @@ ACTION_TERMS = (
     "during",
 )
 CLOSEUP_TERMS = ("headshot", "portrait", "posed", "media day", "close-up", "close up", "mugshot")
-LOW_VALUE_IMAGE_TERMS = ("logo", "icon", "sponsor", "ad", "advert", "scorebug", "watermark")
+LOW_VALUE_IMAGE_TERMS = (
+    "away team",
+    "headshot",
+    "home team",
+    "icon",
+    "logo",
+    "portrait",
+    "sponsor",
+    "ad",
+    "advert",
+    "scorebug",
+    "watermark",
+    "wordmark",
+)
 LOW_VALUE_URL_TERMS = (
     "pixel",
     "scorecardresearch",
@@ -152,8 +165,12 @@ LOW_VALUE_URL_TERMS = (
     "extension_hiatt",
     "boston%20legacy",
     "denver%20summit",
+    "_next/static/media/",
+    "/headshot",
+    "/images/headshot",
     "stats.jpg",
     "untitled%20(300%20x%20343%20px)",
+    "wordmark",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)

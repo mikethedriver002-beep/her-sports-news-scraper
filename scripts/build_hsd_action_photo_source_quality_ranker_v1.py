@@ -24,6 +24,7 @@ DEFAULT_INPUT_CSVS = [
     Path("outputs/local/latest/files/action_photo_wta_lpga_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_volleyball_source_expansion_v1/action_photo_candidate_intake.csv"),
+    Path("outputs/local/latest/files/action_photo_unrivaled_source_expansion_v1/action_photo_candidate_intake.csv"),
 ]
 DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_recovered_decision_reject_log_v1/recovered_decision_reject_log.csv"),
@@ -135,6 +136,7 @@ GENERIC_NAME_TOKENS = {
     "jpeg",
     "mobile",
     "opening",
+    "original",
     "photo",
     "png",
     "recap",
@@ -496,7 +498,12 @@ def candidate_key(row: Mapping[str, str], candidate_field: str = "scout_candidat
 
 def duplicate_image_key(row: Mapping[str, str]) -> str:
     filename = lower(image_filename(clean(row.get("candidate_image_url"))))
-    if filename and (token_set(filename) - GENERIC_NAME_TOKENS):
+    distinctive_tokens = {
+        token
+        for token in (token_set(filename) - GENERIC_NAME_TOKENS)
+        if not token.isdigit() and not re.fullmatch(r"\d+x\d+", token)
+    }
+    if filename and distinctive_tokens:
         return f"filename:{filename}"
     return lower(row.get("candidate_image_url"))
 
