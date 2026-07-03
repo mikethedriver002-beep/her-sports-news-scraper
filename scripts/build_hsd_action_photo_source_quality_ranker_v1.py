@@ -8,6 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.parse import parse_qs, unquote, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -120,6 +121,7 @@ GENERIC_NAME_TOKENS = {
     "action",
     "article",
     "ausl",
+    "championship",
     "blaze",
     "candidate",
     "cdn",
@@ -137,6 +139,21 @@ GENERIC_NAME_TOKENS = {
     "recap",
     "team",
     "webp",
+}
+GENERIC_IDENTITY_TOKENS = GENERIC_NAME_TOKENS | {
+    "athletes",
+    "athletesunlimited",
+    "atlanta",
+    "basketball",
+    "league",
+    "lovb",
+    "mlv",
+    "official",
+    "pro",
+    "sports",
+    "team",
+    "volleyball",
+    "wnba",
 }
 
 
@@ -190,13 +207,29 @@ def entity_tokens(entity_id: str) -> set[str]:
     return set(parts[-3:])
 
 
+def entity_identity_tokens(entity_id: str) -> set[str]:
+    parts = [part for part in re.split(r"[_\W]+", lower(entity_id)) if len(part) >= 3]
+    tokens = [part for part in parts if part not in GENERIC_IDENTITY_TOKENS]
+    return set(tokens[-2:] or tokens or parts[-2:])
+
+
+def image_filename(url: str) -> str:
+    raw = clean(url)
+    if not raw:
+        return ""
+    parsed = urlparse(raw)
+    nested = parse_qs(parsed.query).get("url", [""])[0]
+    target = unquote(nested or raw)
+    return target.rsplit("?", 1)[0].rsplit("/", 1)[-1]
+
+
 def image_url_tokens(url: str) -> set[str]:
-    filename = clean(url).rsplit("/", 1)[-1].rsplit("?", 1)[0]
+    filename = image_filename(url)
     return token_set(filename) - GENERIC_NAME_TOKENS
 
 
 def image_extension(url: str) -> str:
-    filename = clean(url).rsplit("/", 1)[-1].rsplit("?", 1)[0]
+    filename = image_filename(url)
     if "." not in filename:
         return ""
     return filename.rsplit(".", 1)[-1].lower()
@@ -247,7 +280,7 @@ def named_context_signal(row: Mapping[str, str]) -> str:
 
 
 def filename_identity_signal(row: Mapping[str, str]) -> str:
-    tokens = entity_tokens(clean(row.get("entity_id")))
+    tokens = entity_identity_tokens(clean(row.get("entity_id")))
     image_tokens = image_url_tokens(clean(row.get("candidate_image_url")))
     if tokens and image_tokens and tokens & image_tokens:
         return "image_filename_match"
@@ -406,6 +439,9 @@ def candidate_key(row: Mapping[str, str], candidate_field: str = "scout_candidat
 
 
 def duplicate_image_key(row: Mapping[str, str]) -> str:
+    filename = lower(image_filename(clean(row.get("candidate_image_url"))))
+    if filename and (token_set(filename) - GENERIC_NAME_TOKENS):
+        return f"filename:{filename}"
     return lower(row.get("candidate_image_url"))
 
 
