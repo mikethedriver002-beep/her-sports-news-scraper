@@ -126,6 +126,23 @@ def test_action_photo_candidate_scout_extracts_review_only_metadata(tmp_path: Pa
     assert "do not adjudicate fair use or rights" in report
 
 
+def test_action_photo_candidate_scout_normalizes_common_transform_queries() -> None:
+    module = load_module()
+
+    assert (
+        module.normalize_candidate_image_url("https://fixtures.test/images/action.jpg?_t=1780197774")
+        == "https://fixtures.test/images/action.jpg"
+    )
+    assert (
+        module.normalize_candidate_image_url("https://fixtures.test/images/action.jpg?w=1200&h=550&crop=1")
+        == "https://fixtures.test/images/action.jpg"
+    )
+    assert (
+        module.normalize_candidate_image_url("https://fixtures.test/images/action.jpg?dpr=2&q=50&w=413&s=signed")
+        == "https://fixtures.test/images/action.jpg?dpr=2&q=50&w=413&s=signed"
+    )
+
+
 def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"
@@ -140,6 +157,8 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
     <body>
         <img src="/images/tracker-pixel.png" width="1" height="1" alt="tracking pixel">
         <img src="/images/campaign-banner-970x90.png" alt="campaign banner">
+        <img src="/images/team-chip.png?w=25&h=25&crop=1" alt="Team chip">
+        <img src="/images/google-play-badge.png" alt="Google Play badge">
         <img src="/wp-content/uploads/sb-instagram-feed-images/sitewide-social-feed.webp" alt="Sitewide social feed image" width="1080" height="1350">
         <img src="/services/stat_handler.aspx?rp_id=22" alt="player card">
         <img src="/images/2024/pregame-fit-player.jpg" alt="pregame fit arrival" width="1200" height="1500">

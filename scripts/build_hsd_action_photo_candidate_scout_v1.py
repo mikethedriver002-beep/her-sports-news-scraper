@@ -12,7 +12,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Mapping
 from urllib.error import HTTPError
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import parse_qs, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 from urllib.robotparser import RobotFileParser
 
@@ -166,6 +166,7 @@ LOW_VALUE_URL_TERMS = (
     "bigboard",
     "draft_27bigboard",
     "google-download",
+    "google-play-badge",
     "googleplaystore",
     "appstore",
     "owen-grant",
@@ -184,9 +185,14 @@ LOW_VALUE_URL_TERMS = (
     "wordmark",
     "subscribe%20to%20the%20feed",
     "subscribe-to-the-feed",
+    "artboard",
+    "impact_sub_web",
+    "s_po_bracket",
+    "sl_poty",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)
+STRIP_QUERY_KEYS = {"_t", "crop", "h", "height", "q", "quality", "w", "width"}
 
 
 @dataclass(frozen=True)
@@ -407,7 +413,14 @@ def infer_dimensions(image: Mapping[str, str]) -> tuple[int | None, int | None]:
     height = int(image["height"]) if clean(image.get("height")).isdigit() else None
     if width and height:
         return width, height
-    src = clean(image.get("src")).lower()
+    src_value = clean(image.get("src"))
+    parsed = urlparse(src_value)
+    query = parse_qs(parsed.query)
+    query_width = next((query[key][0] for key in ("w", "width") if query.get(key) and query[key][0].isdigit()), "")
+    query_height = next((query[key][0] for key in ("h", "height") if query.get(key) and query[key][0].isdigit()), "")
+    if query_width and query_height:
+        return int(query_width), int(query_height)
+    src = src_value.lower()
     match = re.search(r"(?<!\d)(\d{2,4})x(\d{2,4})(?!\d)", src)
     if match:
         return int(match.group(1)), int(match.group(2))
@@ -436,6 +449,11 @@ def normalize_candidate_image_url(url: str) -> str:
     if parsed.path.lower().endswith(STRIP_QUERY_IMAGE_EXTENSIONS) and any(marker in parsed.query for marker in STRIP_QUERY_MARKERS):
         parsed = parsed._replace(query="", fragment="")
         return urlunparse(parsed)
+    if parsed.path.lower().endswith(STRIP_QUERY_IMAGE_EXTENSIONS) and parsed.query:
+        query = parse_qs(parsed.query)
+        if query and set(query) <= STRIP_QUERY_KEYS:
+            parsed = parsed._replace(query="", fragment="")
+            return urlunparse(parsed)
     return url
 
 

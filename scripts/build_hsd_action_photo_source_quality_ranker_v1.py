@@ -27,6 +27,7 @@ DEFAULT_INPUT_CSVS = [
     Path("outputs/local/latest/files/action_photo_unrivaled_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_wll_source_expansion_v1/action_photo_candidate_intake.csv"),
     Path("outputs/local/latest/files/action_photo_usafh_source_expansion_v1/action_photo_candidate_intake.csv"),
+    Path("outputs/local/latest/files/action_photo_gainbridge_source_expansion_v1/action_photo_candidate_intake.csv"),
 ]
 DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_recovered_decision_reject_log_v1/recovered_decision_reject_log.csv"),
