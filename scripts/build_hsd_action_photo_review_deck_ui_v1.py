@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import html
 import json
 import sys
@@ -23,6 +24,7 @@ HTML_NAME = "action_photo_review_deck.html"
 DECISION_TEMPLATE_NAME = "manual_decision_export_template.csv"
 REPORT_NAME = "action_photo_review_deck_report.md"
 MANIFEST_NAME = "manifest.json"
+LEGACY_BROWSER_STORAGE_KEY = "hsd_action_photo_review_deck_v1"
 
 FALSE_GUARDRAILS = {
     "approval_state_change": False,
@@ -201,8 +203,27 @@ def js_payload(items: list[dict[str, Any]]) -> str:
     return json.dumps(items, ensure_ascii=False).replace("</", "<\\/")
 
 
-def build_html(items: list[dict[str, Any]]) -> str:
+def browser_storage_key(items: list[dict[str, Any]]) -> str:
+    basis = json.dumps(
+        [
+            {
+                "deck_item_id": item.get("deck_item_id", ""),
+                "candidate_id": item.get("candidate_id", ""),
+                "entity_id": item.get("entity_id", ""),
+                "image_or_render_url": item.get("image_or_render_url", ""),
+            }
+            for item in items
+        ],
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    digest = hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
+    return f"{LEGACY_BROWSER_STORAGE_KEY}:{digest}"
+
+
+def build_html(items: list[dict[str, Any]], storage_key: str | None = None) -> str:
     payload = js_payload(items)
+    storage_key = storage_key or browser_storage_key(items)
     return f"""<!doctype html>
 <html lang=\"en\">
 <head>
@@ -498,11 +519,26 @@ def build_html(items: list[dict[str, Any]]) -> str:
   </main>
   <script>
     const items = {payload};
-    const stateKey = "hsd_action_photo_review_deck_v1";
+    const legacyStateKey = "{LEGACY_BROWSER_STORAGE_KEY}";
+    const stateKey = "{html.escape(storage_key)}";
     let index = 0;
     let exportObjectUrl = "";
     let swipe = {{ active: false, startX: 0, startY: 0, dx: 0, dy: 0 }};
-    const decisions = JSON.parse(localStorage.getItem(stateKey) || "{{}}");
+    function parseStoredDecisions(key) {{
+      try {{ return JSON.parse(localStorage.getItem(key) || "{{}}"); }}
+      catch (error) {{ return {{}}; }}
+    }}
+    function loadScopedDecisions() {{
+      const scoped = parseStoredDecisions(stateKey);
+      const legacy = parseStoredDecisions(legacyStateKey);
+      const validIds = new Set(items.map(item => item.deck_item_id));
+      const migrated = {{}};
+      Object.entries(legacy).forEach(([key, value]) => {{
+        if (validIds.has(key)) migrated[key] = value;
+      }});
+      return Object.assign(migrated, scoped);
+    }}
+    const decisions = loadScopedDecisions();
     const fields = {json.dumps(DECISION_FIELDS)};
 
     function save() {{ localStorage.setItem(stateKey, JSON.stringify(decisions)); }}
@@ -737,6 +773,7 @@ This packet creates a local review-only approve/reject deck for action-photo can
 - HTML deck: `{manifest['html_path']}`
 - Manual decision template: `{manifest['decision_template_path']}`
 - Manifest: `{manifest['manifest_path']}`
+- Browser storage key: `{manifest['browser_storage_key']}`
 
 ## Review Flow
 
@@ -767,8 +804,9 @@ def build_packet(*, board_csv: Path, proof_manifest: Path, output_dir: Path, lim
     manifest_payload = read_json_payload(proof_manifest)
     items = candidate_items(board_rows, limit) + proof_items(manifest_payload)
     decision_rows = decision_template_rows(items)
+    storage_key = browser_storage_key(items)
 
-    html_path = write_text(output_dir / HTML_NAME, build_html(items), if_changed=False)
+    html_path = write_text(output_dir / HTML_NAME, build_html(items, storage_key), if_changed=False)
     decision_path = write_csv(output_dir / DECISION_TEMPLATE_NAME, decision_rows, DECISION_FIELDS)
     manifest_path = output_dir / MANIFEST_NAME
     report_path = output_dir / REPORT_NAME
@@ -789,6 +827,8 @@ def build_packet(*, board_csv: Path, proof_manifest: Path, output_dir: Path, lim
         "renderer_proof_item_count": len([item for item in items if item["item_kind"] == "renderer_proof"]),
         "deck_item_count": len(items),
         "decision_fields": DECISION_FIELDS,
+        "browser_storage_key": storage_key,
+        "legacy_browser_storage_key": LEGACY_BROWSER_STORAGE_KEY,
         "review_only": True,
         "download_approved_default": "no",
         **FALSE_GUARDRAILS,
