@@ -137,6 +137,7 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
     <body>
         <img src="/images/tracker-pixel.png" width="1" height="1" alt="tracking pixel">
         <img src="/images/campaign-banner-970x90.png" alt="campaign banner">
+        <img src="/wp-content/uploads/sb-instagram-feed-images/sitewide-social-feed.webp" alt="Sitewide social feed image" width="1080" height="1350">
         <img src="/services/stat_handler.aspx?rp_id=22" alt="player card">
         <img src="/images/2024/pregame-fit-player.jpg" alt="pregame fit arrival" width="1200" height="1500">
         <img src="/images/2024/archive-drive.jpg" alt="Guard drives to the basket" width="1200" height="1500">
@@ -209,6 +210,29 @@ def test_action_photo_candidate_scout_extracts_open_graph_image_metadata(tmp_pat
     assert rows[0]["source_provenance_clarity"] == "clear"
     assert rows[0]["download_approved"] == "no"
     assert rows[0]["asset_downloads"] == "false"
+
+
+def test_action_photo_candidate_scout_ausl_seed_defaults_guardrails() -> None:
+    module = load_module()
+    seed_csv = (
+        REPO
+        / "data"
+        / "asset_registry"
+        / "action_photo_candidates"
+        / "review_only_action_photo_candidate_scout_ausl_source_expansion_v1.csv"
+    )
+
+    rows = read_csv(seed_csv)
+
+    assert rows
+    with seed_csv.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        assert reader.fieldnames == module.SEED_FIELDS
+        assert all(None not in row for row in reader)
+    assert all(row["operator_fair_use_asserted"] == "yes" for row in rows)
+    assert all(row["download_approved"] == "no" for row in rows)
+    assert all(row["rights_class"] == "official_league_site" for row in rows)
+    assert all(row["intended_review_only_use"] == "review_only_action_photo_candidate_scout" for row in rows)
 
 
 def test_action_photo_candidate_scout_records_robots_and_paywall_skips(tmp_path: Path) -> None:
