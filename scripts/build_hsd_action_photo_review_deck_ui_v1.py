@@ -268,14 +268,53 @@ def build_html(items: list[dict[str, Any]]) -> str:
       min-height: 0;
       padding: 18px;
       background: #05070a;
+      overflow: hidden;
     }}
-    .viewer img {{
+    .swipe-card {{
+      position: relative;
+      display: grid;
+      place-items: center;
+      max-width: 100%;
+      cursor: grab;
+      touch-action: pan-y;
+      user-select: none;
+      transition: transform 160ms ease, opacity 160ms ease;
+      will-change: transform;
+    }}
+    .swipe-card.dragging {{
+      cursor: grabbing;
+      transition: none;
+    }}
+    .swipe-card img {{
       max-width: 100%;
       max-height: 72vh;
       object-fit: contain;
       border: 1px solid #3a4352;
       background: #111;
       box-shadow: 0 22px 60px rgba(0,0,0,.45);
+      pointer-events: none;
+    }}
+    .swipe-label {{
+      position: absolute;
+      top: 22px;
+      z-index: 2;
+      opacity: 0;
+      border: 2px solid currentColor;
+      padding: 8px 12px;
+      font-weight: 900;
+      letter-spacing: 0;
+      background: rgba(5,7,10,.78);
+      pointer-events: none;
+    }}
+    .swipe-reject {{
+      left: 18px;
+      color: var(--bad);
+      transform: rotate(-8deg);
+    }}
+    .swipe-carry {{
+      right: 18px;
+      color: var(--good);
+      transform: rotate(8deg);
     }}
     .actions {{ display: flex; gap: 10px; flex-wrap: wrap; }}
     button, a.button {{
@@ -368,6 +407,27 @@ def build_html(items: list[dict[str, Any]]) -> str:
       font-size: 13px;
       min-height: 18px;
     }}
+    .progress {{
+      display: grid;
+      gap: 7px;
+    }}
+    .progress-track {{
+      height: 8px;
+      background: #0b1018;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }}
+    .progress-fill {{
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--bad), var(--hold), var(--good));
+      transition: width 160ms ease;
+    }}
+    #progress-label {{
+      color: var(--muted);
+      font-size: 13px;
+    }}
     @media (max-width: 920px) {{
       main {{ grid-template-columns: 1fr; }}
       .stage {{ min-height: 560px; }}
@@ -388,7 +448,13 @@ def build_html(items: list[dict[str, Any]]) -> str:
         </div>
         <div id=\"count\"></div>
       </div>
-      <div class=\"viewer\"><img id=\"image\" alt=\"\"></div>
+      <div class=\"viewer\">
+        <div class=\"swipe-card\" id=\"swipe-card\" aria-label=\"Swipe review card\">
+          <div class=\"swipe-label swipe-reject\" id=\"swipe-reject\">Reject</div>
+          <img id=\"image\" alt=\"\">
+          <div class=\"swipe-label swipe-carry\" id=\"swipe-carry\">Carry Forward</div>
+        </div>
+      </div>
       <div class=\"card-foot\">
         <div class=\"actions\">
           <button class=\"bad\" data-action=\"reject_wrong_person\">Reject Wrong Person</button>
@@ -400,11 +466,16 @@ def build_html(items: list[dict[str, Any]]) -> str:
         <div class=\"actions\">
           <button id=\"prev\">Back</button>
           <button id=\"next\">Next</button>
+          <button id=\"clear-decision\">Clear Decision</button>
           <a id=\"source\" class=\"button\" target=\"_blank\" rel=\"noreferrer\">Open Source</a>
         </div>
       </div>
     </section>
     <aside>
+      <div class=\"progress\">
+        <div class=\"progress-track\"><span class=\"progress-fill\" id=\"progress-fill\"></span></div>
+        <div id=\"progress-label\"></div>
+      </div>
       <div class=\"queue\" id=\"queue\"></div>
       <div class=\"meta\" id=\"meta\"></div>
       <label>
@@ -430,6 +501,7 @@ def build_html(items: list[dict[str, Any]]) -> str:
     const stateKey = "hsd_action_photo_review_deck_v1";
     let index = 0;
     let exportObjectUrl = "";
+    let swipe = {{ active: false, startX: 0, startY: 0, dx: 0, dy: 0 }};
     const decisions = JSON.parse(localStorage.getItem(stateKey) || "{{}}");
     const fields = {json.dumps(DECISION_FIELDS)};
 
@@ -467,6 +539,7 @@ def build_html(items: list[dict[str, Any]]) -> str:
       const image = document.getElementById("image");
       image.src = item.image_or_render_url;
       image.alt = item.image_alt || item.title || "";
+      resetSwipeCard();
       const source = document.getElementById("source");
       source.href = item.source_url || item.image_or_render_url || "#";
       source.textContent = item.item_kind === "renderer_proof" ? "Open Render" : "Open Source";
@@ -486,6 +559,57 @@ def build_html(items: list[dict[str, Any]]) -> str:
         ["Decision", decision.operator_decision || ""]
       ].map(([k, v]) => `<div><b>${{k}}</b><span>${{esc(v)}}</span></div>`).join("");
       renderQueue();
+      renderProgress();
+    }}
+    function renderProgress() {{
+      const filled = filledDecisionCount();
+      const percent = items.length ? Math.round((filled / items.length) * 100) : 0;
+      document.getElementById("progress-fill").style.width = `${{percent}}%`;
+      document.getElementById("progress-label").textContent = `${{filled}} / ${{items.length}} decisions recorded`;
+    }}
+    function resetSwipeCard() {{
+      const card = document.getElementById("swipe-card");
+      if (!card) return;
+      card.classList.remove("dragging");
+      card.style.transform = "";
+      card.style.opacity = "1";
+      document.getElementById("swipe-reject").style.opacity = "0";
+      document.getElementById("swipe-carry").style.opacity = "0";
+    }}
+    function updateSwipeVisual(dx, dy) {{
+      const card = document.getElementById("swipe-card");
+      const reject = document.getElementById("swipe-reject");
+      const carry = document.getElementById("swipe-carry");
+      const rotate = Math.max(-14, Math.min(14, dx / 18));
+      const opacity = Math.min(1, Math.abs(dx) / 120);
+      card.style.transform = `translate(${{dx}}px, ${{dy * 0.24}}px) rotate(${{rotate}}deg)`;
+      card.style.opacity = String(Math.max(0.78, 1 - Math.abs(dx) / 820));
+      reject.style.opacity = dx < 0 ? String(opacity) : "0";
+      carry.style.opacity = dx > 0 ? String(opacity) : "0";
+    }}
+    function finishSwipe() {{
+      const threshold = 112;
+      const dx = swipe.dx;
+      document.getElementById("swipe-card").classList.remove("dragging");
+      swipe.active = false;
+      if (dx >= threshold) {{
+        applySwipeDecision("carry_forward_for_formal_intake");
+        return;
+      }}
+      if (dx <= -threshold) {{
+        applySwipeDecision("reject_bad_crop");
+        return;
+      }}
+      resetSwipeCard();
+    }}
+    function applySwipeDecision(value) {{
+      setDecision(value);
+    }}
+    function clearDecision() {{
+      const item = active();
+      delete decisions[item.deck_item_id];
+      save();
+      render();
     }}
     function csvCell(value) {{
       const s = String(value ?? "");
@@ -566,8 +690,33 @@ def build_html(items: list[dict[str, Any]]) -> str:
     }});
     document.getElementById("prev").onclick = () => {{ index = Math.max(0, index - 1); render(); }};
     document.getElementById("next").onclick = () => {{ index = Math.min(items.length - 1, index + 1); render(); }};
+    document.getElementById("clear-decision").onclick = clearDecision;
     document.getElementById("export").onclick = exportCsv;
     document.getElementById("copy-csv").onclick = copyCsv;
+    const swipeCard = document.getElementById("swipe-card");
+    swipeCard.addEventListener("pointerdown", event => {{
+      swipe = {{ active: true, startX: event.clientX, startY: event.clientY, dx: 0, dy: 0 }};
+      swipeCard.classList.add("dragging");
+      swipeCard.setPointerCapture(event.pointerId);
+    }});
+    swipeCard.addEventListener("pointermove", event => {{
+      if (!swipe.active) return;
+      swipe.dx = event.clientX - swipe.startX;
+      swipe.dy = event.clientY - swipe.startY;
+      updateSwipeVisual(swipe.dx, swipe.dy);
+    }});
+    swipeCard.addEventListener("pointerup", finishSwipe);
+    swipeCard.addEventListener("pointercancel", () => {{
+      swipe.active = false;
+      resetSwipeCard();
+    }});
+    window.addEventListener("keydown", event => {{
+      if (event.target && ["TEXTAREA", "INPUT"].includes(event.target.tagName)) return;
+      if (event.key === "ArrowLeft") setDecision("reject_bad_crop");
+      if (event.key === "ArrowRight") setDecision("carry_forward_for_formal_intake");
+      if (event.key === "ArrowDown") setDecision("hold_manual_check");
+      if (event.key === "Backspace") clearDecision();
+    }});
     render();
   </script>
 </body>

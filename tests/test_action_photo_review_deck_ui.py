@@ -121,6 +121,14 @@ def test_review_deck_builds_candidate_and_proof_items(tmp_path: Path) -> None:
     assert "Reject Bad Crop" in html
     assert "Reject Group Photo" in html
     assert "Carry Forward" in html
+    assert 'id="swipe-card"' in html
+    assert "applySwipeDecision" in html
+    assert "pointerdown" in html
+    assert "pointermove" in html
+    assert "ArrowLeft" in html
+    assert "ArrowRight" in html
+    assert "Clear Decision" in html
+    assert 'id="progress-fill"' in html
     assert "Export Decision CSV" in html
     assert "Copy CSV" in html
     assert "Download CSV Again" in html
