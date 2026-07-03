@@ -36,6 +36,9 @@ DEFAULT_REJECT_LOG_CSVS = [
     Path("outputs/local/latest/files/action_photo_ausl_manual_decision_intake_adapter_v1/rejected_or_held_review_deck_decisions.csv"),
     Path("outputs/local/latest/files/action_photo_manual_decision_batch_v1/rejected_or_held_review_deck_decisions.csv"),
 ]
+DEFAULT_MANUAL_DECISION_CSVS = [
+    Path("outputs/local/latest/files/action_photo_manual_decision_batch_v1/normalized_review_deck_decisions.csv"),
+]
 DEFAULT_OUTPUT_DIR = Path("outputs/local/tmp/action_photo_source_quality_ranker_v1")
 CSV_NAME = "action_photo_source_quality_ranker.csv"
 REPORT_NAME = "action_photo_source_quality_ranker_report.md"
@@ -531,6 +534,17 @@ def reject_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]
     return keys
 
 
+def manual_decision_keys(decision_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]:
+    keys: set[tuple[str, str]] = set()
+    for rows in decision_logs:
+        for row in rows:
+            candidate_id = clean(row.get("candidate_id")) or clean(row.get("scout_candidate_id"))
+            entity_id = clean(row.get("entity_id"))
+            if candidate_id and entity_id:
+                keys.add((candidate_id, entity_id))
+    return keys
+
+
 def reject_family_keys(reject_logs: list[list[dict[str, str]]]) -> set[tuple[str, str]]:
     keys: set[tuple[str, str]] = set()
     for rows in reject_logs:
@@ -676,6 +690,7 @@ This review-only packet ranks existing scout metadata for manual visual triage. 
 - Rows ranked: {manifest['ranked_row_count']}
 - Closed reject keys suppressed: {manifest['closed_reject_keys_applied']}
 - Closed reject family keys suppressed: {manifest['closed_reject_family_keys_applied']}
+- Latest manual decision keys suppressed: {manifest['manual_decision_keys_applied']}
 - Visual-review-now rows: {review_count}
 - Fast-reject or low-priority rows: {fast_reject_count}
 - Input packets: {', '.join(manifest['input_packets'])}
@@ -712,6 +727,7 @@ def build_packet(
     *,
     input_csvs: list[Path],
     reject_log_csvs: list[Path] | None = None,
+    manual_decision_csvs: list[Path] | None = None,
     output_dir: Path,
     head_commit: str = "",
     limit: int = 80,
@@ -720,11 +736,19 @@ def build_packet(
     output_dir.mkdir(parents=True, exist_ok=True)
     resolved_inputs = [path.resolve(strict=False) for path in input_csvs]
     resolved_reject_logs = [path.resolve(strict=False) for path in (reject_log_csvs or [])]
+    resolved_manual_decisions = [path.resolve(strict=False) for path in (manual_decision_csvs or [])]
     input_sets = [(source_packet_name(path), read_csv_rows(path)) for path in resolved_inputs]
     reject_log_rows = [read_csv_rows(path) for path in resolved_reject_logs if path.exists()]
+    manual_decision_rows = [read_csv_rows(path) for path in resolved_manual_decisions if path.exists()]
     closed_rejects = reject_keys(reject_log_rows)
     closed_reject_families = reject_family_keys(reject_log_rows)
-    rows = build_ranked_rows(input_sets, limit, closed_rejects, closed_reject_families)
+    manual_decision_rows_keys = manual_decision_keys(manual_decision_rows)
+    rows = build_ranked_rows(
+        input_sets,
+        limit,
+        closed_rejects | manual_decision_rows_keys,
+        closed_reject_families,
+    )
 
     csv_path = output_dir / CSV_NAME
     report_path = output_dir / REPORT_NAME
@@ -743,10 +767,12 @@ def build_packet(
         "repo_head": head_commit,
         "input_csvs": [path.as_posix() for path in resolved_inputs],
         "reject_log_csvs": [path.as_posix() for path in resolved_reject_logs],
+        "manual_decision_csvs": [path.as_posix() for path in resolved_manual_decisions],
         "input_packets": [packet for packet, _ in input_sets],
         "input_rows_read": sum(len(input_rows) for _, input_rows in input_sets),
         "closed_reject_keys_applied": len(closed_rejects),
         "closed_reject_family_keys_applied": len(closed_reject_families),
+        "manual_decision_keys_applied": len(manual_decision_rows_keys),
         "ranked_row_count": len(rows),
         "tier_counts": tier_counts,
         "top_candidate_id": rows[0]["scout_candidate_id"] if rows else "",
@@ -768,6 +794,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build a review-only action-photo source-quality ranker.")
     parser.add_argument("--input-csv", action="append", default=[], help="Scout intake CSV to rank. Repeatable.")
     parser.add_argument("--reject-log-csv", action="append", default=[], help="Closed reject log CSV to suppress. Repeatable.")
+    parser.add_argument(
+        "--manual-decision-csv",
+        action="append",
+        default=[],
+        help="Manual decision CSV to suppress from the next refresh pass. Repeatable.",
+    )
     parser.add_argument("--output-dir", default="")
     parser.add_argument("--head-commit", default="")
     parser.add_argument("--limit", type=int, default=80)
@@ -780,9 +812,13 @@ def main(argv: list[str] | None = None) -> int:
     reject_log_csvs = [
         resolve_path(path) for path in (args.reject_log_csv or [path.as_posix() for path in DEFAULT_REJECT_LOG_CSVS])
     ]
+    manual_decision_csvs = [
+        resolve_path(path) for path in (args.manual_decision_csv or [path.as_posix() for path in DEFAULT_MANUAL_DECISION_CSVS])
+    ]
     manifest = build_packet(
         input_csvs=input_csvs,
         reject_log_csvs=reject_log_csvs,
+        manual_decision_csvs=manual_decision_csvs,
         output_dir=resolve_output_dir(args.output_dir or None),
         head_commit=args.head_commit,
         limit=args.limit,
