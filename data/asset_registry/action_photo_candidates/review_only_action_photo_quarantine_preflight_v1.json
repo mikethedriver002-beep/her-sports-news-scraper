@@ -4,13 +4,14 @@
   "generated_at_utc": "2026-06-30T00:00:00+00:00",
   "source_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
   "resolved_source_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
-  "preflight_rows": 10,
-  "return_intake_rows": 10,
-  "ready_for_human_download_decision_rows": 1,
+  "preflight_rows": 11,
+  "return_intake_rows": 11,
+  "ready_for_human_download_decision_rows": 2,
   "lead_only_rows": 9,
   "validation_issue_count": 0,
   "validation_issues": [],
   "candidate_queue_ids": [
+    "APCS114",
     "APQ001",
     "APQ002",
     "APQ003",
@@ -33,17 +34,17 @@
     "identity_anchor_url": 9
   },
   "action_photo_status_counts": {
-    "action_photo_candidate": 1,
+    "action_photo_candidate": 2,
     "missing_candidate_photo_url": 9
   },
   "identity_confidence_status_counts": {
     "identity_missing": 9,
-    "identity_ready_for_human_review": 1
+    "identity_ready_for_human_review": 2
   },
   "download_approved_yes_rows": 0,
-  "human_intake_download_approved_yes_rows": 1,
+  "human_intake_download_approved_yes_rows": 2,
   "generated_download_approved_yes_rows": 0,
-  "review_only_rows": 10,
+  "review_only_rows": 11,
   "publish_ready_rows": 0,
   "review_only": true,
   "source_fetching": false,
@@ -87,6 +88,30 @@
     },
     {
       "preflight_id": "APQP002",
+      "candidate_queue_id": "APCS114",
+      "candidate_photo_url": "https://www.nwslsoccer.com/_next/image?url=https%3A%2F%2Fimages.nwslsoccer.com%2Fimage%2Fprivate%2Ft_ratio16_9-size60%2Fv1777294471%2Fprd%2Fpbosial4i7unbarkydkp&w=3840&q=75",
+      "source_url": "https://www.nwslsoccer.com/news/nwsl-matchweek-5-recap-double-espresso-goals-and-12-silky-saves",
+      "entity_id": "nwsl_portland_thorns_sophia_wilson",
+      "rights_class": "official_league_site",
+      "identity_confidence": "strong_context",
+      "intended_review_only_use": "review_only_action_photo_candidate_quarantine_visual_validation",
+      "evidence_url": "https://www.nwslsoccer.com/news/nwsl-matchweek-5-recap-double-espresso-goals-and-12-silky-saves",
+      "identity_anchor_url": "https://www.nwslsoccer.com/news/nwsl-matchweek-5-recap-double-espresso-goals-and-12-silky-saves",
+      "action_photo_check": "action_photo_candidate",
+      "missing_required_fields": "",
+      "duplicate_candidate_key": "unique_or_unfilled",
+      "identity_confidence_status": "identity_ready_for_human_review",
+      "action_photo_status": "action_photo_candidate",
+      "lead_status": "research_return_pasted_preflight_only",
+      "ready_for_human_download_decision": "yes",
+      "download_approved": "no",
+      "quarantine_target_hint": "data/assets/quarantine/review_only_candidates/action_photo_candidates/nwsl/sophia_wilson/apcs114_operator_review.jpg",
+      "manual_next_action": "Human intake records a yes download flag for quarantine-only review; this preflight still does not download files or approve assets.",
+      "review_only": "true",
+      "publish_ready": "false"
+    },
+    {
+      "preflight_id": "APQP003",
       "candidate_queue_id": "APQ002",
       "candidate_photo_url": "",
       "source_url": "",
@@ -110,7 +135,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP003",
+      "preflight_id": "APQP004",
       "candidate_queue_id": "APQ003",
       "candidate_photo_url": "",
       "source_url": "",
@@ -134,7 +159,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP004",
+      "preflight_id": "APQP005",
       "candidate_queue_id": "APQ004",
       "candidate_photo_url": "",
       "source_url": "",
@@ -158,7 +183,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP005",
+      "preflight_id": "APQP006",
       "candidate_queue_id": "APQ005",
       "candidate_photo_url": "",
       "source_url": "",
@@ -182,7 +207,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP006",
+      "preflight_id": "APQP007",
       "candidate_queue_id": "APQ006",
       "candidate_photo_url": "",
       "source_url": "",
@@ -206,7 +231,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP007",
+      "preflight_id": "APQP008",
       "candidate_queue_id": "APQ007",
       "candidate_photo_url": "",
       "source_url": "",
@@ -230,7 +255,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP008",
+      "preflight_id": "APQP009",
       "candidate_queue_id": "APQ008",
       "candidate_photo_url": "",
       "source_url": "",
@@ -254,7 +279,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP009",
+      "preflight_id": "APQP010",
       "candidate_queue_id": "APQ009",
       "candidate_photo_url": "",
       "source_url": "",
@@ -278,7 +303,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP010",
+      "preflight_id": "APQP011",
       "candidate_queue_id": "APQ010",
       "candidate_photo_url": "",
       "source_url": "",
