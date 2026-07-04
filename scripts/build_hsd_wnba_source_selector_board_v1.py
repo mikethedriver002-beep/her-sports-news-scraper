@@ -72,6 +72,13 @@ SOURCE_NOTES = {
     },
 }
 
+SOURCE_DIMENSION_HINTS = {
+    "apq001_review_only_candidate": (2560, 1440),
+    "apcs033_operator_review": (1080, 1920),
+    "apcs038_operator_review": (1080, 1920),
+    "apcs039_operator_review": (1080, 1920),
+}
+
 INTAKE_FIELDS = [
     "source_id",
     "source_label",
@@ -176,9 +183,14 @@ def fit_image(path: Path, box_w: int, box_h: int) -> Any:
     return canvas
 
 
-def image_dimensions(path: Path) -> tuple[int, int]:
-    with Image.open(path) as image:
-        return int(image.width), int(image.height)
+def image_dimensions(path: Path, source_id: str = "") -> tuple[int, int]:
+    try:
+        with Image.open(path) as image:
+            return int(image.width), int(image.height)
+    except FileNotFoundError:
+        if source_id in SOURCE_DIMENSION_HINTS:
+            return SOURCE_DIMENSION_HINTS[source_id]
+        raise
 
 
 def crop_score(width: int, height: int, source_id: str) -> tuple[str, int]:
@@ -201,7 +213,7 @@ def build_rows() -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     for lead_rank, source in enumerate(SOURCE_ROWS, start=1):
         source_path = REPO_ROOT / source["source_path"]
-        width, height = image_dimensions(source_path)
+        width, height = image_dimensions(source_path, source["source_id"])
         viability, score = crop_score(width, height, source["source_id"])
         note = SOURCE_NOTES[source["source_id"]]
         rows.append(
