@@ -325,6 +325,47 @@ def test_action_photo_candidate_scout_filters_wll_store_badges_and_related_pll_c
     assert rows[0]["candidate_image_url"] == "https://premierlacrosseleague.test/wp-content/uploads/2026/06/Madison-Doucette.webp"
 
 
+def test_action_photo_candidate_scout_filters_world_rugby_page_furniture(tmp_path: Path) -> None:
+    module = load_module()
+    seed_csv = tmp_path / "seed.csv"
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/2026/world-rugby-story", "official_federation_recap")])
+
+    html = """
+    <html>
+      <head>
+        <title>Black Ferns win during HSBC SVNS final</title>
+        <meta name="description" content="New Zealand women celebrate a dramatic sevens win.">
+      </head>
+      <body>
+        <img src="https://www.world.rugby/resources/prod/v9.19.3/i/meta/wr.png" alt="World Rugby">
+        <img src="https://resources.worldrugby-rims.pulselive.com/photo-resources/2024/11/20/801672b6-33c4-4873-99a6-07947d945d99/WizTeam-WR.png" alt="WizTeam">
+        <img src="https://resources.worldrugby-rims.pulselive.com/photo-resources/2024/07/09/479fc7fc-9be7-4f78-ae33-9741818dde69/2020-WR_Backgrounds-DESKTOP_BG6.png" alt="Background art">
+        <img src="https://resources.worldrugby-rims.pulselive.com/photo-resources/worldrugby/photo/2026/03/15/99ac34e1-f52e-48ef-a343-430386e7fcfd/zf_260315_10157.jpg" alt="Black Ferns player celebrates during the final" width="1200" height="1500">
+      </body>
+    </html>
+    """
+
+    def fetcher(url: str):
+        if url == "https://fixtures.test/robots.txt":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
+        if url == "https://fixtures.test/2026/world-rugby-story":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/html"}, body=html.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    manifest = module.scout_packet(
+        seed_path=seed_csv,
+        output_dir=tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1",
+        fetcher=fetcher,
+        sleep_fn=lambda _: None,
+    )
+
+    rows = read_csv(tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1" / "action_photo_candidate_intake.csv")
+
+    assert manifest["extracted_candidate_rows"] == 1
+    assert len(rows) == 1
+    assert rows[0]["candidate_image_url"].endswith("zf_260315_10157.jpg")
+
+
 def test_action_photo_candidate_scout_extracts_open_graph_image_metadata(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"

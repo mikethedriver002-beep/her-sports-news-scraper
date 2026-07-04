@@ -190,6 +190,10 @@ LOW_VALUE_URL_TERMS = (
     "impact_sub_web",
     "s_po_bracket",
     "sl_poty",
+    "/resources/prod/",
+    "wizteam-wr.png",
+    "wr_backgrounds",
+    "2020-wr_backgrounds",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)
