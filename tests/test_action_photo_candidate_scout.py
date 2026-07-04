@@ -3,8 +3,10 @@ from __future__ import annotations
 import csv
 import importlib.util
 import json
+import ssl
 import sys
 from pathlib import Path
+from urllib.error import URLError
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -362,6 +364,72 @@ def test_action_photo_candidate_scout_extracts_open_graph_image_metadata(tmp_pat
     assert rows[0]["source_provenance_clarity"] == "clear"
     assert rows[0]["download_approved"] == "no"
     assert rows[0]["asset_downloads"] == "false"
+
+
+def test_action_photo_candidate_scout_default_fetcher_uses_verified_tls_context(monkeypatch) -> None:
+    module = load_module()
+    seen_contexts: list[ssl.SSLContext | None] = []
+
+    class FakeResponse:
+        status = 200
+
+        def __init__(self) -> None:
+            self.headers = {"Content-Type": "text/html"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self, size: int) -> bytes:
+            return b"<html></html>"
+
+        def geturl(self) -> str:
+            return "https://fixtures.test/story"
+
+    def fake_urlopen(request, timeout=None, context=None):
+        seen_contexts.append(context)
+        assert context is not None
+        assert context.verify_mode == ssl.CERT_REQUIRED
+        assert context.check_hostname is True
+        return FakeResponse()
+
+    monkeypatch.setattr(module, "urlopen", fake_urlopen)
+
+    response = module.default_fetcher("https://fixtures.test/story", user_agent="unit-test")
+
+    assert response.status == 200
+    assert response.text == "<html></html>"
+    assert len(seen_contexts) == 1
+
+
+def test_action_photo_candidate_scout_reports_tls_certificate_validation_skips(tmp_path: Path) -> None:
+    module = load_module()
+    seed_csv = tmp_path / "seed.csv"
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/story")])
+
+    def fetcher(url: str):
+        if url == "https://fixtures.test/robots.txt":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
+        raise URLError("CERTIFICATE_VERIFY_FAILED")
+
+    manifest = module.scout_packet(
+        seed_path=seed_csv,
+        output_dir=tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1",
+        fetcher=fetcher,
+        sleep_fn=lambda _: None,
+    )
+
+    out_dir = tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1"
+    rows = read_csv(out_dir / "action_photo_candidate_intake.csv")
+    report = (out_dir / "action_photo_candidate_scout_report.md").read_text(encoding="utf-8")
+
+    assert manifest["output_rows"] == 1
+    assert manifest["tls_cert_validation_skipped_rows"] == 1
+    assert rows[0]["fetch_status"] == "skipped_tls_cert_validation"
+    assert rows[0]["manual_next_action"] == "Use a reachable public page that passes normal TLS certificate validation."
+    assert "certificate validation" in report
 
 
 def test_action_photo_candidate_scout_ausl_seed_defaults_guardrails() -> None:
