@@ -77,9 +77,9 @@ def write_lpga_dow_board_csv(path: Path) -> None:
 def test_lpga_dow_championship_seed_csv_is_review_only_and_honest_about_identity() -> None:
     rows = read_csv(SEED_CSV)
 
-    assert len(rows) == 4
+    assert len(rows) == 3
     assert len({row["seed_id"] for row in rows}) == len(rows)
-    assert {row["seed_id"] for row in rows} == {f"LPGA{index:03d}" for index in range(1, 5)}
+    assert {row["seed_id"] for row in rows} == {f"LPGA{index:03d}" for index in range(1, 4)}
 
     for row in rows:
         assert urlparse(row["source_page_url"]).netloc == "www.lpga.com"
@@ -94,7 +94,6 @@ def test_lpga_dow_championship_seed_csv_is_review_only_and_honest_about_identity
         assert row["identity_confidence"] == "medium"
 
     assert {row["entity_id"] for row in rows} == {
-        "lpga_dow_championship_alison_lee",
         "lpga_dow_championship_hyo_joo_kim_hye_jin_choi",
         "lpga_dow_championship_camille_boyd_michelle_zhang",
         "lpga_dow_championship_aki_iwai_chizzy_iwai",
