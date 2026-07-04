@@ -29,8 +29,11 @@ except Exception:  # pragma: no cover - Pillow is expected in local HSD runs.
 VERSION = "hsd-blender-apcs048-renderer-proof-v1-review-only"
 DEFAULT_OUTPUT_DIR = Path("outputs/local/tmp/apcs048_renderer_proof_v1")
 DEFAULT_BLENDER_EXECUTABLE = Path(r"C:\Program Files\Blender Foundation\Blender 5.1\blender.exe")
-DEFAULT_SOURCE_REFERENCE = Path(
-    r"C:\Users\Mike\.codex\worktrees\action-photo-formal-download-intake-v1\her-sports-news-scraper\data\assets\quarantine\review_only_candidates\action_photo_candidates\manual_decision_batch\au_volleyball_jordan_thompson\apcs048_operator_review.png"
+LOCAL_SOURCE_REFERENCE_CANDIDATES = (
+    Path(
+        "data/assets/quarantine/review_only_candidates/action_photo_candidates/manual_decision_batch/"
+        "au_volleyball_jordan_thompson/apcs048_operator_review.png"
+    ),
 )
 RUNNER_NAME = "blender_apcs048_renderer_proof_runner.py"
 MANIFEST_NAME = "manifest.json"
@@ -64,7 +67,7 @@ VARIANTS: list[dict[str, Any]] = [
         "output_name": "variant_01_court_depth_hero.png",
         "visual_direction": "full court depth with source-reference hero panel",
         "title": "JORDAN THOMPSON",
-        "kicker": "APCS048 REVIEW-ONLY RENDERER PROOF",
+        "kicker": "APCS048 PROOF",
         "accent": [232, 46, 72],
         "accent_2": [247, 189, 61],
         "background": [8, 12, 18],
@@ -79,8 +82,12 @@ VARIANTS: list[dict[str, Any]] = [
         "spotlight_location": [-2.8, -4.6, 6.4],
         "spotlight_energy": 850,
         "spotlight_size": 3.3,
-        "headline_location": [1.43, -0.84, 2.92],
-        "proof_line_location": [1.45, -0.85, 2.28],
+        "headline_location": [0.54, -0.84, 2.92],
+        "headline_kicker_size": 0.095,
+        "headline_title_size": 0.2,
+        "proof_line_location": [0.54, -0.85, 2.28],
+        "proof_line_size": 0.075,
+        "proof_line_text": "REVIEW ONLY / NOT APPROVED",
         "score_plate_location": [1.6, -0.76, 1.35],
     },
     {
@@ -142,6 +149,10 @@ def resolve_output_dir() -> Path:
     return run_output_dir() or DEFAULT_OUTPUT_DIR
 
 
+def repo_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
 def safe_posix(path: Path) -> str:
     return path.as_posix()
 
@@ -161,6 +172,22 @@ def image_size(path: Path) -> dict[str, int] | None:
         return None
 
 
+def resolve_source_reference(explicit_source_reference: Path | None, root: Path | None = None) -> Path:
+    if explicit_source_reference is not None:
+        return explicit_source_reference.resolve()
+    root = root or repo_root()
+    for relative_path in LOCAL_SOURCE_REFERENCE_CANDIDATES:
+        candidate = (root / relative_path).resolve()
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    candidates = ", ".join(path.as_posix() for path in LOCAL_SOURCE_REFERENCE_CANDIDATES)
+    raise FileNotFoundError(
+        "No local APCS048 quarantine review source reference was found. "
+        f"Checked repo-local candidate(s): {candidates}. "
+        "Pass --source-reference explicitly to use a source from another worktree."
+    )
+
+
 def prepare_source_reference(source_reference: Path, output_dir: Path) -> dict[str, Any]:
     proof_input_dir = output_dir / "proof_inputs" / "quarantine_review_reference"
     proof_input_dir.mkdir(parents=True, exist_ok=True)
@@ -171,6 +198,8 @@ def prepare_source_reference(source_reference: Path, output_dir: Path) -> dict[s
     if allowed_quarantine_source:
         shutil.copy2(source_reference, proof_input_path)
         copied = True
+    elif proof_input_path.exists():
+        proof_input_path.unlink()
     return {
         "source_reference_path": safe_posix(source_reference),
         "source_reference_present": present,
@@ -415,10 +444,16 @@ def add_scene(spec: dict) -> dict:
         frame_mat,
     )
 
-    add_text("variant_kicker", spec["kicker"], tuple(spec["headline_location"]), 0.145, spec["accent_2"])
+    add_text("variant_kicker", spec["kicker"], tuple(spec["headline_location"]), float(spec.get("headline_kicker_size", 0.145)), spec["accent_2"])
     title_loc = (spec["headline_location"][0], spec["headline_location"][1], spec["headline_location"][2] - 0.36)
-    add_text("variant_title", spec["title"], title_loc, 0.34, [247, 249, 252])
-    add_text("review_only_lock", "REVIEW ONLY / NOT ASSET APPROVED", tuple(spec["proof_line_location"]), 0.118, spec["accent"])
+    add_text("variant_title", spec["title"], title_loc, float(spec.get("headline_title_size", 0.34)), [247, 249, 252])
+    add_text(
+        "review_only_lock",
+        str(spec.get("proof_line_text", "REVIEW ONLY / NOT ASSET APPROVED")),
+        tuple(spec["proof_line_location"]),
+        float(spec.get("proof_line_size", 0.118)),
+        spec["accent"],
+    )
 
     plate = add_cube("score_ready_negative_space_plate", tuple(spec["score_plate_location"]), (1.75, 0.055, 0.62), material("score_plate_mat", rgba([10, 12, 16], 0.72), 0.86))
     plate.rotation_euler[2] = math.radians(-2)
@@ -528,19 +563,42 @@ def run_blender_render(
 def overlay_review_labels(path: Path, spec: dict[str, Any]) -> None:
     if Image is None or ImageDraw is None or ImageFont is None:
         return
+
+    def load_font(path: str, size: int):
+        font_path = Path(path)
+        return ImageFont.truetype(font_path.as_posix(), size) if font_path.exists() else ImageFont.load_default()
+
+    def fitted_font(draw: Any, text: str, path: str, start_size: int, max_width: int):
+        size = start_size
+        font = load_font(path, size)
+        while size > 12:
+            bbox = draw.textbbox((0, 0), text, font=font)
+            if bbox[2] - bbox[0] <= max_width:
+                return font
+            size -= 1
+            font = load_font(path, size)
+        return font
+
     try:
         with Image.open(path).convert("RGBA") as image:
             overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
             draw = ImageDraw.Draw(overlay)
-            title_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 34) if Path("C:/Windows/Fonts/arialbd.ttf").exists() else ImageFont.load_default()
-            body_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 22) if Path("C:/Windows/Fonts/arial.ttf").exists() else ImageFont.load_default()
-            draw.rectangle((0, 0, image.width, 58), fill=(5, 7, 10, 192))
-            draw.text((34, 15), spec["review_only_label"], fill=(248, 249, 252, 255), font=body_font)
-            footer_h = 92
+            max_text_width = image.width - 72
+            top_font = fitted_font(draw, spec["review_only_label"], "C:/Windows/Fonts/arial.ttf", 21, max_text_width)
+            footer_title = "APCS048 / Jordan Thompson / REVIEW ONLY"
+            footer_lock = "Quarantine proof - not asset-approved - not publish-ready - no publishing"
+            footer_note = str(spec["visual_direction"])
+            footer_title_font = fitted_font(draw, footer_title, "C:/Windows/Fonts/arialbd.ttf", 26, max_text_width)
+            footer_lock_font = fitted_font(draw, footer_lock, "C:/Windows/Fonts/arial.ttf", 19, max_text_width)
+            footer_note_font = fitted_font(draw, footer_note, "C:/Windows/Fonts/arial.ttf", 17, max_text_width)
+            draw.rectangle((0, 0, image.width, 60), fill=(5, 7, 10, 192))
+            draw.text((34, 18), spec["review_only_label"], fill=(248, 249, 252, 255), font=top_font)
+            footer_h = 124
+            footer_y = image.height - footer_h
             draw.rectangle((0, image.height - footer_h, image.width, image.height), fill=(5, 7, 10, 210))
-            draw.text((34, image.height - 72), "APCS048 / Jordan Thompson / review-only renderer proof", fill=(246, 248, 250, 255), font=title_font)
-            draw.text((34, image.height - 41), "no asset approval / no publish-ready state / no publishing", fill=(224, 232, 242, 255), font=body_font)
-            draw.text((34, image.height - 18), spec["visual_direction"], fill=(198, 207, 220, 255), font=body_font)
+            draw.text((34, footer_y + 20), footer_title, fill=(246, 248, 250, 255), font=footer_title_font)
+            draw.text((34, footer_y + 53), footer_lock, fill=(224, 232, 242, 255), font=footer_lock_font)
+            draw.text((34, footer_y + 82), footer_note, fill=(198, 207, 220, 255), font=footer_note_font)
             composited = Image.alpha_composite(image, overlay).convert("RGB")
             composited.save(path, "PNG")
     except Exception:
@@ -703,7 +761,12 @@ def build_manifest(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build APCS048 review-only Blender renderer proof packet.")
-    parser.add_argument("--source-reference", type=Path, default=DEFAULT_SOURCE_REFERENCE)
+    parser.add_argument(
+        "--source-reference",
+        type=Path,
+        default=None,
+        help="Optional explicit APCS048 quarantine review source reference. If omitted, repo-local quarantine candidates are checked.",
+    )
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--blender-executable", type=Path, default=DEFAULT_BLENDER_EXECUTABLE)
     args = parser.parse_args(argv)
@@ -715,7 +778,8 @@ def main(argv: list[str] | None = None) -> int:
     renders_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
 
-    source_info = prepare_source_reference(args.source_reference.resolve(), output_dir)
+    source_reference = resolve_source_reference(args.source_reference)
+    source_info = prepare_source_reference(source_reference, output_dir)
     specs = build_variant_specs(source_info)
     runner_path = write_runner_script(output_dir / RUNNER_NAME, specs)
     blender_version = probe_blender_version(args.blender_executable)

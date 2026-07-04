@@ -46,6 +46,8 @@ def test_prepare_source_reference_does_not_copy_non_quarantine_source(tmp_path: 
     source = tmp_path / "desktop" / "apcs048_operator_review.png"
     write_png(source)
     output_dir = tmp_path / "outputs" / "local" / "tmp" / "apcs048_renderer_proof_v1"
+    stale_proof_input = output_dir / "proof_inputs" / "quarantine_review_reference" / "apcs048_operator_review.png"
+    write_png(stale_proof_input)
 
     info = module.prepare_source_reference(source, output_dir)
 
@@ -53,6 +55,61 @@ def test_prepare_source_reference_does_not_copy_non_quarantine_source(tmp_path: 
     assert info["source_reference_is_quarantine_review_only_candidate"] is False
     assert info["proof_input_copied"] is False
     assert not Path(info["proof_input_path"]).exists()
+
+
+def test_resolve_source_reference_prefers_repo_local_quarantine_candidate(tmp_path: Path) -> None:
+    module = load_module()
+    source = (
+        tmp_path
+        / "repo"
+        / "data"
+        / "assets"
+        / "quarantine"
+        / "review_only_candidates"
+        / "action_photo_candidates"
+        / "manual_decision_batch"
+        / "au_volleyball_jordan_thompson"
+        / "apcs048_operator_review.png"
+    )
+    write_png(source)
+
+    resolved = module.resolve_source_reference(None, tmp_path / "repo")
+
+    assert resolved == source.resolve()
+
+
+def test_resolve_source_reference_allows_explicit_other_worktree_source(tmp_path: Path) -> None:
+    module = load_module()
+    explicit = (
+        tmp_path
+        / "other-worktree"
+        / "her-sports-news-scraper"
+        / "data"
+        / "assets"
+        / "quarantine"
+        / "review_only_candidates"
+        / "action_photo_candidates"
+        / "manual_decision_batch"
+        / "au_volleyball_jordan_thompson"
+        / "apcs048_operator_review.png"
+    )
+    write_png(explicit)
+
+    resolved = module.resolve_source_reference(explicit, tmp_path / "repo")
+
+    assert resolved == explicit.resolve()
+
+
+def test_resolve_source_reference_requires_explicit_path_when_local_candidate_missing(tmp_path: Path) -> None:
+    module = load_module()
+
+    try:
+        module.resolve_source_reference(None, tmp_path / "repo")
+    except FileNotFoundError as exc:
+        assert "Pass --source-reference explicitly" in str(exc)
+        assert "data/assets/quarantine/review_only_candidates" in str(exc)
+    else:
+        raise AssertionError("resolve_source_reference should require an explicit source when local candidate is missing")
 
 
 def test_build_variant_specs_locks_review_only_blender_stage_contract(tmp_path: Path) -> None:
@@ -80,6 +137,8 @@ def test_build_variant_specs_locks_review_only_blender_stage_contract(tmp_path: 
     assert all("NOT ASSET APPROVED" in spec["review_only_label"] for spec in specs)
     assert all("3D volleyball court floor" in spec["stage_features"] for spec in specs)
     assert all("shadow-casting source reference panel" in spec["stage_features"] for spec in specs)
+    assert specs[0]["headline_title_size"] == 0.2
+    assert specs[0]["proof_line_text"] == "REVIEW ONLY / NOT APPROVED"
 
 
 def test_runner_script_contains_first_class_blender_scene_features(tmp_path: Path) -> None:
