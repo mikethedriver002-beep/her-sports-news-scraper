@@ -28,10 +28,11 @@ except Exception:  # pragma: no cover - Pillow is required in the local HSD runt
 VERSION = "hsd-apcs048-visual-rescue-v1-review-only"
 GENERATED_BY = "scripts/build_hsd_apcs048_visual_rescue_v1.py"
 DEFAULT_OUTPUT_DIR = Path("outputs/local/tmp/apcs048_visual_rescue_v1")
-DEFAULT_SOURCE_IMAGE = Path(
-    r"C:\Users\Mike\.codex\worktrees\action-photo-formal-download-intake-v1\her-sports-news-scraper"
-    r"\data\assets\quarantine\review_only_candidates\action_photo_candidates\manual_decision_batch"
-    r"\au_volleyball_jordan_thompson\apcs048_operator_review.png"
+LOCAL_SOURCE_IMAGE_CANDIDATES = (
+    Path(
+        "data/assets/quarantine/review_only_candidates/action_photo_candidates/manual_decision_batch/"
+        "au_volleyball_jordan_thompson/apcs048_operator_review.png"
+    ),
 )
 CANVAS = {"width": 1080, "height": 1350}
 CONTACT_SHEET_NAME = "contact_sheet.png"
@@ -92,8 +93,20 @@ def resolve_output_dir(explicit: str | None = None) -> Path:
     return run_output_dir() or DEFAULT_OUTPUT_DIR
 
 
-def resolve_source_image(explicit: str | None = None) -> Path:
-    return Path(explicit) if explicit else DEFAULT_SOURCE_IMAGE
+def resolve_source_image(explicit: str | None = None, root: Path | None = None) -> Path:
+    if explicit:
+        return Path(explicit).resolve()
+    root = root or repo_root()
+    for relative_path in LOCAL_SOURCE_IMAGE_CANDIDATES:
+        candidate = (root / relative_path).resolve()
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    candidates = ", ".join(path.as_posix() for path in LOCAL_SOURCE_IMAGE_CANDIDATES)
+    raise FileNotFoundError(
+        "No repo-local APCS048 quarantine source/reference was found. "
+        f"Checked: {candidates}. "
+        "Pass --source-image explicitly to use a quarantine source from another worktree."
+    )
 
 
 def require_pillow() -> None:
@@ -217,7 +230,7 @@ def build_variant_specs() -> list[dict[str, Any]]:
             "zoom": 1.08,
             "grade": {"brightness": 0.84, "contrast": 1.20, "color": 0.94, "sharpness": 1.06, "vignette": 0.28},
             "treatment": "news_cover",
-            "headline": "ATLANTA UNITED",
+            "headline": "ATHLETES UNLIMITED",
             "subhead": "Jordan Thompson candidate review",
             "accent": [242, 243, 236],
             "accent_2": [238, 196, 70],
@@ -691,7 +704,11 @@ def build_packet(*, source_image: Path, output_dir: Path, head_commit: str = "")
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Build APCS048 review-only visual rescue packet.")
-    parser.add_argument("--source-image", default=DEFAULT_SOURCE_IMAGE.as_posix())
+    parser.add_argument(
+        "--source-image",
+        default="",
+        help="Optional explicit APCS048 quarantine source/reference. Without this, repo-local quarantine candidates are checked.",
+    )
     parser.add_argument("--output-dir", default="")
     parser.add_argument("--head-commit", default="")
     return parser.parse_args(argv)
@@ -700,7 +717,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     manifest = build_packet(
-        source_image=resolve_source_image(args.source_image),
+        source_image=resolve_source_image(args.source_image or None),
         output_dir=resolve_output_dir(args.output_dir or None),
         head_commit=args.head_commit,
     )

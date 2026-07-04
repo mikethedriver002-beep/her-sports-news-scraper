@@ -54,8 +54,69 @@ def test_visual_rescue_specs_abandon_boxed_stage_route() -> None:
     assert all(spec["source_use"] for spec in specs)
     assert all("stage" not in spec["visual_direction"].lower() for spec in specs)
     assert all("grid" not in spec["visual_direction"].lower() for spec in specs)
+    spec_text = json.dumps(specs)
+    assert "ATLANTA UNITED" not in spec_text
+    assert "ATLANTA" not in spec_text
+    assert "Athletes Unlimited" not in spec_text
+    assert "ATHLETES UNLIMITED" in spec_text
     assert specs[0]["carry_forward_recommendation"] == "carry_forward_first"
     assert specs[1]["carry_forward_recommendation"] == "carry_forward_second"
+
+
+def test_resolve_source_image_prefers_repo_local_quarantine_candidate(tmp_path: Path) -> None:
+    module = load_module()
+    source = (
+        tmp_path
+        / "repo"
+        / "data"
+        / "assets"
+        / "quarantine"
+        / "review_only_candidates"
+        / "action_photo_candidates"
+        / "manual_decision_batch"
+        / "au_volleyball_jordan_thompson"
+        / "apcs048_operator_review.png"
+    )
+    write_source(source)
+
+    resolved = module.resolve_source_image(None, tmp_path / "repo")
+
+    assert resolved == source.resolve()
+
+
+def test_resolve_source_image_allows_explicit_external_worktree_source(tmp_path: Path) -> None:
+    module = load_module()
+    explicit = (
+        tmp_path
+        / "external-worktree"
+        / "her-sports-news-scraper"
+        / "data"
+        / "assets"
+        / "quarantine"
+        / "review_only_candidates"
+        / "action_photo_candidates"
+        / "manual_decision_batch"
+        / "au_volleyball_jordan_thompson"
+        / "apcs048_operator_review.png"
+    )
+    write_source(explicit)
+
+    resolved = module.resolve_source_image(str(explicit), tmp_path / "repo")
+
+    assert resolved == explicit.resolve()
+
+
+def test_resolve_source_image_requires_explicit_path_when_repo_local_missing(tmp_path: Path) -> None:
+    module = load_module()
+
+    try:
+        module.resolve_source_image(None, tmp_path / "repo")
+    except FileNotFoundError as exc:
+        assert "No repo-local APCS048 quarantine source/reference was found" in str(exc)
+        assert "Pass --source-image explicitly" in str(exc)
+        assert "data/assets/quarantine/review_only_candidates" in str(exc)
+    else:
+        raise AssertionError("resolve_source_image should require explicit external source when repo-local source is missing")
 
 
 def test_build_packet_writes_six_review_only_source_led_variants(tmp_path: Path) -> None:
