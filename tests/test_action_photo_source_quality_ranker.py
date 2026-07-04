@@ -544,11 +544,102 @@ def test_source_quality_ranker_suppresses_rejected_source_entity_siblings(tmp_pa
     assert {row["scout_candidate_id"] for row in rows} == {"APCS031", "APCS032"}
 
 
+def test_source_quality_ranker_suppresses_latest_manual_decisions_without_overmatching(tmp_path: Path) -> None:
+    module = load_module()
+    input_csv = tmp_path / "action_photo_candidate_intake.csv"
+    manual_decisions_csv = tmp_path / "normalized_review_deck_decisions.csv"
+    output_dir = tmp_path / "out"
+    decided = candidate_row(
+        "APCS001",
+        entity_id="wll_new_york_charging_madison_doucette",
+        image_url="https://premierlacrosseleague.com/wp-content/uploads/2026/06/Madison-Doucette.webp",
+        alt="Madison Doucette in the action photo.",
+    )
+    same_candidate_different_entity = candidate_row(
+        "APCS001",
+        entity_id="wnba_indiana_fever_kelsey_mitchell",
+        image_url="https://cdn.test/images/KelseyMitchell_action.jpg",
+        alt="Kelsey Mitchell scores during the game.",
+    )
+    distinct = candidate_row(
+        "APCS009",
+        entity_id="nwsl_kansas_city_current_temwa_chawinga",
+        image_url="https://cdn.test/images/TemwaChawinga_action.jpg",
+        alt="Temwa Chawinga scores during a match.",
+    )
+    write_input(input_csv, [decided, same_candidate_different_entity, distinct])
+    manual_decisions_csv.parent.mkdir(parents=True, exist_ok=True)
+    with manual_decisions_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "source_decisions_csv",
+                "deck_item_id",
+                "item_kind",
+                "candidate_id",
+                "entity_id",
+                "operator_decision",
+                "operator_notes",
+                "manual_reviewer",
+                "reviewed_at_utc",
+                "source_url",
+                "image_or_render_url",
+                "review_only",
+                "download_approved",
+                "asset_downloads",
+                "approval_state_change",
+                "publish_ready",
+                "publishing",
+                "formal_intake_next_action",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "source_decisions_csv": manual_decisions_csv.as_posix(),
+                "deck_item_id": "candidate_APCS001",
+                "item_kind": "candidate_source",
+                "candidate_id": "APCS001",
+                "entity_id": "wll_new_york_charging_madison_doucette",
+                "operator_decision": "carry_forward_for_formal_intake",
+                "operator_notes": "",
+                "manual_reviewer": "Mike",
+                "reviewed_at_utc": "2026-07-03T21:12:09.829Z",
+                "source_url": "https://premierlacrosseleague.com/articles/wll-player-of-the-week-chargings-madison-doucette",
+                "image_or_render_url": "https://premierlacrosseleague.com/wp-content/uploads/2026/06/Madison-Doucette.webp",
+                "review_only": "true",
+                "download_approved": "no",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+                "formal_intake_next_action": "prepare_separate_formal_quarantine_download_intake_if_needed",
+            }
+        )
+
+    manifest = module.build_packet(
+        input_csvs=[input_csv],
+        manual_decision_csvs=[manual_decisions_csv],
+        output_dir=output_dir,
+        head_commit="abc123",
+        limit=10,
+    )
+
+    rows = read_csv(output_dir / "action_photo_source_quality_ranker.csv")
+    assert manifest["manual_decision_keys_applied"] == 1
+    assert [row["entity_id"] for row in rows] == [
+        "wnba_indiana_fever_kelsey_mitchell",
+        "nwsl_kansas_city_current_temwa_chawinga",
+    ]
+    assert all(row["entity_id"] != "wll_new_york_charging_madison_doucette" for row in rows)
+
+
 def test_source_quality_ranker_default_inputs_include_latest_source_packets() -> None:
     module = load_module()
 
     default_inputs = {path.as_posix() for path in module.DEFAULT_INPUT_CSVS}
     default_reject_logs = {path.as_posix() for path in module.DEFAULT_REJECT_LOG_CSVS}
+    default_manual_decisions = {path.as_posix() for path in module.DEFAULT_MANUAL_DECISION_CSVS}
 
     assert "outputs/local/latest/files/action_photo_wta_lpga_source_expansion_v1/action_photo_candidate_intake.csv" in default_inputs
     assert "outputs/local/latest/files/action_photo_nwsl_source_expansion_v4/action_photo_candidate_intake.csv" in default_inputs
@@ -575,4 +666,8 @@ def test_source_quality_ranker_default_inputs_include_latest_source_packets() ->
     assert (
         "outputs/local/latest/files/action_photo_manual_decision_batch_v1/rejected_or_held_review_deck_decisions.csv"
         in default_reject_logs
+    )
+    assert (
+        "outputs/local/latest/files/action_photo_manual_decision_batch_v1/normalized_review_deck_decisions.csv"
+        in default_manual_decisions
     )
