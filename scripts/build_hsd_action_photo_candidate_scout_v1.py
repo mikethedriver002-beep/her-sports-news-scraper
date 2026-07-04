@@ -195,6 +195,7 @@ LOW_VALUE_URL_TERMS = (
     "wizteam-wr.png",
     "wr_backgrounds",
     "2020-wr_backgrounds",
+    "rlcdn",
 )
 STRIP_QUERY_IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 STRIP_QUERY_MARKERS = ("im=",)

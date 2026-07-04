@@ -33,22 +33,38 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def test_official_source_expansion_v6_seed_csv_is_review_only_and_official() -> None:
+def test_official_source_expansion_v6_seed_csv_is_review_only_and_honest_about_identity() -> None:
     rows = read_csv(SEED_CSV)
 
     assert len(rows) == 6
     assert len({row["seed_id"] for row in rows}) == len(rows)
+    assert {row["seed_id"] for row in rows} == {f"UCONNWBB{index:03d}" for index in range(1, 7)}
+
     for row in rows:
         assert urlparse(row["source_page_url"]).netloc == "uconnhuskies.com"
         assert row["source_type"] == "official_university_athletics_gallery"
         assert row["operator_fair_use_asserted"] == "yes"
         assert row["download_approved"] == "no"
         assert row["rights_class"] == "official_university_athletics_site"
-        assert row["identity_confidence"] == "medium"
         assert row["intended_review_only_use"] == "review_only_action_photo_candidate_scout"
         assert row["quarantine_target_hint"].startswith(
             "data/assets/quarantine/review_only_candidates/action_photo_candidates/uconn_wbb/"
         )
+
+    named = {row["entity_id"]: row for row in rows if row["identity_confidence"] == "medium"}
+    generic = {row["entity_id"]: row for row in rows if row["identity_confidence"] == "low"}
+
+    assert set(named) == {"uconn_wbb_serah_williams_seton_hall", "uconn_wbb_st_johns_kelis_fisher"}
+    assert set(generic) == {
+        "uconn_wbb_notre_dame_gallery_action_001",
+        "uconn_wbb_marquette_stock_fans",
+        "uconn_wbb_georgetown_bench",
+        "uconn_wbb_creighton_gallery_action",
+    }
+    assert "gallery" in generic["uconn_wbb_notre_dame_gallery_action_001"]["notes"].lower()
+    assert "stock/fans" in generic["uconn_wbb_marquette_stock_fans"]["notes"].lower()
+    assert "bench" in generic["uconn_wbb_georgetown_bench"]["notes"].lower()
+    assert "generic" in generic["uconn_wbb_creighton_gallery_action"]["notes"].lower()
 
 
 def write_official_expansion_v6_csv(path: Path) -> None:
@@ -78,17 +94,17 @@ def write_official_expansion_v6_csv(path: Path) -> None:
         writer.writerow(
             {
                 "scout_candidate_id": "APCS001",
-                "entity_id": "uconn_wbb_sarah_strong_notre_dame",
+                "entity_id": "uconn_wbb_notre_dame_gallery_action_001",
                 "source_type": "official_university_athletics_gallery",
                 "source_url": "https://uconnhuskies.com/galleries/womens-basketball/wbb-vs-notre-dame/4695",
-                "candidate_image_url": "https://uconnhuskies.com/images/2026/01/19/sarah-strong-action.jpg",
-                "image_alt": "Sarah Strong drives against Notre Dame in an official UConn gallery.",
+                "candidate_image_url": "https://uconnhuskies.com/images/2026/1/20/20260119_WBBvsNotreDame_02660.jpg",
+                "image_alt": "WBB vs. Notre Dame Photo Gallery",
                 "source_domain": "uconnhuskies.com",
-                "identity_confidence": "medium",
+                "identity_confidence": "low",
                 "face_likely_visible": "likely",
-                "body_margin_likely": "possible",
-                "four_by_five_crop_potential": "possible",
-                "text_safe_negative_space": "possible",
+                "body_margin_likely": "unclear",
+                "four_by_five_crop_potential": "unlikely",
+                "text_safe_negative_space": "likely",
                 "download_approved": "no",
                 "review_only": "true",
                 "publish_ready": "false",
@@ -132,7 +148,7 @@ def test_official_source_expansion_v6_deck_wrapper_builds_review_only_decision_s
     assert manifest["publishing"] is False
 
     assert "APCS001" in html
-    assert "uconn_wbb_sarah_strong_notre_dame" in html
+    assert "uconn_wbb_notre_dame_gallery_action_001" in html
     assert "Reject Wrong Person" in html
     assert "Reject Group Photo" in html
     assert "Carry Forward" in html
