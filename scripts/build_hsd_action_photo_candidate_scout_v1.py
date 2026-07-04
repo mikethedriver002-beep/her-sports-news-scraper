@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import ssl
 import re
 import sys
 import time
@@ -342,7 +343,7 @@ def build_request(url: str, user_agent: str) -> Request:
 
 def default_fetcher(url: str, *, user_agent: str) -> FetchedResponse:
     try:
-        with urlopen(build_request(url, user_agent), timeout=30) as response:
+        with urlopen(build_request(url, user_agent), timeout=30, context=ssl.create_default_context()) as response:
             body = response.read(MAX_BYTES + 1)
             if len(body) > MAX_BYTES:
                 raise RuntimeError(f"Response exceeded {MAX_BYTES} bytes: {url}")
@@ -597,14 +598,20 @@ def candidate_rows_for_seed(
     try:
         page = fetcher(source_page_url)
     except Exception as exc:
+        fetch_status = "skipped_tls_cert_validation" if "CERTIFICATE_VERIFY_FAILED" in str(exc) else "fetch_error"
+        notes_evidence = (
+            "Public page fetch failed during certificate validation; no bypass attempt was made."
+            if fetch_status == "skipped_tls_cert_validation"
+            else f"Public page fetch failed without bypass attempt: {exc}"
+        )
         return [
             build_row(
                 seed,
                 discovered_at=discovered_at,
-                fetch_status="fetch_error",
+                fetch_status=fetch_status,
                 robots_status=robots_status,
                 page_status_code="",
-                notes_evidence=f"Public page fetch failed without bypass attempt: {exc}",
+                notes_evidence=notes_evidence,
             )
         ]
     if page.status >= 400 or paywall_or_auth_page(page.text, page.status):
@@ -774,6 +781,8 @@ def next_action(fetch_status: str) -> str:
         return "Do not crawl this page. Replace it with a different public source page or reduce the seed list to allowed URLs."
     if fetch_status == "skipped_auth_or_paywall":
         return "Do not bypass auth or a paywall. Replace this seed with a reachable public page."
+    if fetch_status == "skipped_tls_cert_validation":
+        return "Use a reachable public page that passes normal TLS certificate validation."
     if fetch_status == "no_candidate_images_found":
         return "Try a different public gallery, recap, or source page with larger action imagery and clearer captions."
     return "Fix the source page seed or confirm the URL manually before retrying."
@@ -831,6 +840,7 @@ def render_markdown(rows: List[Mapping[str, str]], issues: List[Mapping[str, str
         f"- Extracted candidate rows: `{len(extracted_rows)}`",
         f"- Robots-denied rows: `{sum(1 for row in rows if clean(row.get('fetch_status')) == 'skipped_robots_disallow')}`",
         f"- Auth/paywall skipped rows: `{sum(1 for row in rows if clean(row.get('fetch_status')) == 'skipped_auth_or_paywall')}`",
+        f"- TLS certificate validation skipped rows: `{sum(1 for row in rows if clean(row.get('fetch_status')) == 'skipped_tls_cert_validation')}`",
         f"- No-candidate rows: `{sum(1 for row in rows if clean(row.get('fetch_status')) == 'no_candidate_images_found')}`",
         f"- Validation issues: `{len(issues)}`",
         "",
@@ -872,6 +882,7 @@ def build_manifest(rows: List[Mapping[str, str]], issues: List[Mapping[str, str]
         "extracted_candidate_rows": sum(1 for row in rows if clean(row.get("fetch_status")) == "candidate_metadata_extracted"),
         "robots_denied_rows": sum(1 for row in rows if clean(row.get("fetch_status")) == "skipped_robots_disallow"),
         "auth_or_paywall_skipped_rows": sum(1 for row in rows if clean(row.get("fetch_status")) == "skipped_auth_or_paywall"),
+        "tls_cert_validation_skipped_rows": sum(1 for row in rows if clean(row.get("fetch_status")) == "skipped_tls_cert_validation"),
         "no_candidate_rows": sum(1 for row in rows if clean(row.get("fetch_status")) == "no_candidate_images_found"),
         "validation_issue_count": len(issues),
         "csv_fields": INTAKE_FIELDS,
