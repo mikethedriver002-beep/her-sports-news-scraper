@@ -115,6 +115,18 @@ def surface_rows(latest_files_root: Path) -> list[dict[str, Any]]:
             summary_note="This is the only surface in the packet with a literal local contact sheet image ready to attach.",
         ),
         SurfaceSpec(
+            surface_id="purdue_v7_focus_deck",
+            surface_name="Purdue women's soccer v7 focused deck",
+            packet_root_name="action_photo_review_deck_official_source_expansion_v7",
+            primary_artifact_name="action_photo_review_deck.html",
+            report_name="action_photo_review_deck_report.md",
+            csv_name="manual_decision_export_template.csv",
+            attachment_mode="deck_html",
+            manual_action="Open the focused deck, review the Purdue women’s soccer rows, and keep the lane review-only.",
+            attachment_guidance="Attach the deck HTML or a screenshot/export of the deck. Prefer the literal deck if it is present locally.",
+            summary_note="This focused deck is the new Purdue women’s soccer review surface and stays review-only.",
+        ),
+        SurfaceSpec(
             surface_id="uconn_v6_focus_deck",
             surface_name="UConn v6 focused deck",
             packet_root_name="action_photo_review_deck_official_source_expansion_v6",

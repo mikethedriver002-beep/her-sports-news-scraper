@@ -75,6 +75,20 @@ def test_manual_surface_index_scans_current_surfaces_and_mirrors_latest(tmp_path
     )
 
     make_surface_packet(
+        latest_root / "action_photo_review_deck_official_source_expansion_v7",
+        status="action_photo_review_deck_ui_ready",
+        generated_at_utc="2026-07-04T18:17:55.000000+00:00",
+        count_key="deck_item_count",
+        count_value=6,
+    )
+    write_text(latest_root / "action_photo_review_deck_official_source_expansion_v7" / "action_photo_review_deck.html", "<html>purdue</html>")
+    write_text(latest_root / "action_photo_review_deck_official_source_expansion_v7" / "action_photo_review_deck_report.md", "# Purdue\n")
+    write_csv(
+        latest_root / "action_photo_review_deck_official_source_expansion_v7" / "manual_decision_export_template.csv",
+        [{"deck_item_id": "candidate_APCS001", "operator_decision": ""}],
+    )
+
+    make_surface_packet(
         latest_root / "action_photo_review_deck_official_source_expansion_v6",
         status="action_photo_review_deck_ui_ready",
         generated_at_utc="2026-07-04T17:48:36.190531+00:00",
@@ -138,22 +152,24 @@ def test_manual_surface_index_scans_current_surfaces_and_mirrors_latest(tmp_path
     mirror_manifest = json.loads((latest_root / "action_photo_manual_surface_index_v1" / "manifest.json").read_text(encoding="utf-8"))
 
     assert manifest["status"] == "action_photo_manual_surface_index_ready"
-    assert manifest["surface_count"] == 4
-    assert manifest["available_surface_count"] == 4
+    assert manifest["surface_count"] == 5
+    assert manifest["available_surface_count"] == 5
     assert manifest["literal_contact_sheet_count"] == 1
     assert manifest["latest_broad_deck_resolved"].endswith("action_photo_ranker_review_deck_v17")
     assert manifest["mirror_dir"].endswith("outputs/local/latest/files/action_photo_manual_surface_index_v1")
 
     assert [row["surface_id"] for row in rows] == [
         "apcs048_visual_rescue",
+        "purdue_v7_focus_deck",
         "uconn_v6_focus_deck",
         "world_rugby_v5_focus_deck",
         "latest_broad_deck",
     ]
     assert rows[0]["attachment_mode"] == "literal_contact_sheet"
     assert "Attach the literal contact_sheet.png first" in report
+    assert "Purdue women" in report
     assert "Latest broad deck" in html
     assert "action_photo_ranker_review_deck_v17" in html
     assert mirror_rows[0]["surface_id"] == "apcs048_visual_rescue"
-    assert mirror_manifest["surface_count"] == 4
+    assert mirror_manifest["surface_count"] == 5
     assert mirror_manifest["latest_broad_deck_resolved"].endswith("action_photo_ranker_review_deck_v17")
