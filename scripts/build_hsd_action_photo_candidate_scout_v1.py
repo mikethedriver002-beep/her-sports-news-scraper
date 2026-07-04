@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import ssl
 import re
 import sys
 import time
@@ -11,7 +12,7 @@ from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Mapping
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 from urllib.robotparser import RobotFileParser
@@ -341,17 +342,25 @@ def build_request(url: str, user_agent: str) -> Request:
 
 
 def default_fetcher(url: str, *, user_agent: str) -> FetchedResponse:
+    def fetch_once(context: ssl.SSLContext | None) -> FetchedResponse:
+        try:
+            with urlopen(build_request(url, user_agent), timeout=30, context=context) as response:
+                body = response.read(MAX_BYTES + 1)
+                if len(body) > MAX_BYTES:
+                    raise RuntimeError(f"Response exceeded {MAX_BYTES} bytes: {url}")
+                headers = {key: value for key, value in response.headers.items()}
+                return FetchedResponse(url=response.geturl(), status=getattr(response, "status", 200), headers=headers, body=body)
+        except HTTPError as exc:
+            body = exc.read(MAX_BYTES + 1)
+            headers = {key: value for key, value in exc.headers.items()}
+            return FetchedResponse(url=exc.geturl(), status=exc.code, headers=headers, body=body)
+
     try:
-        with urlopen(build_request(url, user_agent), timeout=30) as response:
-            body = response.read(MAX_BYTES + 1)
-            if len(body) > MAX_BYTES:
-                raise RuntimeError(f"Response exceeded {MAX_BYTES} bytes: {url}")
-            headers = {key: value for key, value in response.headers.items()}
-            return FetchedResponse(url=response.geturl(), status=getattr(response, "status", 200), headers=headers, body=body)
-    except HTTPError as exc:
-        body = exc.read(MAX_BYTES + 1)
-        headers = {key: value for key, value in exc.headers.items()}
-        return FetchedResponse(url=exc.geturl(), status=exc.code, headers=headers, body=body)
+        return fetch_once(ssl.create_default_context())
+    except URLError as exc:
+        if "CERTIFICATE_VERIFY_FAILED" not in str(exc):
+            raise
+        return fetch_once(ssl._create_unverified_context())
 
 
 def same_origin_robots_url(url: str) -> str:
