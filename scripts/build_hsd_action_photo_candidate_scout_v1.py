@@ -140,6 +140,7 @@ LOW_VALUE_IMAGE_TERMS = (
 LOW_VALUE_URL_TERMS = (
     "pixel",
     "scorecardresearch",
+    "rlcdn",
     "sb-instagram-feed-images",
     "stat_handler",
     "banner",
