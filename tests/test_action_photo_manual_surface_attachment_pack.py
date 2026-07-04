@@ -44,11 +44,13 @@ def test_builds_review_only_attachment_pack_with_thumbnails(tmp_path: Path, monk
     write_png(latest_root / "apcs048_visual_rescue_v1" / "contact_sheet.png", (1680, 2140), (8, 16, 24))
     write_text(latest_root / "action_photo_manual_surface_index_v1" / "action_photo_manual_surface_index.html", "<html>manual index</html>")
     write_text(latest_root / "action_photo_review_deck_official_source_expansion_v6" / "action_photo_review_deck.html", "<html>uconn</html>")
+    write_text(latest_root / "action_photo_review_deck_official_source_expansion_v7" / "action_photo_review_deck.html", "<html>purdue</html>")
     write_text(latest_root / "action_photo_review_deck_official_source_expansion_v5" / "action_photo_review_deck.html", "<html>world rugby</html>")
     write_text(latest_root / "action_photo_ranker_review_deck_v17" / "action_photo_review_deck.html", "<html>broad latest</html>")
 
     write_png(screenshot_dir / "manual_surface_index.png", (1280, 1800), (44, 44, 72))
     write_png(screenshot_dir / "uconn_v6_focus_deck.png", (1280, 1800), (52, 36, 28))
+    write_png(screenshot_dir / "purdue_wsoc_v7_focus_deck.png", (1280, 1800), (48, 42, 22))
     write_png(screenshot_dir / "world_rugby_v5_focus_deck.png", (1280, 1800), (16, 50, 56))
     write_png(screenshot_dir / "latest_broad_deck.png", (1280, 1800), (60, 20, 48))
 
@@ -65,8 +67,8 @@ def test_builds_review_only_attachment_pack_with_thumbnails(tmp_path: Path, monk
     assert manifest["approval_state_change"] is False
     assert manifest["publish_ready"] is False
     assert manifest["publishing"] is False
-    assert manifest["attachment_count"] == 5
-    assert manifest["thumbnail_count"] == 5
+    assert manifest["attachment_count"] == 6
+    assert manifest["thumbnail_count"] == 6
     assert manifest["missing_source_count"] == 0
     assert manifest["mirror_dir"].endswith("outputs/local/latest/files/action_photo_manual_surface_attachment_pack_v1")
 
@@ -74,17 +76,19 @@ def test_builds_review_only_attachment_pack_with_thumbnails(tmp_path: Path, monk
         "apcs048_visual_rescue",
         "manual_surface_index",
         "uconn_v6_focus_deck",
+        "purdue_wsoc_v7_focus_deck",
         "world_rugby_v5_focus_deck",
         "latest_broad_deck",
     ]
     assert (output_dir / "attachments" / "apcs048_contact_sheet.png").exists()
     assert (output_dir / "attachments" / "manual_surface_index_screenshot.png").exists()
+    assert (output_dir / "attachments" / "purdue_wsoc_v7_focus_deck_screenshot.png").exists()
     assert (output_dir / "thumbnails" / "manual_surface_index_screenshot.png").exists()
     assert Image.open(output_dir / "thumbnails" / "apcs048_contact_sheet.png").size[0] <= 480
     assert Image.open(output_dir / "thumbnails" / "manual_surface_index_screenshot.png").size[0] <= 480
     assert "Attach this literal PNG first" in report
     assert "Browser screenshot of the current manual surface index" in report
-    assert mirror_manifest["attachment_count"] == 5
+    assert mirror_manifest["attachment_count"] == 6
 
 
 def test_builds_report_when_browser_screenshots_are_missing(tmp_path: Path, monkeypatch) -> None:
@@ -98,6 +102,7 @@ def test_builds_report_when_browser_screenshots_are_missing(tmp_path: Path, monk
     write_png(latest_root / "apcs048_visual_rescue_v1" / "contact_sheet.png", (1680, 2140), (8, 16, 24))
     write_text(latest_root / "action_photo_manual_surface_index_v1" / "action_photo_manual_surface_index.html", "<html>manual index</html>")
     write_text(latest_root / "action_photo_review_deck_official_source_expansion_v6" / "action_photo_review_deck.html", "<html>uconn</html>")
+    write_text(latest_root / "action_photo_review_deck_official_source_expansion_v7" / "action_photo_review_deck.html", "<html>purdue</html>")
     write_text(latest_root / "action_photo_review_deck_official_source_expansion_v5" / "action_photo_review_deck.html", "<html>world rugby</html>")
     write_text(latest_root / "action_photo_ranker_review_deck_v17" / "action_photo_review_deck.html", "<html>broad latest</html>")
 
@@ -106,5 +111,5 @@ def test_builds_report_when_browser_screenshots_are_missing(tmp_path: Path, monk
     report = (output_dir / "action_photo_manual_surface_attachment_pack_report.md").read_text(encoding="utf-8")
     assert manifest["attachment_count"] == 1
     assert manifest["thumbnail_count"] == 1
-    assert manifest["missing_source_count"] == 4
+    assert manifest["missing_source_count"] == 5
     assert "browser_screenshots" in report
