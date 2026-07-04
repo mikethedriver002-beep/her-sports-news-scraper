@@ -195,6 +195,45 @@ def test_action_photo_candidate_scout_filters_tracking_and_banner_like_images(tm
     assert rows[0]["candidate_image_url"] == "https://fixtures.test/images/2026/action-1.jpg"
 
 
+def test_action_photo_candidate_scout_filters_rlcdn_tracking_pixels(tmp_path: Path) -> None:
+    module = load_module()
+    seed_csv = tmp_path / "seed.csv"
+    write_seed_csv(seed_csv, [seed_row("SCOUT001", "https://fixtures.test/2026/uconn-story")])
+
+    html = """
+    <html>
+      <head>
+        <title>Guard attacks the lane during a conference game</title>
+        <meta name="description" content="Official gallery with a useful action frame and tracking pixels.">
+      </head>
+      <body>
+        <img src="https://di.rlcdn.com/api/segment?pid=712104&pdata=source%3D502%2Ceventtype%3D1001%2CdivisionID%3D755" alt="tracking pixel" width="1" height="1">
+        <img src="/images/2026/action-drive.jpg" alt="Guard drives past a defender during the game" width="1200" height="1500">
+      </body>
+    </html>
+    """
+
+    def fetcher(url: str):
+        if url == "https://fixtures.test/robots.txt":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/plain"}, body=b"User-agent: *\nAllow: /\n")
+        if url == "https://fixtures.test/2026/uconn-story":
+            return module.FetchedResponse(url=url, status=200, headers={"Content-Type": "text/html"}, body=html.encode("utf-8"))
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    manifest = module.scout_packet(
+        seed_path=seed_csv,
+        output_dir=tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1",
+        fetcher=fetcher,
+        sleep_fn=lambda _: None,
+    )
+
+    rows = read_csv(tmp_path / "outputs/local/tmp/action_photo_candidate_scout_v1" / "action_photo_candidate_intake.csv")
+
+    assert manifest["extracted_candidate_rows"] == 1
+    assert len(rows) == 1
+    assert rows[0]["candidate_image_url"] == "https://fixtures.test/images/2026/action-drive.jpg"
+
+
 def test_action_photo_candidate_scout_filters_wta_lpga_navigation_and_store_badges(tmp_path: Path) -> None:
     module = load_module()
     seed_csv = tmp_path / "seed.csv"
