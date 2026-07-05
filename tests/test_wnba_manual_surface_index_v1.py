@@ -95,6 +95,16 @@ def test_wnba_manual_surface_index_prioritizes_current_surfaces_and_mirrors_late
     )
     make_packet(
         latest_root,
+        "wnba_storm_visual_rank_v1",
+        primary="wnba_storm_visual_rank_board.html",
+        report="wnba_storm_visual_rank_report.md",
+        csv_name="wnba_storm_visual_rank_board.csv",
+        status="wnba_storm_visual_rank_ready",
+        count_key="row_count",
+        count_value=5,
+    )
+    make_packet(
+        latest_root,
         "wnba_official_source_expansion_next_v1",
         primary="wnba_storm_source_scout_report.md",
         report="wnba_storm_source_scout_report.md",
@@ -142,26 +152,28 @@ def test_wnba_manual_surface_index_prioritizes_current_surfaces_and_mirrors_late
     mirror_rows = read_csv(latest_root / "wnba_manual_surface_index_v1" / "wnba_manual_surface_index.csv")
 
     assert manifest["status"] == "wnba_manual_surface_index_ready"
-    assert manifest["surface_count"] == 6
-    assert manifest["available_surface_count"] == 6
+    assert manifest["surface_count"] == 7
+    assert manifest["available_surface_count"] == 7
     assert manifest["download_approved"] is False
     assert manifest["asset_downloads"] is False
     assert manifest["publish_ready"] is False
     assert [row["surface_id"] for row in rows] == [
         "wnba_fever_visual_rank",
         "wnba_fever_swipe_deck",
+        "wnba_storm_visual_rank",
         "wnba_storm_source_scout",
         "wnba_fever_source_scout",
         "wnba_apcs039_score_command",
         "wnba_source_quality_next",
     ]
     assert rows[0]["priority"] == "P1_manual_review_now"
-    assert rows[2]["surface_id"] == "wnba_storm_source_scout"
+    assert rows[2]["surface_id"] == "wnba_storm_visual_rank"
     assert rows[2]["candidate_or_variant_count"] == "5"
-    assert "Use the Fever visual-rank board first" in report
+    assert "Use the Fever visual-rank board first, then the Storm visual-rank board" in report
+    assert "WNBA Storm visual-rank board" in html
     assert "WNBA Storm scout and deck" in html
     assert "download_approved=no" in html
-    assert mirror_manifest["surface_count"] == 6
+    assert mirror_manifest["surface_count"] == 7
     assert mirror_rows[0]["surface_id"] == "wnba_fever_visual_rank"
 
 
