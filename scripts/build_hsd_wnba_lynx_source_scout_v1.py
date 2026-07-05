@@ -229,6 +229,33 @@ def parse_page(url: str, response: FetchedResponse) -> dict[str, str]:
     }
 
 
+def normalize_wnba_cdn_image_url(image_url: str) -> tuple[str, bool]:
+    cleaned = clean(image_url)
+    if not cleaned:
+        return "", False
+    parsed = urlparse(cleaned)
+    if parsed.netloc != "cdn.wnba.com":
+        return cleaned, False
+
+    stem, dot, extension = parsed.path.rpartition(".")
+    if not dot:
+        return cleaned, False
+
+    high_res_path = stem
+    normalized = False
+    for suffix in ("-185x148", "-260x190", "-320x180", "-640x360", "-1024x576", "-1280x720"):
+        if high_res_path.endswith(suffix):
+            high_res_path = high_res_path[: -len(suffix)]
+            normalized = True
+            break
+
+    if not normalized:
+        return cleaned, False
+
+    rebuilt = parsed._replace(path=f"{high_res_path}.{extension}")
+    return rebuilt.geturl(), True
+
+
 def robots_status_for(url: str, *, fetcher: Callable[[str], FetchedResponse]) -> str:
     robots_url = urljoin(url, "/robots.txt")
     try:
@@ -305,12 +332,15 @@ def source_family_rows(
         source_url = clean(seed.get("source_page_url"))
         response = fetcher(source_url)
         parsed = parse_page(source_url, response)
+        candidate_url, thumbnail_normalized = normalize_wnba_cdn_image_url(parsed["candidate_url"])
         robots_status = robots_status_for(source_url, fetcher=fetcher)
         hint = subject_phrase(clean(seed.get("entity_id")))
-        score, tier, flags = source_quality_score(parsed["title"], parsed["description"], parsed["candidate_url"], parsed["paywall_hit"], hint)
+        score, tier, flags = source_quality_score(parsed["title"], parsed["description"], candidate_url, parsed["paywall_hit"], hint)
         confidence = clean(seed.get("identity_confidence") or "medium")
         candidate_id = f"WLGS{index:03d}"
         evidence_summary = clean(parsed["description"] or parsed["title"] or "Official Lynx photo gallery page.")
+        if thumbnail_normalized:
+            flags.append("thumbnail_url_promoted_to_high_res")
         notes = (
             f"{clean(seed.get('notes'))} "
             f"Fetched public page status={response.status}; {robots_status}; paywall_marker={parsed['paywall_hit']}; "
@@ -319,7 +349,7 @@ def source_family_rows(
         intake_rows.append(
             {
                 "candidate_queue_id": candidate_id,
-                "candidate_photo_url": parsed["candidate_url"],
+                "candidate_photo_url": candidate_url,
                 "evidence_url": source_url,
                 "evidence_summary": evidence_summary,
                 "identity_anchor_url": clean(seed.get("identity_anchor_url") or "https://lynx.wnba.com/roster"),
@@ -348,7 +378,7 @@ def source_family_rows(
                 "entity_id": clean(seed.get("entity_id")),
                 "source_type": clean(seed.get("source_type") or "official_team_gallery"),
                 "source_url": source_url,
-                "candidate_image_url": parsed["candidate_url"],
+                "candidate_image_url": candidate_url,
                 "image_alt": parsed["candidate_alt"] or parsed["title"],
                 "source_domain": urlparse(source_url).netloc,
                 "visual_priority": "P1_visual_review_now" if score >= 86 else "P2_visual_review_soon",

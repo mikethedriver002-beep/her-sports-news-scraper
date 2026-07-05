@@ -60,7 +60,7 @@ def test_lynx_source_scout_builds_metadata_rows_review_deck_and_latest_mirror(tm
             <title>Lynx Pics: Lynx Defeat Wings | 08.22.23</title>
             <meta property="og:title" content="Lynx Pics: Lynx Defeat Wings | 08.22.23">
             <meta property="og:description" content="The Minnesota Lynx defeated the Dallas Wings in a photo gallery packed with action shots and celebration frames.">
-            <meta property="og:image" content="https://cdn.wnba.com/lynx/gallery-wings-01.jpg">
+            <meta property="og:image" content="https://cdn.wnba.com/sites/1611661324/2023/08/GettyImages-1617633096-185x148.jpg">
             </head><body>body</body></html>
             """,
         ),
@@ -71,7 +71,7 @@ def test_lynx_source_scout_builds_metadata_rows_review_deck_and_latest_mirror(tm
             <title>Lynx Pics: Lynx Victory Over Storm | 06.27.23</title>
             <meta property="og:title" content="Lynx Pics: Lynx Victory Over Storm | 06.27.23">
             <meta property="og:description" content="Minnesota and Seattle collide in a public photo gallery featuring game action, transition defense, and bench reactions.">
-            <meta property="og:image" content="https://cdn.wnba.com/lynx/gallery-storm-01.jpg">
+            <meta property="og:image" content="https://cdn.wnba.com/sites/1611661324/2023/06/GettyImages-1259142576-185x148.jpg">
             </head><body>body</body></html>
             """,
         ),
@@ -82,7 +82,7 @@ def test_lynx_source_scout_builds_metadata_rows_review_deck_and_latest_mirror(tm
             <title>Lynx Pics: Lynx Fall To Aces | 07.22.23</title>
             <meta property="og:title" content="Lynx Pics: Lynx Fall To Aces | 07.22.23">
             <meta property="og:description" content="A matchup gallery with tight court action and strong body-margin potential for manual review.">
-            <meta property="og:image" content="https://cdn.wnba.com/lynx/gallery-aces-01.jpg">
+            <meta property="og:image" content="https://cdn.wnba.com/sites/1611661324/2023/07/GettyImages-1547945026-185x148.jpg">
             </head><body>body</body></html>
             """,
         ),
@@ -93,7 +93,7 @@ def test_lynx_source_scout_builds_metadata_rows_review_deck_and_latest_mirror(tm
             <title>Lynx Pics: Lynx Victory Over Sun | 07.30.23</title>
             <meta property="og:title" content="Lynx Pics: Lynx Victory Over Sun | 07.30.23">
             <meta property="og:description" content="A gallery built around fast-break action, rim pressure, and clean review-only photo evidence.">
-            <meta property="og:image" content="https://cdn.wnba.com/lynx/gallery-sun-01.jpg">
+            <meta property="og:image" content="https://cdn.wnba.com/sites/1611661324/2023/07/GettyImages-1565685337-1-185x148.jpg">
             </head><body>body</body></html>
             """,
         ),
@@ -104,7 +104,7 @@ def test_lynx_source_scout_builds_metadata_rows_review_deck_and_latest_mirror(tm
             <title>Lynx Pics: Lynx Fall To Dream | 07.18.23</title>
             <meta property="og:title" content="Lynx Pics: Lynx Fall To Dream | 07.18.23">
             <meta property="og:description" content="Photo gallery with public action frames and enough context to judge the subject without downloads.">
-            <meta property="og:image" content="https://cdn.wnba.com/lynx/gallery-dream-01.jpg">
+            <meta property="og:image" content="https://cdn.wnba.com/sites/1611661324/2023/07/GettyImages-1541236078-1-185x148.jpg">
             </head><body>body</body></html>
             """,
         ),
@@ -135,6 +135,10 @@ def test_lynx_source_scout_builds_metadata_rows_review_deck_and_latest_mirror(tm
     assert len(board_rows) == 5
     assert board_by_candidate["WLGS001"]["source_family_id"] == "wnba_lynx_official_photo_galleries"
     assert board_by_candidate["WLGS001"]["candidate_quality_tier"] in {"A_primary_source_lead", "B_strong_source_lead"}
+    assert board_by_candidate["WLGS001"]["candidate_image_url"].endswith("GettyImages-1617633096.jpg")
+    assert board_by_candidate["WLGS001"]["candidate_risk_flags"] == "subject_context_not_explicit|thumbnail_url_promoted_to_high_res"
+    assert all("-185x148." not in row["candidate_image_url"] for row in board_rows)
+    assert all("-185x148." not in row["candidate_photo_url"] for row in intake_rows)
     assert all(row["download_approved"] == "no" for row in intake_rows)
     assert all(row["review_only"] == "true" for row in intake_rows)
     assert latest_manifest["latest_mirror_built"] is True
