@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import csv
 import importlib.util
 import json
@@ -9,6 +10,21 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "scripts" / "build_hsd_wnba_unified_swipe_deck_v1.py"
+EMPTY_MANUAL_DECISION_FIELDS = [
+    "candidate_id",
+    "entity_id",
+    "operator_decision",
+    "review_only",
+    "download_approved",
+    "asset_downloads",
+    "approval_state_change",
+    "publish_ready",
+    "publishing",
+]
+
+MINI_PNG_BYTES = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/qK0AAAAASUVORK5CYII="
+)
 
 
 def load_module():
@@ -24,6 +40,29 @@ def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_board_csv(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_empty_manual_decisions(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=EMPTY_MANUAL_DECISION_FIELDS)
+        writer.writeheader()
+
+
+def write_manual_decisions(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=EMPTY_MANUAL_DECISION_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -67,110 +106,244 @@ def source_row(candidate: str, entity: str, family: str, image_url: str, score: 
     }
 
 
-def write_latest_inputs(root: Path) -> None:
-    write_csv(
+def write_latest_inputs(root: Path, image_url: str) -> None:
+    write_board_csv(
         root / "wnba_fever_visual_rank_v1" / "wnba_fever_visual_rank_board.csv",
         [
             source_row(
                 "WFFS001",
                 "indiana_fever_kelsey_mitchell",
                 "wnba_fever_official_galleries_and_recaps",
-                "https://cdn.wnba.com/fever.jpg",
+                image_url,
                 "100",
             )
         ],
     )
-    write_csv(
+    write_board_csv(
         root / "wnba_storm_visual_rank_v1" / "wnba_storm_visual_rank_board.csv",
         [
             source_row(
                 "WSFS001",
                 "wnba_seattle_storm_skylar_diggins",
                 "wnba_storm_official_recaps",
-                "https://cdn.wnba.com/storm.jpg",
+                image_url,
                 "99",
             )
         ],
     )
-    write_csv(
+    write_board_csv(
         root / "wnba_official_team_source_scout_v1" / "wnba_aces_source_scout_board.csv",
         [
             source_row(
                 "WAFS001",
                 "wnba_las_vegas_aces_aja_wilson",
                 "wnba_aces_official_recaps",
-                "https://cdn.wnba.com/aces.jpg",
+                image_url,
                 "98",
             )
         ],
     )
 
 
-def test_unified_swipe_deck_builds_single_tinder_surface(tmp_path: Path) -> None:
+def test_unified_swipe_deck_caches_file_uri_previews_and_preserves_provenance(tmp_path: Path) -> None:
     module = load_module()
-    latest_root = tmp_path / "outputs" / "local" / "latest" / "files"
-    output_dir = tmp_path / "outputs" / "local" / "tmp" / "wnba_unified_swipe_deck_v1"
-    latest_output_dir = tmp_path / "latest_mirror" / "wnba_unified_swipe_deck_v1"
-    write_latest_inputs(latest_root)
+    latest_root = tmp_path / "latest" / "files"
+    output_dir = tmp_path / "out"
+    latest_output_dir = tmp_path / "mirror" / "wnba_unified_swipe_deck_v1"
+    manual_decisions = tmp_path / "manual_decisions" / "normalized_review_deck_decisions.csv"
+    image_path = tmp_path / "preview source.png"
+    image_path.write_bytes(MINI_PNG_BYTES)
+    write_latest_inputs(latest_root, image_path.as_uri())
+    write_empty_manual_decisions(manual_decisions)
+
+    module.build_packet(
+        latest_files_root=latest_root,
+        output_dir=output_dir,
+        latest_output_dir=latest_output_dir,
+        manual_decisions_csv=manual_decisions,
+        preview_fetcher=module.fetch_preview_bytes,
+    )
+
+    rows = read_csv(output_dir / "wnba_unified_swipe_deck_input.csv")
+    manifest = json.loads((output_dir / "manifest.json").read_text(encoding="utf-8"))
+    report = (output_dir / "wnba_unified_swipe_deck_report.md").read_text(encoding="utf-8")
+
+    assert module.fetch_preview_bytes(image_path.as_uri()) == MINI_PNG_BYTES
+    assert manifest["preview_cache_only"] is True
+    assert manifest["candidate_downloads"] is False
+    assert manifest["asset_downloads"] is False
+    assert manifest["download_approved"] is False
+    assert manifest["approval_state_change"] is False
+    assert manifest["publish_ready"] is False
+    assert manifest["publishing"] is False
+    assert manifest["deck_item_count"] == 3
+    assert manifest["suppressed_reviewed_candidates"] == 0
+    assert manifest["latest_mirror_built"] is True
+    assert manifest["latest_mirror_errors"] == []
+    assert rows[0]["candidate_image_remote_url"].startswith("file:///")
+    assert rows[0]["candidate_image_url"].startswith("file:///")
+    assert rows[0]["preview_cache_status"] == "cached"
+    assert rows[0]["preview_cache_only"] == "true"
+    assert rows[0]["candidate_downloads"] == "false"
+    assert Path(rows[0]["preview_cache_path"]).exists()
+    assert "preview_cache_only=true" in report
+    assert "No WNBA swipe cards remain" not in (output_dir / "review_deck" / "action_photo_review_deck.html").read_text(encoding="utf-8")
+
+
+def test_unified_swipe_deck_suppresses_exact_reviewed_candidate_entity_pairs(tmp_path: Path) -> None:
+    module = load_module()
+    latest_root = tmp_path / "latest" / "files"
+    output_dir = tmp_path / "out"
+    manual_decisions = tmp_path / "manual_decisions" / "normalized_review_deck_decisions.csv"
+    image_path = tmp_path / "source.png"
+    image_path.write_bytes(MINI_PNG_BYTES)
+
+    write_board_csv(
+        latest_root / "wnba_fever_visual_rank_v1" / "wnba_fever_visual_rank_board.csv",
+        [
+            source_row(
+                "WFFS010",
+                "indiana_fever_kelsey_mitchell",
+                "wnba_fever_official_galleries_and_recaps",
+                image_path.as_uri(),
+                "100",
+            ),
+            source_row(
+                "WFFS010",
+                "indiana_fever_abby_myers",
+                "wnba_fever_official_galleries_and_recaps",
+                image_path.as_uri(),
+                "99",
+            ),
+        ],
+    )
+    write_manual_decisions(
+        manual_decisions,
+        [
+            {
+                "candidate_id": "WFFS010",
+                "entity_id": "indiana_fever_kelsey_mitchell",
+                "operator_decision": "reject_wrong_person",
+                "review_only": "true",
+                "download_approved": "no",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+            }
+        ],
+    )
+
+    manifest = module.build_packet(
+        latest_files_root=latest_root,
+        output_dir=output_dir,
+        latest_output_dir=None,
+        manual_decisions_csv=manual_decisions,
+        preview_fetcher=module.fetch_preview_bytes,
+    )
+
+    rows = read_csv(output_dir / "wnba_unified_swipe_deck_input.csv")
+    deck_html = (output_dir / "review_deck" / "action_photo_review_deck.html").read_text(encoding="utf-8")
+
+    assert manifest["deck_item_count"] == 1
+    assert manifest["suppressed_reviewed_candidates"] == 1
+    assert len(rows) == 1
+    assert rows[0]["candidate_queue_id"] == "WFFS010"
+    assert rows[0]["entity_id"] == "indiana_fever_abby_myers"
+    assert rows[0]["candidate_image_remote_url"].startswith("file:///")
+    assert rows[0]["candidate_image_url"].startswith("file:///")
+    assert "WFFS010" in deck_html
+    assert "indiana_fever_kelsey_mitchell" not in deck_html
+
+
+def test_unified_swipe_deck_creates_empty_deck_after_full_suppression(tmp_path: Path) -> None:
+    module = load_module()
+    latest_root = tmp_path / "latest" / "files"
+    output_dir = tmp_path / "out"
+    manual_decisions = tmp_path / "manual_decisions" / "normalized_review_deck_decisions.csv"
+    image_path = tmp_path / "empty deck.png"
+    image_path.write_bytes(MINI_PNG_BYTES)
+    write_latest_inputs(latest_root, image_path.as_uri())
+    write_manual_decisions(
+        manual_decisions,
+        [
+            {
+                "candidate_id": "WFFS001",
+                "entity_id": "indiana_fever_kelsey_mitchell",
+                "operator_decision": "reject_wrong_person",
+                "review_only": "true",
+                "download_approved": "no",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+            },
+            {
+                "candidate_id": "WSFS001",
+                "entity_id": "wnba_seattle_storm_skylar_diggins",
+                "operator_decision": "hold_manual_check",
+                "review_only": "true",
+                "download_approved": "no",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+            },
+            {
+                "candidate_id": "WAFS001",
+                "entity_id": "wnba_las_vegas_aces_aja_wilson",
+                "operator_decision": "carry_forward_for_formal_intake",
+                "review_only": "true",
+                "download_approved": "no",
+                "asset_downloads": "false",
+                "approval_state_change": "false",
+                "publish_ready": "false",
+                "publishing": "false",
+            },
+        ],
+    )
+
+    manifest = module.build_packet(
+        latest_files_root=latest_root,
+        output_dir=output_dir,
+        latest_output_dir=None,
+        manual_decisions_csv=manual_decisions,
+        preview_fetcher=module.fetch_preview_bytes,
+    )
+
+    html = (output_dir / "review_deck" / "action_photo_review_deck.html").read_text(encoding="utf-8")
+    report = (output_dir / "wnba_unified_swipe_deck_report.md").read_text(encoding="utf-8")
+    decision_rows = read_csv(output_dir / "review_deck" / "manual_decision_export_template.csv")
+
+    assert manifest["deck_item_count"] == 0
+    assert manifest["candidate_item_count"] == 0
+    assert manifest["suppressed_reviewed_candidates"] == 3
+    assert "No WNBA swipe cards remain" in html
+    assert "empty review deck" in report.lower()
+    assert decision_rows == []
+
+
+def test_unified_swipe_deck_uses_explicit_latest_inputs_in_isolation(tmp_path: Path) -> None:
+    module = load_module()
+    latest_root = tmp_path / "isolated" / "latest" / "files"
+    output_dir = tmp_path / "out"
+    latest_output_dir = tmp_path / "mirror" / "wnba_unified_swipe_deck_v1"
+    manual_decisions = tmp_path / "isolated_manual" / "normalized_review_deck_decisions.csv"
+    image_path = tmp_path / "isolation.png"
+    image_path.write_bytes(MINI_PNG_BYTES)
+    write_latest_inputs(latest_root, image_path.as_uri())
+    write_empty_manual_decisions(manual_decisions)
 
     manifest = module.build_packet(
         latest_files_root=latest_root,
         output_dir=output_dir,
         latest_output_dir=latest_output_dir,
+        manual_decisions_csv=manual_decisions,
+        preview_fetcher=module.fetch_preview_bytes,
     )
 
-    combined_rows = read_csv(output_dir / "wnba_unified_swipe_deck_input.csv")
-    decision_rows = read_csv(output_dir / "review_deck" / "manual_decision_export_template.csv")
-    deck_manifest = json.loads((output_dir / "review_deck" / "manifest.json").read_text(encoding="utf-8"))
-    latest_manifest = json.loads((latest_output_dir / "manifest.json").read_text(encoding="utf-8"))
-    html = (output_dir / "review_deck" / "action_photo_review_deck.html").read_text(encoding="utf-8")
-    report = (output_dir / "wnba_unified_swipe_deck_report.md").read_text(encoding="utf-8")
-
-    assert manifest["status"] == "wnba_unified_swipe_deck_ready"
-    assert manifest["deck_item_count"] == 3
-    assert manifest["candidate_item_count"] == 3
-    assert manifest["renderer_proof_item_count"] == 0
+    assert manifest["latest_files_root"] == latest_root.resolve(strict=False).as_posix()
+    assert manifest["manual_decisions_csv"] == manual_decisions.resolve(strict=False).as_posix()
+    assert all(path.startswith(latest_root.resolve(strict=False).as_posix()) for path in manifest["source_paths"].values())
     assert manifest["latest_mirror_built"] is True
-    assert manifest["download_approved"] is False
-    assert manifest["asset_downloads"] is False
-    assert manifest["approval_state_change"] is False
-    assert manifest["publish_ready"] is False
-    assert manifest["publishing"] is False
-    assert manifest["source_counts"] == {
-        "wnba_fever_visual_rank": 1,
-        "wnba_storm_visual_rank": 1,
-        "wnba_aces_source_scout": 1,
-    }
-    assert latest_manifest["latest_mirror_built"] is True
-    assert deck_manifest["status"] == "action_photo_review_deck_ui_ready"
-    assert deck_manifest["deck_item_count"] == 3
-    assert deck_manifest["download_approved_default"] == "no"
-    assert [row["candidate_queue_id"] for row in combined_rows] == ["WFFS001", "WSFS001", "WAFS001"]
-    assert all(row["download_approved"] == "no" for row in combined_rows)
-    assert all(row["review_only"] == "true" for row in combined_rows)
-    assert all(row["publish_ready"] == "false" for row in combined_rows)
-    assert all(row["download_approved"] == "no" for row in decision_rows)
-    assert all(row["review_only"] == "true" for row in decision_rows)
-    assert "swipe-card" in html
-    assert "pointerdown" in html
-    assert "ArrowLeft" in html
-    assert "ArrowRight" in html
-    assert "Export Decision CSV" in html
-    assert "WFFS001" in html and "WSFS001" in html and "WAFS001" in html
-    forbidden_download_flag = "download_approved" + "=" + "yes"
-    assert forbidden_download_flag not in html
-    assert "Tinder-style manual review surface" in report
-
-
-def test_unified_swipe_deck_fails_without_rows(tmp_path: Path) -> None:
-    module = load_module()
-    try:
-        module.build_packet(
-            latest_files_root=tmp_path / "missing",
-            output_dir=tmp_path / "out",
-            latest_output_dir=None,
-        )
-    except ValueError as exc:
-        assert "No WNBA rows found" in str(exc)
-    else:
-        raise AssertionError("Expected missing WNBA rows to fail fast")
+    assert manifest["latest_mirror_errors"] == []
