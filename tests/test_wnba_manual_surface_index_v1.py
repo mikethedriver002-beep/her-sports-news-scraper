@@ -135,6 +135,16 @@ def test_wnba_manual_surface_index_prioritizes_current_surfaces_and_mirrors_late
     )
     make_packet(
         latest_root,
+        "wnba_official_source_expansion_highres_v12",
+        primary="wnba_fire_gallery_source_scout_report.md",
+        report="wnba_fire_gallery_source_scout_report.md",
+        csv_name="wnba_fire_gallery_source_scout_board.csv",
+        status="wnba_fire_gallery_source_scout_ready",
+        count_key="candidate_row_count",
+        count_value=4,
+    )
+    make_packet(
+        latest_root,
         "wnba_apcs039_score_command_refine_v2",
         primary="contact_sheet.png",
         report="visual_report.md",
@@ -162,8 +172,8 @@ def test_wnba_manual_surface_index_prioritizes_current_surfaces_and_mirrors_late
     mirror_rows = read_csv(latest_root / "wnba_manual_surface_index_v1" / "wnba_manual_surface_index.csv")
 
     assert manifest["status"] == "wnba_manual_surface_index_ready"
-    assert manifest["surface_count"] == 8
-    assert manifest["available_surface_count"] == 8
+    assert manifest["surface_count"] == 9
+    assert manifest["available_surface_count"] == 9
     assert manifest["download_approved"] is False
     assert manifest["asset_downloads"] is False
     assert manifest["publish_ready"] is False
@@ -174,6 +184,7 @@ def test_wnba_manual_surface_index_prioritizes_current_surfaces_and_mirrors_late
         "wnba_aces_source_scout",
         "wnba_storm_source_scout",
         "wnba_fever_source_scout",
+        "wnba_fire_source_scout",
         "wnba_apcs039_score_command",
         "wnba_source_quality_next",
     ]
@@ -181,12 +192,14 @@ def test_wnba_manual_surface_index_prioritizes_current_surfaces_and_mirrors_late
     assert rows[2]["surface_id"] == "wnba_storm_visual_rank"
     assert rows[2]["candidate_or_variant_count"] == "5"
     assert rows[3]["surface_id"] == "wnba_aces_source_scout"
+    assert rows[6]["surface_id"] == "wnba_fire_source_scout"
     assert "Use the Fever visual-rank board first, then the Storm visual-rank board, then the Aces source scout" in report
     assert "WNBA Storm visual-rank board" in html
     assert "WNBA Aces scout and deck" in html
     assert "WNBA Storm scout and deck" in html
+    assert "WNBA Fire gallery source scout" in html
     assert "download_approved=no" in html
-    assert mirror_manifest["surface_count"] == 8
+    assert mirror_manifest["surface_count"] == 9
     assert mirror_rows[0]["surface_id"] == "wnba_fever_visual_rank"
 
 
