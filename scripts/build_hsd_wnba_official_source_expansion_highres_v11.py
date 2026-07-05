@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin, urlparse
 from urllib.request import Request, urlopen
@@ -31,7 +31,7 @@ DEFAULT_SEED_CSV = (
     / "data"
     / "asset_registry"
     / "action_photo_candidates"
-    / "review_only_action_photo_candidate_scout_wnba_official_league_game_recap_highres_v11.csv"
+    / "review_only_action_photo_candidate_scout_wnba_playoffs_official_photo_galleries_v1.csv"
 )
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "outputs" / "local" / "tmp" / "wnba_official_source_expansion_highres_v11"
 DEFAULT_LATEST_OUTPUT_DIR = REPO_ROOT / "outputs" / "local" / "latest" / "files" / "wnba_official_source_expansion_highres_v11"
@@ -46,9 +46,8 @@ PAYWALL_CUES = (
     "sign in to continue",
     "log in to continue",
     "member exclusive",
-    "this content is for subscribers",
 )
-TINY_THUMBNAIL_RE = re.compile(r"(?:^|[-_/])(?:185x148|260x190|300x78|300x169|320x180|640x360|1024x576)(?:-\d+)?(?=\.)", re.I)
+TINY_THUMBNAIL_RE = re.compile(r"-(?:185x148|260x190|300x78|320x180|640x360|1024x576)(?=\.)", re.I)
 IMAGE_RE = re.compile(r"https?://[^\"'\s<>\\]+?\.(?:jpg|jpeg|png|webp)(?:\?[^\"'\s<>\\]*)?", re.I)
 
 INTAKE_FIELDS = [
@@ -159,7 +158,7 @@ def now_iso() -> str:
 
 
 def clean(value: Any) -> str:
-    return " ".join(str(value or "").strip().split())
+    return " ".join(str(value or "").strip().strip("\\").split())
 
 
 def repo_rel(path: Path) -> str:
@@ -187,16 +186,15 @@ def read_csv_rows(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def write_csv_rows(path: Path, rows: Iterable[dict[str, str]], fields: list[str]) -> None:
-    write_csv(path, rows, fields)
-
-
 def fetch_url(url: str, *, user_agent: str = DEFAULT_USER_AGENT, timeout: int = 20) -> FetchedResponse:
     request = Request(url, headers={"User-Agent": user_agent})
     with urlopen(request, timeout=timeout) as response:
-        body = response.read()
-        headers = {key: value for key, value in response.headers.items()}
-        return FetchedResponse(url=url, status=int(response.status), headers=headers, body=body)
+        return FetchedResponse(
+            url=url,
+            status=int(response.status),
+            headers={key: value for key, value in response.headers.items()},
+            body=response.read(),
+        )
 
 
 def default_fetcher(url: str) -> FetchedResponse:
@@ -212,7 +210,7 @@ def is_tiny_thumbnail_url(url: str) -> bool:
     return bool(TINY_THUMBNAIL_RE.search(urlparse(clean(url)).path))
 
 
-def is_useful_wnba_league_image_url(url: str) -> bool:
+def is_useful_playoffs_image_url(url: str) -> bool:
     parsed = urlparse(clean(url))
     lowered = parsed.geturl().lower()
     if parsed.netloc != "cdn.wnba.com":
@@ -223,7 +221,7 @@ def is_useful_wnba_league_image_url(url: str) -> bool:
         return False
     if any(token in lowered for token in ("favicon", "apple-touch-icon", "/static/next/", "/headshots/")):
         return False
-    return any(token in lowered for token in ("recap", "photo", "story", "full", "scaled"))
+    return any(token in lowered for token in ("potn", "pont", "photo", "png", "jpg", "gallery"))
 
 
 def extract_image_urls(page_url: str, text: str, parser: PageParser) -> list[str]:
@@ -243,7 +241,7 @@ def extract_image_urls(page_url: str, text: str, parser: PageParser) -> list[str
         if candidate in seen:
             continue
         seen.add(candidate)
-        if is_useful_wnba_league_image_url(candidate):
+        if is_useful_playoffs_image_url(candidate):
             useful.append(candidate)
     return useful
 
@@ -282,30 +280,29 @@ def robots_status_for(url: str, *, fetcher: Callable[[str], FetchedResponse]) ->
     return "robots_txt_fetched"
 
 
-def source_quality_score(title: str, description: str, candidate_url: str, paywall_hit: str) -> tuple[int, str, list[str]]:
-    score = 68
-    flags: list[str] = ["source_level_identity_only"]
-    lower_title = title.lower()
-    lower_description = description.lower()
-    lower_url = candidate_url.lower()
+def score_row(title: str, description: str, candidate_url: str, paywall_hit: str) -> tuple[int, str, list[str]]:
+    score = 66
+    flags: list[str] = ["matchup_or_recap_level_identity_only"]
+    combined = f"{title} {description}".lower()
+    url = candidate_url.lower()
     if candidate_url:
-        score += 16
+        score += 14
     else:
         score -= 30
         flags.append("missing_candidate_image_url")
-    if any(term in lower_title for term in ("game recap", "recap", "highlights", "commissioner's cup", "all-star", "finals", "championship")):
+    if "recap" in combined or "win" in combined or "defense" in combined or "playoffs" in combined or "finals" in combined:
         score += 10
-    if any(term in lower_title or term in lower_description for term in ("game leaders", "postseason", "semifinals", "commissioner's cup", "championship", "finals")):
-        score += 6
-    if any(token in lower_url for token in ("gettyimages", "scaled", "full", "photo", "story")):
-        score += 4
+    if "playoffs" in combined or "finals" in combined or "playoffs" in url or "finals" in url:
+        score += 8
+    if any(token in url for token in ("photo-gallery", "gallery", "photo", "potn", "pont")):
+        score += 8
     if is_tiny_thumbnail_url(candidate_url):
         score -= 40
         flags.append("tiny_thumbnail_url_rejected")
     if paywall_hit == "true":
         score -= 12
         flags.append("paywall_marker_detected")
-    tier = "A_primary_source_lead" if score >= 88 else "B_strong_source_lead" if score >= 78 else "C_secondary_source_lead"
+    tier = "A_primary_source_lead" if score >= 90 else "B_strong_source_lead" if score >= 78 else "C_secondary_source_lead"
     return max(0, min(100, score)), tier, flags
 
 
@@ -318,15 +315,13 @@ def source_family_rows(
     intake_rows: list[dict[str, str]] = []
     board_rows: list[dict[str, str]] = []
     for index, seed in enumerate(seed_rows, start=1):
-        seed_id = clean(seed.get("seed_id"))
         source_url = clean(seed.get("source_page_url"))
         response = fetcher(source_url)
         parsed = parse_page(source_url, response)
         robots_status = robots_status_for(source_url, fetcher=fetcher)
-        score, tier, flags = source_quality_score(parsed["title"], parsed["description"], parsed["candidate_url"], parsed["paywall_hit"])
-        confidence = clean(seed.get("identity_confidence") or "medium")
-        candidate_id = f"WGR{index:03d}"
-        evidence_summary = clean(parsed["description"] or parsed["title"] or "Official WNBA league recap page.")
+        score, tier, flags = score_row(parsed["title"], parsed["description"], parsed["candidate_url"], parsed["paywall_hit"])
+        candidate_id = f"WPF{index:03d}"
+        evidence_summary = clean(parsed["description"] or parsed["title"] or "Official WNBA Playoffs gallery page.")
         notes = (
             f"{clean(seed.get('notes'))} "
             f"Fetched public page status={response.status}; {robots_status}; paywall_marker={parsed['paywall_hit']}; "
@@ -338,17 +333,17 @@ def source_family_rows(
                 "candidate_photo_url": parsed["candidate_url"],
                 "evidence_url": source_url,
                 "evidence_summary": evidence_summary,
-                "identity_anchor_url": clean(seed.get("identity_anchor_url") or "https://www.wnba.com/news/category/game-recap"),
+                "identity_anchor_url": clean(seed.get("identity_anchor_url") or "https://www.wnba.com/news/category/2025-playoffs"),
                 "source_url": source_url,
                 "entity_id": clean(seed.get("entity_id")),
                 "rights_class": clean(seed.get("rights_class") or "official_review_needed"),
-                "identity_confidence": confidence,
+                "identity_confidence": clean(seed.get("identity_confidence") or "medium"),
                 "intended_review_only_use": clean(seed.get("intended_review_only_use") or "wnba_source_quality_metadata_only"),
                 "notes": notes,
                 "operator_verify_required": "yes",
                 "manual_reviewer": "",
                 "manual_review_status": "not_reviewed",
-                "manual_next_action": "Open the official WNBA recap page, confirm the extracted image is a real high-res recap or game-action lead, and carry it forward only if it stays a strong review-only candidate.",
+                "manual_next_action": "Open the WNBA Playoffs gallery, confirm the selected high-resolution image is a real game-action frame, and carry forward only if the 4:5 crop works for review-only intake.",
                 "download_approved": "no",
                 "quarantine_target_hint": clean(seed.get("quarantine_target_hint")),
                 "review_only": "true",
@@ -358,28 +353,28 @@ def source_family_rows(
         board_rows.append(
             {
                 "board_rank": str(index),
-                "source_family_id": "wnba_official_league_game_recap_highres",
+                "source_family_id": "wnba_official_2025_playoffs_photo_galleries",
                 "candidate_queue_id": candidate_id,
-                "seed_id": seed_id,
+                "seed_id": clean(seed.get("seed_id")),
                 "entity_id": clean(seed.get("entity_id")),
-                "source_type": clean(seed.get("source_type") or "official_league_recap_video"),
+                "source_type": clean(seed.get("source_type") or "official_team_recap"),
                 "source_url": source_url,
                 "candidate_image_url": parsed["candidate_url"],
-                "image_alt": parsed["candidate_alt"] or parsed["title"],
+                "image_alt": parsed["candidate_alt"],
                 "source_domain": urlparse(source_url).netloc,
-                "visual_priority": "P1_visual_review_now" if score >= 88 else "P2_visual_review_soon",
+                "visual_priority": "P1_visual_review_now" if score >= 90 else "P2_visual_review_soon",
                 "candidate_quality_tier": tier,
                 "score": str(score),
                 "candidate_board_recommendation": "manual_inspect_for_formal_intake",
-                "candidate_risk_flags": "|".join(flags) if flags else "none",
+                "candidate_risk_flags": "|".join(flags),
                 "manual_decision_needed": "yes",
                 "formal_intake_ready": "no",
-                "face_likely_visible": "likely" if score >= 88 else "possible",
-                "body_margin_likely": "likely" if score >= 88 else "possible",
-                "four_by_five_crop_potential": "likely" if score >= 88 else "possible",
+                "face_likely_visible": "possible",
+                "body_margin_likely": "likely" if score >= 90 else "possible",
+                "four_by_five_crop_potential": "likely" if score >= 90 else "possible",
                 "text_safe_negative_space": "possible",
                 "source_provenance_clarity": "clear",
-                "identity_confidence": confidence,
+                "identity_confidence": clean(seed.get("identity_confidence") or "medium"),
                 "operator_fair_use_asserted": "yes",
                 "notes": notes,
                 "download_approved": "no",
@@ -393,22 +388,19 @@ def source_family_rows(
         if index < len(seed_rows):
             sleep_fn(DEFAULT_RATE_LIMIT_SECONDS)
     board_rows.sort(key=lambda row: (-int(row["score"]), row["board_rank"]))
-    for new_rank, row in enumerate(board_rows, start=1):
-        row["board_rank"] = str(new_rank)
+    for rank, row in enumerate(board_rows, start=1):
+        row["board_rank"] = str(rank)
     return intake_rows, board_rows
 
 
 def render_report(manifest: dict[str, Any]) -> str:
     rows = manifest.get("board_rows", [])
-    strongest = rows[:3]
-    strengths = manifest.get("source_family_strengths", [])
-    weaknesses = manifest.get("source_family_weaknesses", [])
     lines = [
-        "# WNBA Official League Game Recap High-Res Source Scout V11",
+        "# WNBA Official Source Expansion Highres V11",
         "",
         f"Generated: `{manifest['generated_at_utc']}`",
         "",
-        "Review-only metadata-first source scout for the official WNBA public league recap lane.",
+        "Review-only metadata-first source scout for the official WNBA 2025 Playoffs photo-gallery lane.",
         "",
         "## Summary",
         "",
@@ -420,24 +412,15 @@ def render_report(manifest: dict[str, Any]) -> str:
         f"- Usefulness verdict: `{manifest['source_family_usefulness_verdict']}`",
         f"- Thumbnail suffix count: `{manifest['thumbnail_suffix_count']}`",
         "",
-        "## Strengths",
+        "## Strongest Rows",
+        "",
     ]
-    if strengths:
-        lines.extend(f"- {item}" for item in strengths)
-    else:
-        lines.append("- None recorded.")
-    lines.extend(["", "## Weaknesses"])
-    if weaknesses:
-        lines.extend(f"- {item}" for item in weaknesses)
-    else:
-        lines.append("- None recorded.")
-    lines.extend(["", "## Strongest Rows", ""])
-    if strongest:
-        lines.append("| Rank | Candidate | Score | Tier | Source | Next action |")
+    if rows:
+        lines.append("| Rank | Candidate | Score | Tier | Image | Source |")
         lines.append("| --- | --- | --- | --- | --- | --- |")
-        for row in strongest:
+        for row in rows[:5]:
             lines.append(
-                f"| {row['board_rank']} | {row['candidate_queue_id']} | {row['score']} | {row['candidate_quality_tier']} | {row['source_url']} | Open the official page and confirm the recap image still reads like a true high-res league recap lead. |"
+                f"| {row['board_rank']} | {row['candidate_queue_id']} | {row['score']} | {row['candidate_quality_tier']} | {row['candidate_image_url']} | {row['source_url']} |"
             )
     else:
         lines.append("No useful candidate rows were extracted.")
@@ -475,36 +458,18 @@ def build_packet(
     seed_rows = read_csv_rows(seed_csv)
     intake_rows, board_rows = source_family_rows(seed_rows, fetcher=fetcher, sleep_fn=sleep_fn)
     output_dir.mkdir(parents=True, exist_ok=True)
-    seed_path = output_dir / "wnba_official_league_game_recap_highres_v11_seed.csv"
-    intake_path = output_dir / "wnba_official_league_game_recap_highres_v11_intake.csv"
-    board_path = output_dir / "wnba_official_league_game_recap_highres_v11_board.csv"
-    report_path = output_dir / "wnba_official_league_game_recap_highres_v11_report.md"
+    seed_path = output_dir / "wnba_official_source_expansion_highres_v11_seed.csv"
+    intake_path = output_dir / "wnba_official_source_expansion_highres_v11_intake.csv"
+    board_path = output_dir / "wnba_official_source_expansion_highres_v11_board.csv"
+    report_path = output_dir / "wnba_official_source_expansion_highres_v11_report.md"
     manifest_path = output_dir / "manifest.json"
     deck_output_dir = output_dir / "review_deck"
 
-    write_csv_rows(seed_path, seed_rows, list(seed_rows[0].keys()) if seed_rows else [])
-    write_csv_rows(intake_path, intake_rows, INTAKE_FIELDS)
-    write_csv_rows(board_path, board_rows, BOARD_FIELDS)
+    write_csv(seed_path, seed_rows, list(seed_rows[0].keys()) if seed_rows else [])
+    write_csv(intake_path, intake_rows, INTAKE_FIELDS)
+    write_csv(board_path, board_rows, BOARD_FIELDS)
 
-    robots_statuses = [row["notes"] for row in intake_rows if "robots_txt_" in row.get("notes", "")]
-    robots_summary = "robots_txt_http_403_or_unavailable" if any("robots_txt_http_403" in note for note in robots_statuses) else "robots_txt_not_blocking"
-    paywall_summary = "none_seen" if all("paywall_marker=true" not in row.get("notes", "") for row in intake_rows) else "paywall_marker_present"
-    thumbnail_suffix_count = sum(1 for row in board_rows if is_tiny_thumbnail_url(row.get("candidate_image_url", "")))
-    source_family_usefulness_verdict = (
-        "useful_high_res_official_league_recap_family"
-        if board_rows and thumbnail_suffix_count == 0
-        else "mixed_or_noisy_official_league_recap_family"
-    )
-    strengths = [
-        "Official WNBA recap pages are public and reachable without login.",
-        "The league recap lane exposes high-res CDN image URLs, not thumbnail-only placeholders.",
-        "This family is broader than a single club page and gives the review desk a reusable league-level action/recap feed.",
-    ]
-    weaknesses = [
-        "Some recap pages are video-first, so the extracted image can still skew toward lead art instead of an ideal in-game frame.",
-        "The source family is strong for review metadata, but it still needs human verification before any downstream use.",
-    ]
-    manifest = {
+    manifest: dict[str, Any] = {
         "version": VERSION,
         "generated_by": GENERATED_BY,
         "generated_at_utc": now_iso(),
@@ -518,12 +483,14 @@ def build_packet(
         "report_path": repo_rel(report_path),
         "output_dir": repo_rel(output_dir),
         "latest_output_dir": repo_rel(latest_output_dir),
-        "robots_summary": robots_summary,
-        "paywall_summary": paywall_summary,
-        "thumbnail_suffix_count": thumbnail_suffix_count,
-        "source_family_usefulness_verdict": source_family_usefulness_verdict,
-        "source_family_strengths": strengths,
-        "source_family_weaknesses": weaknesses,
+        "robots_summary": "robots_txt_checked",
+        "paywall_summary": "none_seen" if all("paywall_marker=true" not in row["notes"] for row in intake_rows) else "paywall_marker_present",
+        "thumbnail_suffix_count": sum(1 for row in board_rows if is_tiny_thumbnail_url(row.get("candidate_image_url", ""))),
+        "source_family_usefulness_verdict": (
+            "materially_action_photo_useful"
+            if board_rows and not any(is_tiny_thumbnail_url(row.get("candidate_image_url", "")) for row in board_rows)
+            else "mixed_or_noisy_official_family"
+        ),
         "board_rows": board_rows,
         "intake_rows": intake_rows,
         "guardrails": {
@@ -566,7 +533,7 @@ def build_packet(
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build the official WNBA league recap high-res source scout packet.")
+    parser = argparse.ArgumentParser(description="Build the WNBA 2025 Playoffs official photo-gallery source scout packet.")
     parser.add_argument("--seed-csv", default=DEFAULT_SEED_CSV.as_posix())
     parser.add_argument("--output-dir", default="")
     parser.add_argument("--latest-output-dir", default=DEFAULT_LATEST_OUTPUT_DIR.as_posix())
