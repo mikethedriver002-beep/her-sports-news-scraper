@@ -23,7 +23,7 @@ from hsd_run_io import write_csv, write_json, write_text
 from scripts.build_hsd_action_photo_review_deck_ui_v1 import build_packet as build_review_deck_packet
 
 
-VERSION = "hsd-wnba-liberty-source-scout-v1-review-only"
+VERSION = "hsd-wnba-liberty-source-scout-v2-review-only"
 GENERATED_BY = "scripts/build_hsd_wnba_liberty_source_scout_v1.py"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SEED_CSV = (
@@ -293,8 +293,10 @@ def source_quality_score(title: str, description: str, candidate_url: str, paywa
     else:
         score -= 30
         flags.append("missing_candidate_image_url")
-    if any(term in lower_title for term in ("game recap", "recap", "preview", "home opener", "training camp", "sign", "unveil", "libs abroad", "seafoam")):
+    if any(term in lower_title for term in ("game recap", "recap", "preview", "home opener", "training camp", "sign", "unveil", "libs abroad", "seafoam", "win", "overtime", "clinch", "finals", "championship")):
         score += 10
+    if any(term in lower_title or term in lower_description for term in ("game leaders", "playoff", "postseason", "semifinals", "commissioner's cup", "championship", "finals")):
+        score += 8
     if "liberty" in lower_title or "liberty" in lower_description or "liberty" in lower_url:
         score += 6
     if any(token in lower_url for token in ("gettyimages", "dsc", "scaled", "story", "photo")):
@@ -361,7 +363,7 @@ def source_family_rows(
         board_rows.append(
             {
                 "board_rank": str(index),
-                "source_family_id": "wnba_new_york_liberty_official_highres_news_and_recaps",
+                "source_family_id": "wnba_new_york_liberty_official_highres_game_recap_lane",
                 "candidate_queue_id": candidate_id,
                 "seed_id": seed_id,
                 "entity_id": clean(seed.get("entity_id")),
@@ -407,11 +409,11 @@ def render_report(manifest: dict[str, Any]) -> str:
     strengths = manifest.get("source_family_strengths", [])
     weaknesses = manifest.get("source_family_weaknesses", [])
     lines = [
-        "# WNBA New York Liberty Official High-Res News and Recap Source Scout V1",
+        "# WNBA New York Liberty Official High-Res Game Recap Source Scout V1",
         "",
         f"Generated: `{manifest['generated_at_utc']}`",
         "",
-        "Review-only metadata-first source scout for the official New York Liberty public high-res news and recap lane.",
+        "Review-only metadata-first source scout for the official New York Liberty public high-res game-recap lane.",
         "",
         "## Summary",
         "",
@@ -440,7 +442,7 @@ def render_report(manifest: dict[str, Any]) -> str:
         lines.append("| --- | --- | --- | --- | --- | --- |")
         for row in strongest:
             lines.append(
-            f"| {row['board_rank']} | {row['candidate_queue_id']} | {row['score']} | {row['candidate_quality_tier']} | {row['source_url']} | Open the official page and confirm the OG image still reads like a true high-res lead. |"
+            f"| {row['board_rank']} | {row['candidate_queue_id']} | {row['score']} | {row['candidate_quality_tier']} | {row['source_url']} | Open the official page and confirm the OG image still reads like a true high-res game recap lead. |"
             )
     else:
         lines.append("No useful candidate rows were extracted.")
@@ -494,18 +496,18 @@ def build_packet(
     paywall_summary = "none_seen" if all("paywall_marker=true" not in row.get("notes", "") for row in intake_rows) else "paywall_marker_present"
     thumbnail_suffix_count = sum(1 for row in board_rows if is_tiny_thumbnail_url(row.get("candidate_image_url", "")))
     source_family_usefulness_verdict = (
-        "useful_high_res_official_news_and_recap_family"
+        "useful_high_res_official_game_recap_family"
         if board_rows and thumbnail_suffix_count == 0
-        else "mixed_or_noisy_official_news_family"
+        else "mixed_or_noisy_official_game_recap_family"
     )
     strengths = [
-        "Official Liberty pages are public and reachable without login.",
+        "Official Liberty game-recap pages are public and reachable without login.",
         "High-res CDN image URLs are present and live, not thumbnail-only placeholders.",
-        "The lane stays review-only and does not overclaim player identity when the page only proves source-level context.",
+        "The lane is more action-photo useful than the signing/story mix because the pages center game outcomes, postseason pressure, and box-score context.",
     ]
     weaknesses = [
-        "Some pages are announcement-led rather than action-led, so the deck is useful but not uniformly action-heavy.",
-        "A few pages reuse branded or roster artwork instead of a clean game-action frame, so manual review still matters.",
+        "A few hero images are still stylized lead art instead of pure in-game frames, so the deck still needs human review.",
+        "The family is stronger than the prior version, but not every recap guarantees a peak action frame.",
     ]
     manifest = {
         "version": VERSION,
