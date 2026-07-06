@@ -79,3 +79,8 @@ def test_drm002_manual_review_deck_builds_swipe_surface_with_click_to_load_previ
     assert decision_rows[0]["publish_ready"] == "false"
 
     assert (latest_dir / "review_deck" / "action_photo_review_deck.html").exists()
+    latest_deck_html = (latest_dir / "review_deck" / "action_photo_review_deck.html").read_text(encoding="utf-8")
+    assert output_dir.as_uri() not in latest_deck_html
+    assert latest_dir.as_uri() in latest_deck_html
+    latest_board_rows = read_csv(latest_dir / "drm002_manual_review_board.csv")
+    assert latest_board_rows[0]["candidate_image_url"].startswith(latest_dir.as_uri())

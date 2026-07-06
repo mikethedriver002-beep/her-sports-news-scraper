@@ -245,6 +245,26 @@ def mirror_latest(output_dir: Path, latest_dir: Path) -> None:
         shutil.rmtree(latest_dir)
     latest_dir.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(output_dir, latest_dir)
+    rewrite_latest_paths(output_dir, latest_dir)
+
+
+def rewrite_latest_paths(output_dir: Path, latest_dir: Path) -> None:
+    output_dir = output_dir.resolve(strict=False)
+    latest_dir = latest_dir.resolve(strict=False)
+    replacements = {
+        output_dir.as_posix(): latest_dir.as_posix(),
+        file_uri(output_dir): file_uri(latest_dir),
+    }
+    text_suffixes = {".csv", ".html", ".json", ".md", ".svg"}
+    for path in latest_dir.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in text_suffixes:
+            continue
+        text = path.read_text(encoding="utf-8", errors="replace")
+        updated = text
+        for old, new in replacements.items():
+            updated = updated.replace(old, new)
+        if updated != text:
+            path.write_text(updated, encoding="utf-8")
 
 
 def build_packet(
