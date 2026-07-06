@@ -297,30 +297,86 @@ def robots_status_for(url: str, *, fetcher: Callable[[str], FetchedResponse]) ->
     return "robots_txt_fetched"
 
 
-def score_row(title: str, description: str, candidate_url: str, paywall_hit: str) -> tuple[int, str, list[str]]:
-    score = 66
+def classify_surface_priority(title: str, description: str, candidate_url: str) -> tuple[int, str]:
+    combined = f"{title} {description}".lower()
+    url = candidate_url.lower()
+    action_anchor_tokens = (
+        "game action",
+        "action photos",
+        "recap",
+        "win",
+        "defense",
+        "skills challenge",
+        "three-point contest",
+        "3-point contest",
+        "postgame",
+        "pregame",
+    )
+    supporting_tokens = (
+        "roster",
+        "orange carpet",
+        "courtside",
+        "looks and moments",
+        "looks",
+        "moments",
+        "style",
+        "fashion",
+    )
+    if any(token in combined or token in url for token in action_anchor_tokens):
+        return 0, "action_anchor"
+    if any(token in combined or token in url for token in supporting_tokens):
+        return 1, "supporting_context"
+    return 2, "context_support"
+
+
+def score_row(title: str, description: str, candidate_url: str, paywall_hit: str) -> tuple[int, str, list[str], int, str]:
+    surface_priority, surface_label = classify_surface_priority(title, description, candidate_url)
+    score = 60
     flags: list[str] = ["event_scoped_identity_only"]
     combined = f"{title} {description}".lower()
     url = candidate_url.lower()
     if candidate_url:
-        score += 14
+        score += 12
     else:
         score -= 30
         flags.append("missing_candidate_image_url")
-    if any(token in combined for token in ("recap", "win", "defense", "all-star", "all star", "skills", "three-point", "postgame", "pregame", "courtside")):
-        score += 10
-    if any(token in combined or token in url for token in ("all-star", "all star", "skills", "three-point", "game-action", "postgame", "pregame", "courtside")):
-        score += 8
+    if surface_priority == 0:
+        score += 22
+        if any(token in combined for token in ("skills challenge", "three-point contest", "3-point contest", "game action", "action photos")):
+            score += 8
+        if "friday night" in combined:
+            score += 6
+    elif surface_priority == 1:
+        score -= 10
+        flags.append("supporting_context_not_action_anchor")
+    else:
+        score -= 4
+        flags.append("generic_context_page")
+    if any(token in combined for token in ("all-star", "all star", "skills", "three-point", "postgame", "pregame", "courtside")):
+        score += 5
     if any(token in url for token in ("photo-gallery", "gallery", "photo", "potn", "pont")):
-        score += 8
+        score += 5
     if is_tiny_thumbnail_url(candidate_url):
         score -= 40
         flags.append("tiny_thumbnail_url_rejected")
     if paywall_hit == "true":
         score -= 12
         flags.append("paywall_marker_detected")
-    tier = "A_primary_source_lead" if score >= 90 else "B_strong_source_lead" if score >= 78 else "C_secondary_source_lead"
-    return max(0, min(100, score)), tier, flags
+    if surface_priority == 0 and any(token in combined for token in ("skills challenge", "three-point contest", "3-point contest", "game action", "action photos")):
+        tier = "A_primary_source_lead"
+    elif score >= 86:
+        tier = "A_primary_source_lead"
+    elif score >= 74:
+        tier = "B_strong_source_lead"
+    else:
+        tier = "C_secondary_source_lead"
+    if surface_priority == 1:
+        score = min(score, 84)
+    elif surface_priority == 2:
+        score = min(score, 76)
+    else:
+        score = min(score, 100)
+    return max(0, score), tier, flags, surface_priority, surface_label
 
 
 def source_family_rows(
@@ -336,7 +392,9 @@ def source_family_rows(
         response = fetcher(source_url)
         parsed = parse_page(source_url, response)
         robots_status = robots_status_for(source_url, fetcher=fetcher)
-        score, tier, flags = score_row(parsed["title"], parsed["description"], parsed["candidate_url"], parsed["paywall_hit"])
+        score, tier, flags, surface_priority, surface_label = score_row(
+            parsed["title"], parsed["description"], parsed["candidate_url"], parsed["paywall_hit"]
+        )
         candidate_id = f"WAS{index:03d}"
         evidence_summary = clean(parsed["description"] or parsed["title"] or "Official WNBA All-Star gallery page.")
         notes = (
@@ -382,6 +440,8 @@ def source_family_rows(
                 "visual_priority": "P1_visual_review_now" if score >= 90 else "P2_visual_review_soon",
                 "candidate_quality_tier": tier,
                 "score": str(score),
+                "surface_priority": str(surface_priority),
+                "surface_label": surface_label,
                 "candidate_board_recommendation": "manual_inspect_for_formal_intake",
                 "candidate_risk_flags": "|".join(flags),
                 "manual_decision_needed": "yes",
@@ -404,7 +464,7 @@ def source_family_rows(
         )
         if index < len(seed_rows):
             sleep_fn(DEFAULT_RATE_LIMIT_SECONDS)
-    board_rows.sort(key=lambda row: (-int(row["score"]), row["board_rank"]))
+    board_rows.sort(key=lambda row: (int(row["surface_priority"]), -int(row["score"]), row["board_rank"]))
     for rank, row in enumerate(board_rows, start=1):
         row["board_rank"] = str(rank)
     return intake_rows, board_rows
@@ -505,7 +565,9 @@ def build_packet(
         "thumbnail_suffix_count": sum(1 for row in board_rows if is_tiny_thumbnail_url(row.get("candidate_image_url", ""))),
         "source_family_usefulness_verdict": (
             "materially_action_photo_useful"
-            if board_rows and not any(is_tiny_thumbnail_url(row.get("candidate_image_url", "")) for row in board_rows)
+            if board_rows
+            and not any(is_tiny_thumbnail_url(row.get("candidate_image_url", "")) for row in board_rows)
+            and any(clean(row.get("surface_label")) == "action_anchor" for row in board_rows)
             else "mixed_or_noisy_official_family"
         ),
         "board_rows": board_rows,

@@ -100,6 +100,10 @@ def test_all_star_weekend_source_scout_builds_highres_rows_review_deck_and_lates
     assert len(intake_rows) == 3
     assert len(board_rows) == 3
     assert {row["source_family_id"] for row in board_rows} == {"wnba_official_2025_all_star_weekend_photo_suite"}
+    assert board_rows[0]["candidate_queue_id"] == "WAS001"
+    assert board_rows[0]["source_url"] == "https://www.wnba.com/news/2025-all-star-friday-night-photo-gallery"
+    assert board_rows[0]["candidate_quality_tier"] == "A_primary_source_lead"
+    assert int(board_rows[0]["score"]) > int(board_rows[1]["score"])
     assert {row["candidate_image_url"] for row in board_rows} == {
         "https://cdn.wnba.com/sites/4/2025/07/FEATUREIMAGE_-Recovered-1.png",
         "https://cdn.wnba.com/sites/4/2025/07/OrangeCarpetAllStar.png",
