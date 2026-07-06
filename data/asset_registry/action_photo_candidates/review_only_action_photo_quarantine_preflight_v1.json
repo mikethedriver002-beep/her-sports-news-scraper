@@ -4,9 +4,9 @@
   "generated_at_utc": "2026-06-30T00:00:00+00:00",
   "source_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
   "resolved_source_intake_csv": "data/asset_registry/action_photo_candidates/review_only_action_photo_research_return_intake_v1.csv",
-  "preflight_rows": 11,
-  "return_intake_rows": 11,
-  "ready_for_human_download_decision_rows": 2,
+  "preflight_rows": 12,
+  "return_intake_rows": 12,
+  "ready_for_human_download_decision_rows": 3,
   "lead_only_rows": 9,
   "validation_issue_count": 0,
   "validation_issues": [],
@@ -21,7 +21,8 @@
     "APQ007",
     "APQ008",
     "APQ009",
-    "APQ010"
+    "APQ010",
+    "DRM002"
   ],
   "missing_required_field_counts": {
     "source_url": 9,
@@ -34,17 +35,17 @@
     "identity_anchor_url": 9
   },
   "action_photo_status_counts": {
-    "action_photo_candidate": 2,
+    "action_photo_candidate": 3,
     "missing_candidate_photo_url": 9
   },
   "identity_confidence_status_counts": {
     "identity_missing": 9,
-    "identity_ready_for_human_review": 2
+    "identity_ready_for_human_review": 3
   },
   "download_approved_yes_rows": 0,
   "human_intake_download_approved_yes_rows": 2,
   "generated_download_approved_yes_rows": 0,
-  "review_only_rows": 11,
+  "review_only_rows": 12,
   "publish_ready_rows": 0,
   "review_only": true,
   "source_fetching": false,
@@ -160,6 +161,30 @@
     },
     {
       "preflight_id": "APQP005",
+      "candidate_queue_id": "DRM002",
+      "candidate_photo_url": "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png",
+      "source_url": "https://dream.wnba.com/news/dream-scores-a-win-in-reeses-return-to-chicago-howard-makes-history",
+      "entity_id": "wnba_atlanta_dream_chicago_road_win_recap_hero",
+      "rights_class": "official_review_needed",
+      "identity_confidence": "strong_context",
+      "intended_review_only_use": "review_only_renderer_social_visual_testing",
+      "evidence_url": "https://dream.wnba.com/news/dream-scores-a-win-in-reeses-return-to-chicago-howard-makes-history",
+      "identity_anchor_url": "https://www.wnba.com/teams/atlanta-dream",
+      "action_photo_check": "action_photo_candidate",
+      "missing_required_fields": "",
+      "duplicate_candidate_key": "unique_or_unfilled",
+      "identity_confidence_status": "identity_ready_for_human_review",
+      "action_photo_status": "action_photo_candidate",
+      "lead_status": "research_return_pasted_preflight_only",
+      "ready_for_human_download_decision": "yes",
+      "download_approved": "no",
+      "quarantine_target_hint": "data/assets/quarantine/review_only_candidates/action_photo_candidates/wnba/atlanta_dream/chicago_road_win_recap/dream_official_recap_source_scout_v1/drm002_operator_review.jpg",
+      "manual_next_action": "Ready for a later human quarantine-download decision; do not download unless Mike separately records a quarantine-only approval in the intake and keeps the quarantine target.",
+      "review_only": "true",
+      "publish_ready": "false"
+    },
+    {
+      "preflight_id": "APQP006",
       "candidate_queue_id": "APQ004",
       "candidate_photo_url": "",
       "source_url": "",
@@ -183,7 +208,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP006",
+      "preflight_id": "APQP007",
       "candidate_queue_id": "APQ005",
       "candidate_photo_url": "",
       "source_url": "",
@@ -207,7 +232,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP007",
+      "preflight_id": "APQP008",
       "candidate_queue_id": "APQ006",
       "candidate_photo_url": "",
       "source_url": "",
@@ -231,7 +256,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP008",
+      "preflight_id": "APQP009",
       "candidate_queue_id": "APQ007",
       "candidate_photo_url": "",
       "source_url": "",
@@ -255,7 +280,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP009",
+      "preflight_id": "APQP010",
       "candidate_queue_id": "APQ008",
       "candidate_photo_url": "",
       "source_url": "",
@@ -279,7 +304,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP010",
+      "preflight_id": "APQP011",
       "candidate_queue_id": "APQ009",
       "candidate_photo_url": "",
       "source_url": "",
@@ -303,7 +328,7 @@
       "publish_ready": "false"
     },
     {
-      "preflight_id": "APQP011",
+      "preflight_id": "APQP012",
       "candidate_queue_id": "APQ010",
       "candidate_photo_url": "",
       "source_url": "",
