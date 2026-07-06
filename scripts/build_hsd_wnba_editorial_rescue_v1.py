@@ -11,6 +11,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from hsd_creative_tools import discover_local_creative_tools
 from hsd_run_io import run_output_dir, write_csv, write_json, write_text
 
 try:
@@ -538,7 +539,7 @@ def build_contact_sheet(output_dir: Path, rows: list[dict[str, Any]]) -> Path:
     draw.text((34, 28), "WNBA EDITORIAL RESCUE V1", fill=(245, 246, 248), font=title_font)
     draw.text(
         (34, 60),
-        "Local player images only. No downloads, no Photoshop automation, no Blender. Built as a blunt rescue pass against the dead APCS039 language.",
+        "Local player images only. No downloads, no Photoshop automation in this run, no Blender. Built as a blunt rescue pass against the dead APCS039 language.",
         fill=(188, 196, 208),
         font=small_font,
     )
@@ -558,14 +559,19 @@ def build_contact_sheet(output_dir: Path, rows: list[dict[str, Any]]) -> Path:
     return path
 
 
-def build_layer_map(output_dir: Path, rows: list[dict[str, Any]], layered_path: Path) -> Path:
+def build_layer_map(output_dir: Path, rows: list[dict[str, Any]], layered_path: Path, photoshop: dict[str, Any]) -> Path:
     lines = [
         "# Layer Map",
         "",
         "This is the manual follow-up reference for a future Photoshop reconstruction.",
         "",
         f"- Planned layered file reference: `{layered_path.as_posix()}`",
-        "- Actual rescue pass was flattened to PNG because Photoshop is not installed locally.",
+        (
+            f"- Photoshop install detected at: `{photoshop['executable_path']}`"
+            if photoshop["available"]
+            else "- Photoshop install was not detected from the local probe."
+        ),
+        f"- Actual rescue pass was flattened to PNG because this lane still ran as a Pillow scaffold pass (photoshop_execution_mode={photoshop['preferred_execution_mode'] or 'none'}).",
         "",
         "## Intended layer stack",
         "",
@@ -626,12 +632,20 @@ def build_report(manifest: dict[str, Any]) -> str:
     keep_line = ", ".join(f"`{row['variant_id']}`" for row in keep_rows) if keep_rows else "none"
     kill_line = ", ".join(f"`{row['variant_id']}`" for row in kill_rows) if kill_rows else "none"
     strongest = manifest["best_variant_id"]
+    photoshop_path = manifest.get("photoshop_executable_path", "")
+    photoshop_mode = manifest.get("photoshop_execution_mode", "")
+    photoshop_status = (
+        f"Photoshop is installed at `{photoshop_path}` with preferred execution mode `{photoshop_mode or 'exe'}`. "
+        "This packet still used Pillow for reproducible local comping rather than claiming a Photoshop finish."
+        if manifest.get("photoshop_available")
+        else "Photoshop was not detected by the local creative-tool probe, so this packet used Pillow for comping."
+    )
     return f"""# WNBA Editorial Rescue V1
 
 Status: `{manifest['status']}`
 Version: `{VERSION}`
 
-This is a review-only rescue pass built from local WNBA player images only. Photoshop was not available locally, so the comping was rendered with Pillow instead. That is fine for the handoff, but it means the layered follow-up should happen manually if somebody wants a true PSD stack later.
+This is a review-only rescue pass built from local WNBA player images only. {photoshop_status}
 
 ## Blunt Read
 
@@ -670,6 +684,8 @@ This is a review-only rescue pass built from local WNBA player images only. Phot
 - source_auto_enabled=false
 - paid_apis=false
 - photoshop_used=false
+- photoshop_available={str(bool(manifest.get("photoshop_available"))).lower()}
+- photoshop_execution_mode={manifest.get("photoshop_execution_mode") or "none"}
 - blender_used=false
 """
 
@@ -678,6 +694,8 @@ def build_packet(*, output_dir: Path, head_commit: str = "") -> dict[str, Any]:
     output_dir = output_dir.resolve(strict=False)
     output_dir.mkdir(parents=True, exist_ok=True)
     specs = build_variant_specs()
+    creative_tools = discover_local_creative_tools(probe_photoshop_com=False)
+    photoshop = creative_tools["photoshop"]
 
     variant_rows: list[dict[str, Any]] = []
     for spec in specs:
@@ -705,7 +723,7 @@ def build_packet(*, output_dir: Path, head_commit: str = "") -> dict[str, Any]:
 
     contact_sheet_path = build_contact_sheet(output_dir, variant_rows)
     layered_path = output_dir / "working" / "wnba_editorial_rescue_v1.psd"
-    layer_map_path = build_layer_map(output_dir, variant_rows, layered_path)
+    layer_map_path = build_layer_map(output_dir, variant_rows, layered_path, photoshop)
     manifest_path = output_dir / MANIFEST_NAME
     report_path = output_dir / REPORT_NAME
 
@@ -726,6 +744,9 @@ def build_packet(*, output_dir: Path, head_commit: str = "") -> dict[str, Any]:
         "best_variant_id": best_variant_id,
         "variant_rows": variant_rows,
         "photoshop_used": False,
+        "photoshop_available": bool(photoshop["available"]),
+        "photoshop_executable_path": photoshop["executable_path"],
+        "photoshop_execution_mode": photoshop["preferred_execution_mode"],
         "blender_used": False,
         "review_only": True,
         "asset_downloads": False,

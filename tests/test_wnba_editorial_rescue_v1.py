@@ -50,6 +50,17 @@ def test_build_packet_writes_review_only_premium_rescue_packet(tmp_path: Path, m
     run_dir = tmp_path / "outputs" / "local" / "tmp" / "wnba_editorial_rescue_v1"
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("HSD_RUN_OUTPUT_DIR", str(run_dir))
+    monkeypatch.setattr(
+        module,
+        "discover_local_creative_tools",
+        lambda probe_photoshop_com=False: {
+            "photoshop": {
+                "available": True,
+                "executable_path": "E:/Installed Programs/Creative Cloud/Adobe Photoshop 2025/Photoshop.exe",
+                "preferred_execution_mode": "exe",
+            }
+        },
+    )
 
     manifest = module.build_packet(output_dir=run_dir, head_commit="abc123")
     manifest_json = json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
@@ -63,6 +74,9 @@ def test_build_packet_writes_review_only_premium_rescue_packet(tmp_path: Path, m
     assert manifest_json["best_variant_id"] == "jackie_final_cover"
     assert manifest_json["review_only"] is True
     assert manifest_json["photoshop_used"] is False
+    assert manifest_json["photoshop_available"] is True
+    assert manifest_json["photoshop_executable_path"] == "E:/Installed Programs/Creative Cloud/Adobe Photoshop 2025/Photoshop.exe"
+    assert manifest_json["photoshop_execution_mode"] == "exe"
     assert manifest_json["blender_used"] is False
     assert manifest_json["asset_downloads"] is False
     assert manifest_json["approval_state_change"] is False
@@ -89,7 +103,8 @@ def test_build_packet_writes_review_only_premium_rescue_packet(tmp_path: Path, m
     assert contact_sheet.size == (1080, 1350)
     assert "Best premium route" in report
     assert "Kill:" in report
-    assert "Photoshop was not available locally" in report
+    assert "Photoshop is installed at" in report
+    assert "used Pillow for reproducible local comping" in report
 
     assert len(rows) == 4
     assert all(row["review_only"] == "true" for row in rows)
