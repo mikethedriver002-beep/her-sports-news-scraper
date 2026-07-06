@@ -35,13 +35,39 @@ function Resolve-StrictPath {
     return (Resolve-Path -LiteralPath $PathValue).Path
 }
 
+function Get-PhotoshopProcessIds {
+    return @(Get-Process -Name "Photoshop" -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.Id })
+}
+
+function Stop-WrapperLaunchedPhotoshop {
+    param(
+        [int[]]$BeforeProcessIds
+    )
+    $before = @{}
+    foreach ($processId in $BeforeProcessIds) {
+        $before[$processId] = $true
+    }
+    foreach ($process in @(Get-Process -Name "Photoshop" -ErrorAction SilentlyContinue)) {
+        if (-not $before.ContainsKey([int]$process.Id)) {
+            try {
+                Stop-Process -Id $process.Id -Force -ErrorAction Stop
+            }
+            catch {
+            }
+        }
+    }
+}
+
 function Try-GetPhotoshopApplication {
+    param(
+        [bool]$HadPhotoshopProcessBefore = $false
+    )
     try {
         $app = New-Object -ComObject Photoshop.Application
         return @{
             app = $app
-            connected_via = "com_create"
-            launched = $false
+            connected_via = if ($HadPhotoshopProcessBefore) { "com_create" } else { "com_create_launched" }
+            launched = -not $HadPhotoshopProcessBefore
         }
     }
     catch {
@@ -61,8 +87,11 @@ function Connect-PhotoshopApplication {
         [string]$ExecutablePathValue
     )
 
-    $firstAttempt = Try-GetPhotoshopApplication
+    $beforeProcessIds = Get-PhotoshopProcessIds
+    $hadPhotoshopProcessBefore = $beforeProcessIds.Count -gt 0
+    $firstAttempt = Try-GetPhotoshopApplication -HadPhotoshopProcessBefore $hadPhotoshopProcessBefore
     if ($firstAttempt.app) {
+        $firstAttempt.before_process_ids = $beforeProcessIds
         return $firstAttempt
     }
 
@@ -82,10 +111,11 @@ function Connect-PhotoshopApplication {
 
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Milliseconds 1500
-        $attempt = Try-GetPhotoshopApplication
+        $attempt = Try-GetPhotoshopApplication -HadPhotoshopProcessBefore $hadPhotoshopProcessBefore
         if ($attempt.app) {
             $attempt.connected_via = "launch_then_com_create"
             $attempt.launched = $true
+            $attempt.before_process_ids = $beforeProcessIds
             return $attempt
         }
         if ($attempt.error) {
@@ -101,6 +131,7 @@ $openedPaths = @()
 $resolvedJsxPath = ""
 $connectedVia = ""
 $launchedByWrapper = $false
+$beforeProcessIds = @()
 $visibleFlag = ConvertTo-Bool -Value $Visible -DefaultValue $true
 $quitAfterFlag = ConvertTo-Bool -Value $QuitAfter -DefaultValue $false
 $launchIfNeededFlag = ConvertTo-Bool -Value $LaunchIfNeeded -DefaultValue $true
@@ -110,6 +141,7 @@ try {
     $app = $connection.app
     $connectedVia = $connection.connected_via
     $launchedByWrapper = [bool]$connection.launched
+    $beforeProcessIds = @($connection.before_process_ids)
 
     $app.Visible = $visibleFlag
     $app.DisplayDialogs = 3
@@ -159,6 +191,10 @@ finally {
             $app.Quit()
         }
         catch {
+        }
+        if ($launchedByWrapper) {
+            Start-Sleep -Seconds 2
+            Stop-WrapperLaunchedPhotoshop -BeforeProcessIds $beforeProcessIds
         }
     }
 }
