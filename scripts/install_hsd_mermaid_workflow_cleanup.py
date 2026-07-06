@@ -138,7 +138,10 @@ def main() -> None:
     update_versions()
     move_old_workflows()
     print("Mermaid workflow consolidation complete.")
-    print("Next: git add . && git commit -m 'Install HSD Mermaid Ops v1 workflow consolidation' && git push origin main")
+    print(
+        "Next: python scripts/run_hsd_git_actions.py --add . "
+        "--message \"Install HSD Mermaid Ops v1 workflow consolidation\" --push"
+    )
 
 if __name__ == "__main__":
     main()

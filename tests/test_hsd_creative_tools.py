@@ -77,7 +77,7 @@ def test_build_photoshop_cli_command_uses_python_wrapper() -> None:
     )
 
     assert command[:4] == [
-        "python",
+        sys.executable,
         str(hsd_creative_tools.photoshop_cli_wrapper_path()),
         "--mode",
         "open",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -77,7 +78,7 @@ def build_photoshop_cli_command(
     timeout_sec: int = DEFAULT_PHOTOSHOP_COM_TIMEOUT_SEC,
 ) -> list[str]:
     command = [
-        "python",
+        sys.executable,
         str(photoshop_cli_wrapper_path()),
         "--mode",
         mode,
