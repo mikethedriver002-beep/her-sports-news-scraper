@@ -68,8 +68,10 @@ def test_default_route_handoff_builds_single_route_packet(tmp_path: Path) -> Non
     assert manifest["approval_state_change"] is False
     assert manifest["publish_ready"] is False
     assert manifest["publishing"] is False
-    assert "merge_candidate_soft" not in Path(manifest["report_path"]).read_text(encoding="utf-8")
-    assert "merge_candidate_dense" not in Path(manifest["report_path"]).read_text(encoding="utf-8")
+    report_text = Path(manifest["report_path"]).read_text(encoding="utf-8")
+    assert "merge_candidate_soft" not in report_text
+    assert "merge_candidate_dense" not in report_text
+    assert "supersedes the broader v4 finish packet" in report_text
 
     rows = read_csv(output_dir / "drm002_default_route_handoff.csv")
     assert rows == [

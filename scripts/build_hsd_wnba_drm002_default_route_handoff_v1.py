@@ -174,7 +174,7 @@ def build_handoff_sheet(output_dir: Path, lead_image_path: Path) -> Path:
             y += 6
 
     draw.text((58, 1452), "DRM002 // DEFAULT ROUTE ONLY", fill=(245, 246, 249), font=badge_font)
-    draw.text((58, 1490), "Historical alternates stay out of this handoff packet on purpose.", fill=(176, 185, 198), font=label_font)
+    draw.text((58, 1490), "Route locked for downstream review lanes.", fill=(176, 185, 198), font=label_font)
 
     path = output_dir / SHEET_NAME
     canvas.save(path)
@@ -188,6 +188,8 @@ Status: `{manifest['status']}`
 Version: `{manifest['version']}`
 
 This packet is the downstream handoff surface for DRM002 after the v4 finish review. It intentionally exposes one route only: `drm002_merge_candidate`.
+
+It supersedes the broader v4 finish packet for downstream operator-facing use.
 
 ## Default Route
 

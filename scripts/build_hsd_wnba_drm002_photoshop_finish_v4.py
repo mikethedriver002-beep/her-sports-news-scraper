@@ -397,24 +397,27 @@ def build_contact_sheet(output_dir: Path, rows: list[dict[str, Any]]) -> Path:
     sheet = Image.new("RGB", (1080, 1350), (10, 12, 16))
     draw = ImageDraw.Draw(sheet)
     title_font = V1.load_font(36, bold=True)
-    label_font = V1.load_font(20, bold=True)
+    label_font = V1.load_font(22, bold=True)
     small_font = V1.load_font(17, bold=False)
     draw.text((34, 26), "WNBA DRM002 PHOTOSHOP FINISH V4", fill=(245, 246, 248), font=title_font)
-    draw.text((34, 68), "Single-lead luxury polish from the local DRM002 quarantine asset. Review-only. No downloads, approvals, or publishing.", fill=(184, 192, 205), font=small_font)
-    positions = [(30, 110), (550, 110), (30, 720)]
-    tile_w = 500
-    tile_h = 610
-    for index, row in enumerate(rows):
-        x, y = positions[index]
-        with Image.open(row["render_path"]) as image:
-            thumb = image.convert("RGB").resize((tile_w, tile_h))
-        sheet.paste(thumb, (x, y))
-        draw.rectangle((x, y, x + tile_w, y + tile_h), outline=(235, 238, 244), width=2)
-        draw.text((x, y + tile_h + 16), row["variant_id"], fill=(246, 247, 250), font=label_font)
-        decision_label = row["decision"].replace("_", " ").upper()
-        wrapped = V1.wrap_text(draw, f"{decision_label} // {row['note']}", small_font, tile_w - 8)
-        for line_index, line in enumerate(wrapped[:3]):
-            draw.text((x, y + tile_h + 44 + (line_index * 22)), line, fill=(202, 212, 226), font=small_font)
+    draw.text((34, 68), "Single default-route luxury polish from the local DRM002 quarantine asset. Review-only. No downloads, approvals, or publishing.", fill=(184, 192, 205), font=small_font)
+    lead_row = next((row for row in rows if row["variant_id"] == "drm002_merge_candidate"), rows[0])
+    x, y = 92, 118
+    tile_w = 896
+    tile_h = 1120
+    with Image.open(lead_row["render_path"]) as image:
+        thumb = image.convert("RGB").resize((tile_w, tile_h))
+    sheet.paste(thumb, (x, y))
+    draw.rectangle((x, y, x + tile_w, y + tile_h), outline=(235, 238, 244), width=2)
+    draw.text((92, 1252), "DEFAULT ROUTE // drm002_merge_candidate", fill=(246, 247, 250), font=label_font)
+    wrapped = V1.wrap_text(
+        draw,
+        "Merge-worthy lead comp. This is the operator-facing DRM002 finish route for downstream review lanes.",
+        small_font,
+        880,
+    )
+    for line_index, line in enumerate(wrapped[:3]):
+        draw.text((92, 1284 + (line_index * 18)), line, fill=(202, 212, 226), font=small_font)
     path = output_dir / CONTACT_SHEET_NAME
     sheet.save(path)
     return path
@@ -449,9 +452,10 @@ def build_bundle_zip(output_dir: Path) -> Path:
 
 def build_report(manifest: dict[str, Any]) -> str:
     rows = manifest["variant_rows"]
-    table = "\n".join(
-        f"| `{row['variant_id']}` | {row['variant_name']} | {row['decision'].upper()} | `{row['render_path']}` | {row['note']} |"
-        for row in rows
+    lead_row = next((row for row in rows if row["variant_id"] == "drm002_merge_candidate"), rows[0])
+    table = (
+        f"| `{lead_row['variant_id']}` | {lead_row['variant_name']} | DEFAULT | `{lead_row['render_path']}` | "
+        "Active downstream DRM002 finish route. |"
     )
     return f"""# WNBA DRM002 Photoshop Finish Pass V4
 
@@ -463,10 +467,8 @@ This is a review-only Photoshop-first final luxury polish pass from the local DR
 ## Blunt Read
 
 - Default route: `drm002_merge_candidate`
-- Proof-only comparison: `drm002_merge_candidate_soft`
-- Kill: `drm002_merge_candidate_dense`
 - Verdict: MERGE-WORTHY
-- Why: the lead now feels like a default finish route instead of an experiment. The spacing is cleaner, the footer is quieter, the tone is more expensive, and the packet no longer pretends there is a second real route to debate.
+- Why: the lead now feels like a default finish route instead of an experiment. The spacing is cleaner, the footer is quieter, the tone is more expensive, and this operator-facing packet is now locked to the single downstream route.
 - Hard boundary: no downloads, no approvals, no `.approved`, no protected movement, no publish-ready lane, no publishing.
 
 ## Photoshop Proof
@@ -485,7 +487,7 @@ This is a review-only Photoshop-first final luxury polish pass from the local DR
 - Layer map: `{manifest['layer_map_path']}`
 - Bundle zip: `{manifest['bundle_zip_path']}`
 
-## Lead-only Variant Table
+## Active Route
 
 | Variant | Name | Decision | Export | Note |
 | --- | --- | --- | --- | --- |
