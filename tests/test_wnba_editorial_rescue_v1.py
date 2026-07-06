@@ -25,21 +25,17 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def test_build_variant_specs_uses_four_local_wnba_sources() -> None:
+def test_build_variant_specs_uses_two_local_wnba_sources() -> None:
     module = load_module()
     specs = module.build_variant_specs()
 
     assert [spec["variant_id"] for spec in specs] == [
         "jackie_final_cover",
         "aja_control_line",
-        "arike_break_shot",
-        "nneka_front_page",
     ]
     assert [spec["source_key"] for spec in specs] == [
         "jackie_young",
         "aja_wilson",
-        "arike_ogunbowale",
-        "nneka_ogwumike",
     ]
     assert all("headline_lines" in spec for spec in specs)
     assert all(spec["decision"] in {"keep", "kill"} for spec in specs)
@@ -59,7 +55,7 @@ def test_build_packet_writes_review_only_premium_rescue_packet(tmp_path: Path, m
     assert manifest["status"] == "wnba_editorial_rescue_ready"
     assert manifest_json["version"] == "hsd-wnba-editorial-rescue-v1-review-only"
     assert manifest_json["repo_head"] == "abc123"
-    assert manifest_json["variant_count"] == 4
+    assert manifest_json["variant_count"] == 2
     assert manifest_json["best_variant_id"] == "jackie_final_cover"
     assert manifest_json["review_only"] is True
     assert manifest_json["photoshop_used"] is False
@@ -86,12 +82,12 @@ def test_build_packet_writes_review_only_premium_rescue_packet(tmp_path: Path, m
         assert Image.open(item["render_path"]).size == (1080, 1350)
 
     contact_sheet = Image.open(run_dir / "contact_sheet.png")
-    assert contact_sheet.size == (1080, 1350)
+    assert contact_sheet.size == (1080, 816)
     assert "Best premium route" in report
-    assert "Kill:" in report
+    assert "Kill: none" in report
     assert "Photoshop was not available locally" in report
 
-    assert len(rows) == 4
+    assert len(rows) == 2
     assert all(row["review_only"] == "true" for row in rows)
     assert all(row["photoshop_used"] == "false" for row in rows)
     assert all(row["blender_used"] == "false" for row in rows)

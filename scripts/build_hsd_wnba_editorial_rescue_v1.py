@@ -70,20 +70,6 @@ SOURCE_POOL: dict[str, dict[str, Any]] = {
         "accent": (245, 194, 92),
         "support": (223, 231, 242),
     },
-    "arike_ogunbowale": {
-        "source_image_path": Path("data/assets/player_images/arike-ogunbowale_img_b657bc0d660f71.jpg"),
-        "player_name": "Arike Ogunbowale",
-        "team_name": "Dallas Wings",
-        "accent": (230, 53, 75),
-        "support": (210, 216, 228),
-    },
-    "nneka_ogwumike": {
-        "source_image_path": Path("data/assets/player_images/nneka-ogwumike_img_5f16a036aea79f.jpg"),
-        "player_name": "Nneka Ogwumike",
-        "team_name": "Los Angeles Sparks",
-        "accent": (247, 205, 53),
-        "support": (224, 224, 226),
-    },
 }
 
 
@@ -381,68 +367,6 @@ def build_variant_specs() -> list[dict[str, Any]]:
             "shadow_offset": (16, 16),
             "known_limit": "cleanest magazine lane; a little less violent than the Jackie route",
         },
-        {
-            "variant_id": "arike_break_shot",
-            "variant_name": "Arike Break Shot",
-            "source_key": "arike_ogunbowale",
-            "output_name": "variant_03_arike_break_shot.png",
-            "decision": "keep",
-            "visual_strength": "most dynamic comparison card",
-            "crop_center": [0.48, 0.50],
-            "crop_zoom": 1.03,
-            "grade": {"brightness": 0.74, "contrast": 1.30, "color": 0.95, "sharpness": 1.11, "vignette": 0.30, "top_scrim": 0.16},
-            "scrim_side": "top",
-            "scrim_strength": 0.16,
-            "scrim_width_ratio": 0.20,
-            "headline_lines": ["BREAK", "ARIKE OGUNBOWALE"],
-            "headline_align": "left",
-            "headline_size": 106,
-            "headline_tracking": 0,
-            "headline_x": 74,
-            "headline_y": 120,
-            "headline_gap": 8,
-            "kicker": "DALLAS WINGS",
-            "kicker_size": 24,
-            "kicker_tracking": 1,
-            "dek": "LATE-CLOCK FIRE / SPORTS DESK READ",
-            "dek_size": 21,
-            "accent_rule": [76, 382, 224],
-            "footer": "REPORTING-STYLE COVER",
-            "footer_right": "HIGH-ENERGY SOURCE",
-            "shadow_offset": (17, 17),
-            "known_limit": "most dynamic frame; type has to stay disciplined or it gets noisy",
-        },
-        {
-            "variant_id": "nneka_front_page",
-            "variant_name": "Nneka Front Page",
-            "source_key": "nneka_ogwumike",
-            "output_name": "variant_04_nneka_front_page.png",
-            "decision": "kill",
-            "visual_strength": "weakest premium route",
-            "crop_center": [0.49, 0.48],
-            "crop_zoom": 1.01,
-            "grade": {"brightness": 0.73, "contrast": 1.24, "color": 0.92, "sharpness": 1.06, "vignette": 0.28, "top_scrim": 0.16},
-            "scrim_side": "bottom",
-            "scrim_strength": 0.14,
-            "scrim_width_ratio": 0.18,
-            "headline_lines": ["FEATURE", "NNEKA OGWUMIKE"],
-            "headline_align": "center",
-            "headline_size": 98,
-            "headline_tracking": 0,
-            "headline_x": 62,
-            "headline_y": 116,
-            "headline_gap": 10,
-            "kicker": "LOS ANGELES SPARKS",
-            "kicker_size": 24,
-            "kicker_tracking": 1,
-            "dek": "GOOD SOURCE, BUT THE CROP FIGHTS THE OPENING PAGE READ",
-            "dek_size": 20,
-            "accent_rule": [410, 378, 268],
-            "footer": "WEAKEST OF THE FOUR",
-            "footer_right": "KILL UNLESS YOU WANT TEXTURE",
-            "shadow_offset": (15, 15),
-            "known_limit": "busier crowd plane makes this feel less premium than the top three",
-        },
     ]
 
 
@@ -530,7 +454,7 @@ def render_variant(source_image: Path, output_path: Path, spec: dict[str, Any]) 
 def build_contact_sheet(output_dir: Path, rows: list[dict[str, Any]]) -> Path:
     if Image is None or ImageDraw is None or ImageOps is None:
         raise RuntimeError("Pillow is required for the contact sheet")
-    sheet = Image.new("RGB", (1080, 1350), (10, 12, 18))
+    sheet = Image.new("RGB", (1080, 816), (10, 12, 18))
     draw = ImageDraw.Draw(sheet)
     title_font = load_font(24, bold=True)
     small_font = load_font(16, bold=False)
@@ -538,12 +462,12 @@ def build_contact_sheet(output_dir: Path, rows: list[dict[str, Any]]) -> Path:
     draw.text((34, 28), "WNBA EDITORIAL RESCUE V1", fill=(245, 246, 248), font=title_font)
     draw.text(
         (34, 60),
-        "Local player images only. No downloads, no Photoshop automation, no Blender. Built as a blunt rescue pass against the dead APCS039 language.",
+        "Local player images only. No downloads, no Photoshop automation, no Blender. Final lane carries Jackie first and A'ja as the backup.",
         fill=(188, 196, 208),
         font=small_font,
     )
 
-    positions = [(36, 104), (552, 104), (36, 730), (552, 730)]
+    positions = [(36, 104), (552, 104)]
     resample = getattr(getattr(Image, "Resampling", Image), "LANCZOS", 1)
     for (x, y), row in zip(positions, rows):
         with Image.open(row["render_path"]) as image:
@@ -642,9 +566,9 @@ This is a review-only rescue pass built from local WNBA player images only. Phot
 
 ## Why It Works
 
-- The Jackie and A'ja routes feel closest to elite sports journalism.
-- The Arike route is the most aggressive, which makes it the best comparison card.
-- The Nneka route is the weakest because the crowd plane steals a little too much authority from the headline.
+- The Jackie route carries the strongest cover feel and is the only route that reads fully final.
+- The A'ja route is the backup because it stays calm, premium, and readable without trying to outshout the photo.
+- The ceiling now looks like source-level, not typography-level: if this still misses the bar, the answer is better source selection rather than more polish.
 
 ## Output Table
 
