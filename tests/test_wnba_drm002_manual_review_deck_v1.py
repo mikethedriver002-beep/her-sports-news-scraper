@@ -67,6 +67,8 @@ def test_drm002_manual_review_deck_builds_swipe_surface_with_click_to_load_previ
     assert "HSD Action Photo Review Deck" in deck_html
     assert "DRM002" in deck_html
     assert "load-remote-preview" in deck_html
+    assert "Show DRM002 Image" in deck_html
+    assert "Remote preview is gated." in deck_html
     assert "drm002RemotePreviewUrl" in deck_html
     assert "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png" in deck_html
     assert '"image_or_render_url": "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png"' not in deck_html
