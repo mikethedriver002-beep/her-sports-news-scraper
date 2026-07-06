@@ -23,7 +23,7 @@ def read_csv(path: Path) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def test_drm002_manual_review_deck_builds_swipe_surface_without_remote_image_load(tmp_path: Path) -> None:
+def test_drm002_manual_review_deck_builds_swipe_surface_with_click_to_load_preview(tmp_path: Path) -> None:
     module = load_module()
     output_dir = tmp_path / "outputs" / "local" / "tmp" / "wnba_drm002_manual_review_deck_v1"
     latest_dir = tmp_path / "outputs" / "local" / "latest" / "files" / "wnba_drm002_manual_review_deck_v1"
@@ -42,6 +42,7 @@ def test_drm002_manual_review_deck_builds_swipe_surface_without_remote_image_loa
     assert manifest["status"] == "wnba_drm002_manual_review_deck_ready"
     assert manifest["candidate_queue_id"] == "DRM002"
     assert manifest["remote_image_loaded_by_deck"] is False
+    assert manifest["remote_preview_mode"] == "operator_click_to_load_in_browser"
     assert manifest["download_approved"] == "no"
     assert manifest["asset_downloads"] is False
     assert manifest["approval_state_change"] is False
@@ -65,7 +66,10 @@ def test_drm002_manual_review_deck_builds_swipe_surface_without_remote_image_loa
     deck_html = (output_dir / "review_deck" / "action_photo_review_deck.html").read_text(encoding="utf-8")
     assert "HSD Action Photo Review Deck" in deck_html
     assert "DRM002" in deck_html
-    assert "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png" not in deck_html
+    assert "load-remote-preview" in deck_html
+    assert "drm002RemotePreviewUrl" in deck_html
+    assert "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png" in deck_html
+    assert '"image_or_render_url": "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png"' not in deck_html
     assert "drm002_manual_review_placeholder.svg" in deck_html
 
     decision_rows = read_csv(output_dir / "review_deck" / "manual_decision_export_template.csv")

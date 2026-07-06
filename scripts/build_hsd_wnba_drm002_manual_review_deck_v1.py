@@ -105,27 +105,67 @@ def placeholder_svg(row: dict[str, str]) -> str:
     candidate_url = clean(row.get("candidate_photo_url"))
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
   <rect width="1080" height="1350" fill="#111418"/>
-  <rect x="48" y="48" width="984" height="1254" rx="0" fill="#171b21" stroke="#d8dde6" stroke-width="3"/>
-  <text x="84" y="124" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">DRM002 MANUAL REVIEW</text>
-  <text x="84" y="180" fill="#b9c0cc" font-family="Arial, Helvetica, sans-serif" font-size="24">Atlanta Dream official recap hero candidate</text>
-  <rect x="84" y="240" width="912" height="640" fill="#0d0f13" stroke="#424955" stroke-width="2"/>
-  <text x="124" y="330" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">No local proof image yet</text>
-  <text x="124" y="386" fill="#c7ceda" font-family="Arial, Helvetica, sans-serif" font-size="25">This swipe card is for source/intake review only.</text>
-  <text x="124" y="434" fill="#c7ceda" font-family="Arial, Helvetica, sans-serif" font-size="25">Opening the deck does not load the remote CDN image.</text>
-  <text x="124" y="510" fill="#7fffd4" font-family="Arial, Helvetica, sans-serif" font-size="24">Source URL:</text>
-  <foreignObject x="124" y="536" width="820" height="122">
+  <rect x="52" y="52" width="976" height="1246" rx="0" fill="#181c23" stroke="#d8dde6" stroke-width="3"/>
+  <text x="88" y="128" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700">DRM002 MANUAL REVIEW</text>
+  <text x="88" y="184" fill="#b9c0cc" font-family="Arial, Helvetica, sans-serif" font-size="24">Atlanta Dream official recap hero candidate</text>
+  <rect x="88" y="236" width="904" height="638" fill="#0d0f13" stroke="#424955" stroke-width="2"/>
+  <text x="128" y="326" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Preview gated</text>
+  <text x="128" y="382" fill="#c7ceda" font-family="Arial, Helvetica, sans-serif" font-size="25">The deck starts with this local placeholder.</text>
+  <text x="128" y="430" fill="#c7ceda" font-family="Arial, Helvetica, sans-serif" font-size="25">Use the deck button to load the remote preview manually.</text>
+  <text x="128" y="506" fill="#7fffd4" font-family="Arial, Helvetica, sans-serif" font-size="24">Source URL</text>
+  <foreignObject x="128" y="532" width="808" height="122">
     <div xmlns="http://www.w3.org/1999/xhtml" style="font:23px Arial;color:#f1f5f9;line-height:1.25;word-break:break-word;">{source_url}</div>
   </foreignObject>
-  <text x="124" y="712" fill="#7fffd4" font-family="Arial, Helvetica, sans-serif" font-size="24">Candidate image URL metadata:</text>
-  <foreignObject x="124" y="738" width="820" height="90">
+  <text x="128" y="704" fill="#7fffd4" font-family="Arial, Helvetica, sans-serif" font-size="24">Candidate image URL metadata</text>
+  <foreignObject x="128" y="730" width="808" height="96">
     <div xmlns="http://www.w3.org/1999/xhtml" style="font:23px Arial;color:#f1f5f9;line-height:1.25;word-break:break-word;">{candidate_url}</div>
   </foreignObject>
-  <text x="84" y="956" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">Decision Needed</text>
-  <text x="84" y="1008" fill="#c7ceda" font-family="Arial, Helvetica, sans-serif" font-size="25">Carry forward only if Mike verifies source, identity context, rights posture, and action-photo fit.</text>
-  <text x="84" y="1060" fill="#c7ceda" font-family="Arial, Helvetica, sans-serif" font-size="25">A carry-forward decision is not a download approval and not asset approval.</text>
-  <text x="84" y="1212" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="26">Review-only. No downloads. No approval-state changes. No publish-ready state.</text>
+  <text x="88" y="954" fill="#f6f7fb" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">Decision Needed</text>
+  <foreignObject x="88" y="984" width="884" height="150">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font:25px Arial;color:#c7ceda;line-height:1.45;">Carry forward only if Mike verifies the source, identity context, rights posture, and action-photo fit. A carry-forward decision is not a download approval and not asset approval.</div>
+  </foreignObject>
+  <foreignObject x="88" y="1190" width="884" height="70">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font:25px Arial;color:#f6f7fb;line-height:1.35;">Review-only. No downloads. No approval-state changes. No publish-ready state.</div>
+  </foreignObject>
 </svg>
 """
+
+
+def enhance_review_deck_html(html_path: str | Path, *, remote_preview_url: str) -> None:
+    path = Path(html_path)
+    html_text = path.read_text(encoding="utf-8")
+    if "load-remote-preview" in html_text:
+        return
+    button_html = (
+        '<button id="load-remote-preview" type="button" title="Manually load the remote preview in this browser">'
+        "Load Remote Preview</button>"
+    )
+    html_text = html_text.replace(
+        '<a id="source" class="button" target="_blank" rel="noreferrer">Open Source</a>',
+        '<a id="source" class="button" target="_blank" rel="noreferrer">Open Source</a>\n'
+        f"          {button_html}",
+    )
+    script = f"""
+    const drm002RemotePreviewUrl = {json.dumps(remote_preview_url)};
+    const drm002OriginalRender = render;
+    render = function() {{
+      drm002OriginalRender();
+      const loadButton = document.getElementById("load-remote-preview");
+      if (loadButton) {{
+        loadButton.onclick = function() {{
+          const item = active();
+          if (!item || item.candidate_id !== "DRM002") return;
+          const image = document.getElementById("image");
+          image.src = drm002RemotePreviewUrl;
+          image.alt = "DRM002 remote preview loaded manually by operator";
+          loadButton.textContent = "Remote Preview Loaded";
+          loadButton.disabled = true;
+        }};
+      }}
+    }};
+"""
+    html_text = html_text.replace("    render();\n  </script>", script + "    render();\n  </script>")
+    path.write_text(html_text, encoding="utf-8")
 
 
 def board_row(row: dict[str, str], placeholder_path: Path) -> dict[str, str]:
@@ -229,6 +269,8 @@ def build_packet(
         limit=1,
         head_commit=head_commit,
     )
+    remote_preview_url = clean(row.get("candidate_photo_url"))
+    enhance_review_deck_html(deck_manifest["html_path"], remote_preview_url=remote_preview_url)
     manifest_path = output_dir / "manifest.json"
     report_path = output_dir / "manual_review_deck_report.md"
     manifest: dict[str, Any] = {
@@ -246,7 +288,8 @@ def build_packet(
         "manual_decision_template": deck_manifest["decision_template_path"],
         "review_deck_manifest": deck_manifest["manifest_path"],
         "report_path": report_path.as_posix(),
-        "remote_image_reference": clean(row.get("candidate_photo_url")),
+        "remote_image_reference": remote_preview_url,
+        "remote_preview_mode": "operator_click_to_load_in_browser",
         "remote_image_loaded_by_deck": False,
         "review_only": True,
         "download_approved": "no",
