@@ -189,7 +189,8 @@ def formal_intake_rows(decisions: list[dict[str, str]], board_rows: list[dict[st
             continue
 
         source = lookup.get(candidate_id, {})
-        candidate_photo_url = clean(row.get("image_or_render_url") or source.get("candidate_image_url"))
+        source_candidate_url = clean(source.get("candidate_remote_image_url") or source.get("candidate_image_url"))
+        candidate_photo_url = source_candidate_url or clean(row.get("image_or_render_url"))
         source_url = clean(row.get("source_url") or source.get("source_url"))
         identity_confidence = clean(source.get("identity_confidence") or "operator_selected")
         evidence_summary = clean(source.get("image_alt") or source.get("candidate_board_recommendation") or "Review deck carry-forward candidate.")

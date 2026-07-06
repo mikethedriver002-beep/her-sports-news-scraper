@@ -137,13 +137,45 @@ def enhance_review_deck_html(html_path: str | Path, *, remote_preview_url: str) 
     if "load-remote-preview" in html_text:
         return
     button_html = (
-        '<button id="load-remote-preview" type="button" title="Manually load the remote preview in this browser">'
-        "Load Remote Preview</button>"
+        '<button id="load-remote-preview" class="preview-load-button" type="button" '
+        'title="Manually load the remote WNBA preview in this browser">'
+        "Show DRM002 Image</button>"
     )
     html_text = html_text.replace(
-        '<a id="source" class="button" target="_blank" rel="noreferrer">Open Source</a>',
-        '<a id="source" class="button" target="_blank" rel="noreferrer">Open Source</a>\n'
-        f"          {button_html}",
+        "  </style>",
+        """    .preview-load-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border: 1px solid #2f7a68;
+      background: #09251f;
+      color: #e9fff8;
+    }
+    .preview-load-panel strong { font-size: 15px; }
+    .preview-load-panel span { color: #b8d6cd; font-size: 13px; }
+    .preview-load-button {
+      border-color: #25d0a2;
+      background: #0f6a56;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+    .preview-load-button:disabled {
+      opacity: 0.8;
+      cursor: default;
+    }
+  </style>""",
+    )
+    html_text = html_text.replace(
+        '      <div class="viewer">\n        <div class="swipe-card"',
+        f"""      <div class="viewer">
+        <div class="preview-load-panel">
+          <div><strong>Remote preview is gated.</strong><br><span>Click once to show the WNBA CDN image in this browser. No file is downloaded into the repo.</span></div>
+          {button_html}
+        </div>
+        <div class="swipe-card" """,
     )
     script = f"""
     const drm002RemotePreviewUrl = {json.dumps(remote_preview_url)};

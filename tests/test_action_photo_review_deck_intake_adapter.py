@@ -178,3 +178,42 @@ def test_adapter_blocks_truthy_download_approval_from_export(tmp_path: Path) -> 
     assert rows == []
     assert len(invalid) == 1
     assert "exported_decision_must_not_download_approve" in invalid[0]["validation_issues"]
+
+
+def test_adapter_prefers_board_remote_candidate_url_over_placeholder_export(tmp_path: Path) -> None:
+    module = load_module()
+    decisions = tmp_path / "decisions.csv"
+    board = tmp_path / "board.csv"
+    output = tmp_path / "out"
+    write_csv(
+        decisions,
+        [
+            decision_row(
+                candidate_id="DRM002",
+                entity_id="wnba_atlanta_dream_chicago_road_win_recap_hero",
+                source_url="https://dream.wnba.com/news/dream-scores-a-win-in-reeses-return-to-chicago-howard-makes-history",
+                image_or_render_url="file:///D:/repo/outputs/local/latest/files/wnba_drm002_manual_review_deck_v1/drm002_manual_review_placeholder.svg",
+            )
+        ],
+        DECISION_FIELDS,
+    )
+    board_row_with_remote = {
+        **board_row(),
+        "scout_candidate_id": "DRM002",
+        "entity_id": "wnba_atlanta_dream_chicago_road_win_recap_hero",
+        "source_type": "official_team_recap",
+        "source_url": "https://dream.wnba.com/news/dream-scores-a-win-in-reeses-return-to-chicago-howard-makes-history",
+        "candidate_image_url": "file:///D:/repo/outputs/local/latest/files/wnba_drm002_manual_review_deck_v1/drm002_manual_review_placeholder.svg",
+        "candidate_remote_image_url": "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png",
+        "source_domain": "dream.wnba.com",
+        "identity_confidence": "strong_context",
+    }
+    write_csv(board, [board_row_with_remote], BOARD_FIELDS + ["candidate_remote_image_url"])
+
+    module.build_packet(decisions_csv=decisions, board_csv=board, output_dir=output)
+    rows = read_csv(output / "formal_quarantine_download_intake_candidates.csv")
+
+    assert len(rows) == 1
+    assert rows[0]["candidate_queue_id"] == "DRM002"
+    assert rows[0]["candidate_photo_url"] == "https://cdn.wnba.com/sites/1611661330/2026/06/6.9-story.png"
+    assert rows[0]["download_approved"] == "no"
